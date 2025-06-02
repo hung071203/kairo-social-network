@@ -1,0 +1,204 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>
+      {{ title }}
+    </title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ baseUrl }}/images/favicon.png"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&amp;display=swap" rel="stylesheet"/>
+    <link href="{{ baseUrl }}/social/styles/app.css" rel="stylesheet"/>
+    <link
+    href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet"/>
+    {# customCss #}
+    {% block css %}{% endblock %}
+    {# customJs #}
+    {% block js %}{% endblock %}
+  </head>
+  <body>
+    <div id="toast-container" class="fixed z-50 space-y-3 p-6 top-6 right-6 max-w-full w-auto"></div>
+    <!-- Top Nav -->
+    {% include 'users/layouts/_topnav.njk' %}
+    <!-- Top Nav -->
+    <main>
+      <div class="flex min-h-screen justify-center">
+        {% if not path.includes('profile/user') %}
+          <!-- Left Sidebar -->
+          {% include 'users/layouts/_leftbar.njk' %}
+          <!-- Left Sidebar -->
+          <!-- Main Content -->
+          <section
+            class="scrollable-content w-full w-[600px] space-y-4 pr-2 pb-24"> <!-- Post creation box -->
+          {% endif %}
+          {% block content %}
+            <p>Mặc định</p>
+          {% endblock %}
+          {% if not path.includes('profile/user') %}
+            <!-- Post creation box -->
+          </section>
+          <!-- Main Content -->
+          <!-- Right Sidebar -->
+          {% include 'users/layouts/_rightbar.njk' %}
+          <!-- Right Sidebar -->
+        {% endif %}
+      </div>
+    </main>
+  </body>
+  <style>
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    @keyframes fadeOutRight {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #3a3b3c;
+      color: #e4e6eb;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      min-width: 320px;
+      max-width: 400px;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      animation: slideInRight 0.4s ease forwards;
+      position: relative;
+      opacity: 1;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .toast.success {
+      background-color: #4e944f;
+    }
+    .toast.error {
+      background-color: #a94442;
+    }
+    .toast.warning {
+      background-color: #b58b00;
+    }
+    .toast.info {
+      background-color: #3a3b3c;
+    }
+    .toast .message {
+      flex-grow: 1;
+      color: #fff;
+    }
+    .toast .close-btn {
+      background: transparent;
+      border: none;
+      color: #b0b3b8;
+      font-size: 1.2rem;
+      margin-left: 1rem;
+      cursor: pointer;
+    }
+    .toast.closing {
+      animation: fadeOutRight 0.5s ease forwards;
+    }
+  </style>
+  <script>
+    function showToast({
+      message = "Thông báo hệ thống.",
+      delay = 4000,
+      link = null,
+      type = "info" // 'success', 'error', 'warning', 'info'
+    } = {}) {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      const messageEl = document.createElement(
+        link
+        ? 'a'
+        : 'div');
+      messageEl.className = 'message';
+      messageEl.textContent = message;
+      if (link) {
+        messageEl.href = link;
+        messageEl.classList.add('hover:underline');
+      }
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "close-btn";
+      closeBtn.innerHTML = "&times;";
+      closeBtn.onclick = () => {
+        toast.classList.add('closing');
+        setTimeout(() => toast.remove(), 500);
+      };
+      toast.appendChild(messageEl);
+      toast.appendChild(closeBtn);
+      // Click vào message cũng đóng toast nếu có link
+      if (link) {
+        toast.onclick = (e) => {
+          if (e.target !== closeBtn) 
+            window.location.href = link;
+          
+        };
+      }
+      container.appendChild(toast);
+      // Auto remove
+      setTimeout(() => {
+        toast.classList.add('closing');
+        setTimeout(() => toast.remove(), 500);
+      }, delay);
+    }
+    function getColor(text) {
+      const colors = [
+        'dark',
+        'info',
+        'warning',
+        'danger',
+        'success',
+        'secondary',
+        'primary'
+      ];
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) {
+        hash = text.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return colors[Math.abs(hash) % colors.length];
+    };
+
+    async function uploadFile(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const response = await fetch('/storage/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error('Upload failed');
+        const data = await response.json();
+        return data.data.url; // Assuming the API returns the file URL
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        showToast({message: "Lỗi khi tải lên tệp.", type: "error"});
+      }
+    }
+  </script>
+  {% if successMessage is defined %}
+    <script>
+      showToast({message: "{{ successMessage }}", type: "success", delay: 5000});
+    </script>
+  {% endif %}
+  {% if errorMessage is defined %}
+    <script>
+      showToast({message: "{{ errorMessage }}", type: "error", delay: 5000});
+    </script>
+  {% endif %}
+</html>

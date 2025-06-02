@@ -1,0 +1,133 @@
+{% extends 'admins/layouts/app.njk' %}
+{% set title = 'Login' %}
+{% set auth = true %}
+{% block css %}
+    <style>
+        .authentication-wrapper {
+            display: flex;
+            justify-content: center; /* Căn giữa theo chiều ngang */
+            align-items: center; /* Căn giữa theo chiều dọc */
+            min-height: 100vh; /* Chiều cao tối thiểu bằng chiều cao của toàn bộ viewport */
+        }
+        .card {
+            max-width: 500px; /* Giới hạn chiều rộng tối đa của thẻ */
+            width: 100%; /* Đảm bảo thẻ không lớn hơn container */
+            margin: auto; /* Đảm bảo thẻ căn giữa theo chiều ngang */
+        }
+        .turnstile-container {
+            display: flex;
+            justify-content: center; /* Căn giữa Turnstile theo chiều ngang */
+            margin-top: 1rem; /* Khoảng cách phía trên */
+        }
+    </style>
+{% endblock %}
+{% block js %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const email = localStorage.getItem('email');
+            const password = localStorage.getItem('password');
+            if (email && password) {
+                document.getElementById('email').value = email;
+                document.getElementById('password').value = password;
+                document.getElementById('remember-me').checked = true;
+            }
+        });
+        function setValue() {
+            if (document.getElementById('remember-me').checked) {
+                localStorage.setItem('email', document.getElementById('email').value);
+                localStorage.setItem('password', document.getElementById('password').value);
+            } else {
+                localStorage.removeItem('email');
+                localStorage.removeItem('password');
+            }
+        }
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-xxl">
+        <div class="authentication-wrapper authentication-basic container-p-y">
+            <div
+                class="authentication-inner">
+                <!-- Đăng nhập -->
+                <div class="card px-sm-6 px-0" style="max-width: 500px; margin: auto;">
+                    <div
+                        class="card-body">
+                        <!-- Logo -->
+                        <div class="app-brand justify-content-center mb-6">
+                            <a class="app-brand-link gap-2">
+                                <span class="app-brand-logo demo">
+                                    <img src="{{ baseUrl }}/images/favicon.png" alt="brand-logo"/>
+                                </span>
+                                <span class="app-brand-text demo text-heading fw-bold">KAIRO</span>
+                            </a>
+                        </div>
+                        <!-- /Logo -->
+                        <h4 class="mb-1">Chào mừng bạn đã quay trở lại!</h4>
+                        <p class="mb-6">Vui lòng đăng nhập vào tài khoản của bạn để bắt đầu</p>
+                        <form id="formAuthentication" class="mb-6" method="post" action="{{ baseUrl }}/auth/login">
+                            <div class="mb-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="text" class="form-control" id="email" name="email" placeholder="Nhập email của bạn" autofocus/>
+                            </div>
+                            <div class="mb-6 form-password-toggle">
+                                <label class="form-label" for="password">Mật khẩu</label>
+                                <div class="input-group input-group-merge">
+                                    <input
+                                        type="password"
+                                        required
+                                        id="password"
+                                        class="form-control"
+                                        name="password"
+                                        placeholder="············"
+                                        aria-describedby="password"/>
+                                </div>
+                            </div>
+                            <div class="mb-8">
+                                <div class="d-flex justify-content-between mt-8">
+                                    <div class="form-check mb-0 ms-2">
+                                        <input class="form-check-input" type="checkbox" onclick="setValue()" id="remember-me"/>
+                                        <label class="form-check-label" for="remember-me">
+                                            Nhớ tôi
+                                        </label>
+                                    </div>
+                                    <a href="{{ baseUrl }}/auth/forgot-password">
+                                        <span>Quên mật khẩu?</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="turnstile-container">
+                                <div class="cf-turnstile" data-sitekey="{{ capchaPublicKey }}" data-theme="light"></div>
+                            </div>
+                            <div class="mb-6">
+                                <button class="btn btn-primary d-grid w-100" type="submit">Đăng nhập</button>
+                            </div>
+                            <div class="text-center my-4">
+                                <span>hoặc</span>
+                            </div>
+                            <div class="text-center mb-4">
+                                <!-- Nút Đăng nhập với Google -->
+                                <a href="{{ baseUrl }}/auth/google" class="btn btn-light border d-flex align-items-center justify-content-center shadow-sm" style="height: 45px; font-weight: 500;">
+                                    <i class="fab fa-google" style="font-size: 20px; margin-right: 10px;"></i>
+                                    <span>Đăng nhập với Google</span>
+                                </a>
+                            </div>
+                        </form>
+                        <p class="text-center">
+                            <span>Bạn mới tham gia ?</span>
+                            <a href="{{ baseUrl }}/auth/signup">
+                                <span>Tạo tài khoản</span>
+                            </a>
+                        </p>
+                        <div class="mb-3 text-center">
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                                ← Quay lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- /Đăng nhập -->
+            </div>
+        </div>
+    </div>
+{% endblock %}

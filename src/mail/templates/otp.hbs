@@ -1,0 +1,50 @@
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title> {{#if pass}}Đặt lại mật khẩu{{else}}Xác minh OTP{{/if}}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 0;
+      background-color: #f9f9f9; } .email-container { max-width: 600px; margin:
+      50px auto; background-color: #ffffff; padding: 20px; border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); } .header { text-align: center;
+      margin-bottom: 20px; } .header img { max-width: 100px; } .otp-box {
+      font-size: 24px; color: #333333; font-weight: bold; text-align: center;
+      background-color: #f1f1f1; padding: 10px; border-radius: 4px; margin: 20px
+      0; } .footer { font-size: 12px; color: #999999; text-align: center;
+      margin-top: 20px; } .footer a { color: #007bff; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class='email-container'>
+      <div class='header'>
+        <h1>Xác Minh OTP</h1>
+      </div>
+      <p>Xin chào, người dùng!</p>
+
+      <p>{{#if isSignup}}
+          Bạn đang tạo tài khoản mới trên hệ thống của chúng tôi. Vui lòng sử
+          dụng OTP dưới đây để hoàn tất hành động của bạn:
+        {{else if isForgot}}
+          Bạn đang yêu cầu đặt lại mật khẩu cho tài khoản của mình. Vui lòng sử
+          dụng OTP dưới đây để tiếp tục:
+        {{else if isMail}}
+          Bạn đang yêu cầu thay đổi email cho tài khoản của mình. Vui lòng sử
+          dụng OTP dưới đây để tiếp tục:
+        {{else if isSendPass}}
+          Bạn đang yêu cầu gửi mật khẩu cho tài khoản của mình. Mật khẩu của bạn
+          là:
+        {{/if}}</p>
+      <div class='otp-box'>{{#if otp}}
+          {{otp}}
+        {{else}}
+          {{pass}}
+        {{/if}}</div>
+      <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p>
+      <div class='footer'>
+        <p>© 2024 {{admin}}. Bảo lưu mọi quyền.</p>
+        <p>Cần giúp đỡ? <a href='mailto:{{email}}'>Liên hệ Hỗ trợ</a></p>
+      </div>
+    </div>
+  </body>
+</html>

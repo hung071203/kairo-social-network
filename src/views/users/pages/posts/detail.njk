@@ -1,0 +1,865 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta content="width=device-width, initial-scale=1" name="viewport"/>
+        <title>Facebook Post Detail with Modal and Replies</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+        <style>
+            /* Custom scrollbar for comments scroll container */
+            #commentsScrollContainer {
+                height: 100%;
+                min-height: 0;
+                scrollbar-width: thin;
+                scrollbar-color: #555 #18191A;
+            }
+            #commentsScrollContainer::-webkit-scrollbar {
+                width: 8px;
+            }
+            #commentsScrollContainer::-webkit-scrollbar-track {
+                background: #18191A;
+                border-radius: 4px;
+            }
+            #commentsScrollContainer::-webkit-scrollbar-thumb {
+                background-color: #555;
+                border-radius: 4px;
+                border: 2px solid #18191A;
+            }
+            #commentsScrollContainer::-webkit-scrollbar-thumb:hover {
+                background-color: #888;
+            }
+
+            @keyframes slideInRight {
+                from {
+                opacity: 0;
+                transform: translateX(50px);
+                }
+                to {
+                opacity: 1;
+                transform: translateX(0);
+                }
+            }
+
+            @keyframes fadeOutRight {
+                from {
+                opacity: 1;
+                transform: translateX(0);
+                }
+                to {
+                opacity: 0;
+                transform: translateX(50px);
+                }
+            }
+
+            .toast {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background-color: #3a3b3c;
+                color: #e4e6eb;
+                border-radius: 0.75rem;
+                padding: 1rem 1.25rem;
+                min-width: 320px;
+                max-width: 400px;
+                font-size: 0.95rem;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+                animation: slideInRight 0.4s ease forwards;
+                position: relative;
+                opacity: 1;
+                transition: opacity 0.5s ease, transform 0.5s ease;
+            }
+
+            .toast.success { background-color: #4e944f; }
+            .toast.error { background-color: #a94442; }
+            .toast.warning { background-color: #b58b00; }
+            .toast.info { background-color: #3a3b3c; }
+
+            .toast .message {
+                flex-grow: 1;
+                color: #fff;
+            }
+
+            .toast .close-btn {
+                background: transparent;
+                border: none;
+                color: #b0b3b8;
+                font-size: 1.2rem;
+                margin-left: 1rem;
+                cursor: pointer;
+            }
+
+            .toast.closing {
+                animation: fadeOutRight 0.5s ease forwards;
+            }
+        </style>
+    </head>
+    <body class="bg-[#18191A] text-white font-sans min-h-screen flex justify-center">
+        <div id="toast-container" class="fixed z-50 space-y-3 p-6 top-6 right-6 max-w-full w-auto"></div>
+        <div
+            class="flex w-full w-full h-screen">
+            <!-- Left: Image/Video viewer -->
+            <div class="flex-1 flex flex-col bg-black relative">
+                <div class="flex-1 flex items-center justify-center relative">
+                    {% if mediaUrls.length > 1 %}
+                        <button
+                            aria-label="Previous"
+                            id="prevBtn"
+                            class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-3 hover:bg-opacity-80
+                                z-10">
+                            <i class="fas fa-chevron-left text-white text-xl"></i>
+                        </button>
+                    {% endif %}
+                    <div
+                        id="mediaContainer" class="max-h-[90vh] max-w-full flex items-center justify-center cursor-pointer"><!-- Image or video will be injected here -->
+                    </div>
+                    {% if mediaUrls.length > 1 %}
+                        <button
+                            aria-label="Next"
+                            id="nextBtn"
+                            class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-3 hover:bg-opacity-80
+                                z-10">
+                            <i class="fas fa-chevron-right text-white text-xl"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Right: Post details -->
+            <div
+                class="w-[400px] bg-[#242526] flex flex-col">
+                <!-- Top bar -->
+                <div
+                    class="flex items-center justify-between p-4 border-b border-[#3a3b3c]">
+                    <!-- Logo ở bên trái -->
+                    <div class="flex items-center" onclick="window.location.href='{{ baseUrl }}'">
+                        <img alt="Logo" class="w-10 h-10 object-contain" src="{{ baseUrl }}/images/favicon.png" width="40" height="40"/>
+                    </div>
+                    <!-- Các nút và avatar ở bên phải -->
+                    <div class="flex items-center space-x-2">
+                        <button class="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center text-[#B0B3B8] hover:text-white
+                                hover:bg-[#4a4b4c]">
+                            <i class="fab fa-facebook-messenger text-xl"></i>
+                        </button>
+                        <button class="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center text-[#B0B3B8] hover:text-white
+                                hover:bg-[#4a4b4c] relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <!-- Số thông báo chưa đọc -->
+                            <span class="absolute top-0 right-0 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">4</span>
+                        </button>
+                        <div class="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center overflow-hidden">
+                            <img alt="User avatar" class="w-full h-full object-cover" src="{{ user.avatar }}" width="40" height="40"/>
+                        </div>
+                    </div>
+                </div>
+                <!-- Existing post header -->
+                <div class="flex items-center justify-between p-4 border-b border-[#3a3b3c]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center overflow-hidden">
+                            <img alt="User avatar" class="w-full h-full object-cover" src="{{ author.avatar }}" width="40" height="40"/>
+                        </div>
+                        <div>
+                            <p class="text-white font-semibold text-sm">{{ author.name }}</p>
+                            <p class="text-[#B0B3B8] text-xs mt-0.5 flex items-center space-x-1">
+                                <span>{{ createdAt }}</span>
+                                <i class="fas fa-globe-americas text-[10px]"></i>
+                            </p>
+                        </div>
+                    </div>
+                    <button class="text-white text-xl hover:bg-[#3a3b3c] p-1 rounded-full">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+                <!-- Post content area -->
+                <div class="p-4 border-b border-[#3a3b3c] text-sm text-white leading-relaxed">
+                    {{ content | safe }}
+                </div>
+                <div class="flex justify-around border-b border-[#3a3b3c] py-3 text-[#B0B3B8]">
+                    <button id="likeButton" class="flex items-center space-x-1 hover:text-[#1877F2]" data-post-id="{{ _id }}">
+                        <i class="fas fa-heart text-xl {% if(isLiked) == true %}liked{% endif %}" id="likeIcon"></i>
+                        <span class="text-sm">{{ likes.length }}</span>
+                    </button>
+                    <button class="flex items-center space-x-1 hover:text-[#1877F2]">
+                        <i class="far fa-comment text-xl"></i>
+                        <span class="text-sm">{{ commentsCount }}</span>
+                    </button>
+                    <button class="flex items-center space-x-1 hover:text-[#1877F2]">
+                        <i class="fas fa-share text-xl"></i>
+                        <span class="text-sm">{{ sharesCount }}</span>
+                    </button>
+                </div>
+                <style>
+                    .liked {
+                        color: #1877F2 !important;
+                    }
+                    #sendCommentBtn:disabled {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                    }
+                </style>
+                <script>
+                    // Lấy phần tử nút Like và icon
+                    const likeButton = document.getElementById('likeButton');
+                    const likeIcon = document.getElementById('likeIcon');
+                    const likeCount = likeButton.querySelector('span');
+                    // Phần tử hiển thị số like Hàm xử lý sự kiện click nút Like
+                    async function handleLike() {
+                        const postId = likeButton.getAttribute('data-post-id'); // Lấy ID bài viết
+                        const isLiked = likeIcon.classList.contains('liked'); // Kiểm tra trạng thái hiện tại
+                        try { // Gửi yêu cầu PATCH đến /posts/like/:id
+                            const response = await fetch(`/posts/like/${postId}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    // Thêm header xác thực nếu cần, ví dụ: 'Authorization': `Bearer ${yourToken}`
+                                }
+                            });
+                            if (! response.ok) {
+                                throw new Error(`HTTP error! Status: ${
+                                    response.status
+                                }`);
+                            }
+                            // Lấy dữ liệu từ response
+                            const data = await response.json();
+                            // Cập nhật giao diện
+                            if (isLiked) {
+                                likeIcon.classList.remove('liked'); // Bỏ trạng thái liked
+                                likeCount.textContent = parseInt(likeCount.textContent) - 1; // Giảm số like
+                            } else {
+                                likeIcon.classList.add('liked'); // Thêm trạng thái liked (màu xanh FB)
+                                likeCount.textContent = parseInt(likeCount.textContent) + 1; // Tăng số like
+                            }
+                        } catch (error) {}
+                    }
+                    // Gắn sự kiện click cho nút Like
+                    likeButton.addEventListener('click', handleLike);
+                </script>
+                <div class="flex-1 flex flex-col border-t border-[#3a3b3c] min-h-0">
+                    <div
+                        id="commentsScrollContainer" class="overflow-y-auto p-4 space-y-3 flex-1 min-h-0">
+                        <!-- Comments container with scroll -->
+                        <div
+                            class="flex flex-col space-y-3" id="commentsContainer"><!-- Comments will be appended here -->
+                        </div>
+                    </div>
+                    <div class="flex items-center p-4 space-x-3 border-t border-[#3a3b3c]">
+                        <img alt="User avatar" class="w-10 h-10 rounded-full object-cover" src="{{ user.avatar }}" width="40" height="40"/>
+                        <textarea
+                            id="commentInput"
+                            class="flex-1 resize-none rounded-md bg-[#3a3b3c] text-white placeholder-[#B0B3B8] p-2 focus:outline-none"
+                            placeholder="Bình luận dưới tên {{ user.name }}"
+                            rows="2"></textarea>
+                        <button aria-label="Send comment" id="sendCommentBtn" class="text-[#B0B3B8] hover:text-white p-2 rounded-md">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden">
+            <button
+                id="modalClose"
+                aria-label="Close modal"
+                class="absolute top-6 right-6 text-white text-sm px-3 py-1 rounded-full bg-black bg-opacity-50 hover:bg-opacity-80 z-50">
+                ✕
+            </button>
+            <img id="modalImage" alt="Enlarged image" class="max-h-[90vh] max-w-[90vw] object-contain" src=""/>
+        </div>
+        <script>
+            function showToast({
+                message = "Thông báo hệ thống.",
+                delay = 4000,
+                link = null,
+                type = "info" // 'success', 'error', 'warning', 'info'
+            } = {}) {
+                const container = document.getElementById("toast-container");
+
+                const toast = document.createElement("div");
+                toast.className = `toast ${type}`;
+                
+                const messageEl = document.createElement(link ? 'a' : 'div');
+                messageEl.className = 'message';
+                messageEl.textContent = message;
+                if (link) {
+                messageEl.href = link;
+                messageEl.classList.add('hover:underline');
+                }
+
+                const closeBtn = document.createElement("button");
+                closeBtn.className = "close-btn";
+                closeBtn.innerHTML = "&times;";
+                closeBtn.onclick = () => {
+                toast.classList.add('closing');
+                setTimeout(() => toast.remove(), 500);
+                };
+
+                toast.appendChild(messageEl);
+                toast.appendChild(closeBtn);
+
+                // Click vào message cũng đóng toast nếu có link
+                if (link) {
+                toast.onclick = (e) => {
+                    if (e.target !== closeBtn) window.location.href = link;
+                };
+                }
+
+                container.appendChild(toast);
+
+                // Auto remove
+                setTimeout(() => {
+                toast.classList.add('closing');
+                setTimeout(() => toast.remove(), 500);
+                }, delay);
+            }
+            (() => { // Hàm định dạng thời gian từ ISO string sang DD/MM/YYYY HH:mm
+                function formatTimestamp(isoString) {
+                    try {
+                        const date = new Date(isoString);
+                        if (isNaN(date.getTime())) {
+                            return "Thời gian không xác định";
+                        }
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        return `${day}/${month}/${year} ${hours}:${minutes}`;
+                    } catch (error) {
+                        console.error('Lỗi định dạng thời gian:', isoString);
+                        return "Thời gian không xác định";
+                    }
+                }
+                const mediaItems = {{ mediaUrls | dump | safe }}; // Dữ liệu media từ backend
+                let currentIndex = 0;
+                const mediaContainer = document.getElementById("mediaContainer");
+                const prevBtn = document.getElementById("prevBtn");
+                const nextBtn = document.getElementById("nextBtn");
+                const modal = document.getElementById("modal");
+                const modalImage = document.getElementById("modalImage");
+                const modalClose = document.getElementById("modalClose");
+                const sendCommentBtn = document.getElementById("sendCommentBtn");
+                const commentInput = document.getElementById("commentInput");
+                const commentsContainer = document.getElementById("commentsContainer");
+                const commentsScrollContainer = document.getElementById("commentsScrollContainer");
+                const commentSection = document.querySelector('[data-post-id]');
+                const postId = commentSection
+                    ? commentSection.getAttribute('data-post-id')
+                    : null;
+                let page = 1;
+                const limit = 10;
+                let isLoading = false;
+                let hasMoreComments = true;
+                function renderMedia() {
+                    mediaContainer.innerHTML = "";
+                    const item = mediaItems[currentIndex];
+                    if (item?.mimeType.includes("image")) {
+                        const img = document.createElement("img");
+                        img.src = item.url;
+                        img.alt = item.alt;
+                        img.className = "max-h-[90vh] max-w-full object-contain cursor-pointer";
+                        img.id = "mainMedia";
+                        mediaContainer.appendChild(img);
+                        img.addEventListener("click", () => {
+                            modalImage.src = item.url;
+                            modalImage.alt = item.alt;
+                            modal.classList.remove("hidden");
+                        });
+                    } else if (item?.mimeType.includes("video")) {
+                        const video = document.createElement("video");
+                        video.src = item.url;
+                        video.controls = true;
+                        video.className = "max-h-[90vh] max-w-full object-contain cursor-default";
+                        video.id = "mainMedia";
+                        mediaContainer.appendChild(video);
+                    }
+                }
+                {% if mediaUrls.length > 1 %}
+                prevBtn.addEventListener("click", () => {
+                    currentIndex = (currentIndex - 1 + mediaItems.length) % mediaItems.length;
+                    renderMedia();
+                });
+                nextBtn.addEventListener("click", () => {
+                    currentIndex = (currentIndex + 1) % mediaItems.length;
+                    renderMedia();
+                });
+                {% endif %}
+                modalClose.addEventListener("click", () => {
+                    modal.classList.add("hidden");
+                    modalImage.src = "";
+                    modalImage.alt = "";
+                });
+                modal.addEventListener("click", (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add("hidden");
+                        modalImage.src = "";
+                        modalImage.alt = "";
+                    }
+                });
+                let activeReplyBox = null;
+                function createReplyBox(parentDiv) {
+                    if (activeReplyBox) {
+                        activeReplyBox.remove();
+                        activeReplyBox = null;
+                    }
+                    const box = document.createElement("div");
+                    box.className = "mt-2 flex space-x-2";
+                    const textarea = document.createElement("textarea");
+                    textarea.rows = 2;
+                    textarea.placeholder = "Viết trả lời...";
+                    textarea.className = "flex-1 resize-none rounded-md bg-[#4a4b4c] text-white placeholder-[#B0B3B8] p-2 focus:outline-none";
+                    const sendBtn = document.createElement("button");
+                    sendBtn.className = "text-[#B0B3B8] hover:text-white px-3 py-1 rounded bg-[#3a3b3c]";
+                    sendBtn.textContent = "Gửi";
+                    const commentId = parentDiv.closest('[data-comment-id]') ?. getAttribute('data-comment-id');
+                    const parentCommentDiv = parentDiv.closest('[data-comment-id]');
+                    if (! commentId || ! parentCommentDiv) 
+                        return;
+                    
+                    sendBtn.addEventListener("click", async () => {
+                        const content = textarea.value.trim();
+                        if (! content || ! postId || ! commentId) 
+                            return;
+                        
+                        const scrollTopBefore = commentsScrollContainer.scrollTop;
+                        try {
+                            const response = await fetch(`/comment/create/${postId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(
+                                {content, parentComment: commentId})
+                            });
+                            if (! response.ok) {
+                                throw new Error(`HTTP error! Status: ${
+                                    response.status
+                                }`);
+                            }
+                            const data = await response.json();
+                            const comment = data.data;
+                            const replyDiv = document.createElement("div");
+                            replyDiv.className = "flex items-start space-x-3";
+                            replyDiv.setAttribute('data-comment-id', comment._id);
+                            const avatar = document.createElement("img");
+                            avatar.alt = "User avatar";
+                            avatar.src = '{{ user.avatar }}';
+                            avatar.width = 32;
+                            avatar.height = 32;
+                            avatar.className = "w-8 h-8 rounded-full object-cover";
+                            const contentDiv = document.createElement("div");
+                            contentDiv.className = "bg-[#4a4b4c] rounded-lg p-2 text-sm flex-1";
+                            const nameP = document.createElement("p");
+                            nameP.className = "font-semibold text-white";
+                            const parentName = parentDiv.querySelector('.font-semibold') ?. textContent.split(' > ')[0] || 'Unknown';
+                            nameP.textContent = `{{user.name}} > ${parentName}`;
+                            const textP = document.createElement("p");
+                            textP.className = "text-[#B0B3B8]";
+                            textP.textContent = comment.content;
+                            const timeP = document.createElement("p");
+                            timeP.className = "text-[#B0B3B8] text-xs mt-1";
+                            timeP.textContent = formatTimestamp(comment.createdAt);
+                            const replyBtn = document.createElement("button");
+                            replyBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1";
+                            replyBtn.setAttribute("data-reply-btn", "");
+                            replyBtn.innerHTML = '<i class="fas fa-reply mr-1"></i>Trả lời';
+                            replyBtn.addEventListener("click", () => {
+                                createReplyBox(contentDiv);
+                            });
+                            const toggleBtn = document.createElement("button");
+                            toggleBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1 ml-2";
+                            toggleBtn.textContent = "Hiện trả lời";
+                            toggleBtn.type = "button";
+                            const repliesContainer = document.createElement("div");
+                            repliesContainer.className = "ml-6 mt-3 space-y-3";
+                            repliesContainer.setAttribute("data-replies", "");
+                            repliesContainer.style.display = "none";
+                            toggleBtn.addEventListener("click", () => {
+                                if (repliesContainer.style.display === "none") {
+                                    repliesContainer.style.display = "block";
+                                    toggleBtn.textContent = "Ẩn/Hiện trả lời";
+                                } else {
+                                    repliesContainer.style.display = "none";
+                                    toggleBtn.textContent = "Hiện trả lời";
+                                }
+                            });
+                            contentDiv.appendChild(nameP);
+                            contentDiv.appendChild(textP);
+                            contentDiv.appendChild(timeP);
+                            contentDiv.appendChild(replyBtn);
+                            contentDiv.appendChild(toggleBtn);
+                            replyDiv.appendChild(avatar);
+                            replyDiv.appendChild(contentDiv);
+                            let parentRepliesContainer;
+                            const isReply = parentCommentDiv.closest('[data-replies]');
+                            if (isReply) {
+                                parentRepliesContainer = isReply;
+                            } else {
+                                parentRepliesContainer = parentCommentDiv.nextElementSibling;
+                                if (! parentRepliesContainer || ! parentRepliesContainer.hasAttribute('data-replies')) {
+                                    parentRepliesContainer = document.createElement("div");
+                                    parentRepliesContainer.className = "ml-6 mt-3 space-y-3";
+                                    parentRepliesContainer.setAttribute("data-replies", "");
+                                    parentRepliesContainer.style.display = "none";
+                                    parentCommentDiv.parentNode.insertBefore(parentRepliesContainer, parentCommentDiv.nextSibling);
+                                }
+                            }
+                            if (isReply) {
+                                const nextSibling = parentCommentDiv.nextElementSibling;
+                                if (nextSibling && nextSibling !== parentRepliesContainer) {
+                                    parentRepliesContainer.insertBefore(replyDiv, nextSibling);
+                                } else {
+                                    parentRepliesContainer.appendChild(replyDiv);
+                                }
+                            } else {
+                                if (parentRepliesContainer.firstChild) {
+                                    parentRepliesContainer.insertBefore(replyDiv, parentRepliesContainer.firstChild);
+                                } else {
+                                    parentRepliesContainer.appendChild(replyDiv);
+                                }
+                            } parentRepliesContainer.style.display = "block";
+                            let parentToggleBtn = parentDiv.querySelector('button.text-xs.ml-2');
+                            if (! parentToggleBtn) {
+                                parentToggleBtn = document.createElement("button");
+                                parentToggleBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1 ml-2";
+                                parentToggleBtn.textContent = "Ẩn/Hiện trả lời";
+                                parentToggleBtn.type = "button";
+                                parentToggleBtn.addEventListener("click", () => {
+                                    if (parentRepliesContainer.style.display === "none") {
+                                        parentRepliesContainer.style.display = "block";
+                                        parentToggleBtn.textContent = "Ẩn/Hiện trả lời";
+                                    } else {
+                                        parentRepliesContainer.style.display = "none";
+                                        parentToggleBtn.textContent = "Hiện trả lời";
+                                    }
+                                });
+                                parentDiv.appendChild(parentToggleBtn);
+                            } else {
+                                parentToggleBtn.textContent = "Ẩn/Hiện trả lời";
+                            } box.remove();
+                            activeReplyBox = null;
+                            commentsScrollContainer.scrollTop = scrollTopBefore;
+                            replyDiv.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+                        } catch (error) {
+                            console.error('Lỗi khi gửi trả lời:', error);
+                            showToast({
+                                message: "Đã có lỗi xảy ra khi gửi trả lời. Vui lòng thử lại!",
+                                type: "error",
+                                delay: 5000
+                            });
+                        }
+                    });
+                    box.appendChild(textarea);
+                    box.appendChild(sendBtn);
+                    parentDiv.appendChild(box);
+                    textarea.focus();
+                    activeReplyBox = box;
+                }
+                commentsScrollContainer.addEventListener("click", (e) => {
+                    if (e.target.closest("[data-reply-btn]")) {
+                        e.preventDefault();
+                        const commentDiv = e.target.closest(".bg-[#3a3b3c], .bg-[#4a4b4c]");
+                        if (commentDiv) {
+                            createReplyBox(commentDiv);
+                        }
+                    }
+                });
+                function updateButtonState() {
+                    sendCommentBtn.disabled = commentInput.value.trim() === '';
+                }
+                commentInput.addEventListener('input', updateButtonState);
+                async function handleSendComment() {
+                    const content = commentInput.value.trim();
+                    if (! content || ! postId) 
+                        return;
+                    
+                    try {
+                        const response = await fetch(`/comment/create/${postId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(
+                            {content, parentComment: null})
+                        });
+                        if (! response.ok) {
+                            throw new Error(`HTTP error! Status: ${
+                                response.status
+                            }`);
+                        }
+                        const data = await response.json();
+                        const comment = data.data;
+                        const commentDiv = document.createElement("div");
+                        commentDiv.className = "flex flex-col space-y-1";
+                        commentDiv.setAttribute('data-comment-id', comment._id);
+                        const mainComment = document.createElement("div");
+                        mainComment.className = "flex items-start space-x-3";
+                        const avatar = document.createElement("img");
+                        avatar.alt = "User avatar";
+                        avatar.src = '{{ user.avatar }}';
+                        avatar.width = 40;
+                        avatar.height = 40;
+                        avatar.className = "w-10 h-10 rounded-full object-cover";
+                        const contentDiv = document.createElement("div");
+                        contentDiv.className = "bg-[#3a3b3c] rounded-lg p-3 text-sm flex-1";
+                        const nameP = document.createElement("p");
+                        nameP.className = "font-semibold text-white";
+                        nameP.textContent = '{{ user.name }}';
+                        const textP = document.createElement("p");
+                        textP.className = "text-[#B0B3B8]";
+                        textP.textContent = comment.content;
+                        const timeP = document.createElement("p");
+                        timeP.className = "text-[#B0B3B8] text-xs mt-1";
+                        timeP.textContent = formatTimestamp(comment.createdAt);
+                        const replyBtn = document.createElement("button");
+                        replyBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1";
+                        replyBtn.setAttribute("data-reply-btn", "");
+                        replyBtn.innerHTML = '<i class="fas fa-reply mr-1"></i>Trả lời';
+                        replyBtn.addEventListener("click", () => {
+                            createReplyBox(contentDiv);
+                        });
+                        const toggleBtn = document.createElement("button");
+                        toggleBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1 ml-2";
+                        toggleBtn.textContent = "Hiện trả lời";
+                        toggleBtn.type = "button";
+                        const repliesContainer = document.createElement("div");
+                        repliesContainer.className = "ml-6 mt-3 space-y-3";
+                        repliesContainer.setAttribute("data-replies", "");
+                        repliesContainer.style.display = "none";
+                        toggleBtn.addEventListener("click", () => {
+                            if (repliesContainer.style.display === "none") {
+                                repliesContainer.style.display = "block";
+                                toggleBtn.textContent = "Ẩn/Hiện trả lời";
+                            } else {
+                                repliesContainer.style.display = "none";
+                                toggleBtn.textContent = "Hiện trả lời";
+                            }
+                        });
+                        contentDiv.appendChild(nameP);
+                        contentDiv.appendChild(textP);
+                        contentDiv.appendChild(timeP);
+                        contentDiv.appendChild(replyBtn);
+                        contentDiv.appendChild(toggleBtn);
+                        mainComment.appendChild(avatar);
+                        mainComment.appendChild(contentDiv);
+                        commentDiv.appendChild(mainComment);
+                        commentDiv.appendChild(repliesContainer);
+                        commentsContainer.prepend(commentDiv);
+                        commentInput.value = "";
+                        sendCommentBtn.disabled = true;
+                        commentsScrollContainer.scrollTop = 0;
+                    } catch (error) {
+                        console.error('Lỗi khi gửi bình luận:', error);
+                        showToast({
+                            message: "Đã có lỗi xảy ra khi gửi bình luận. Vui lòng thử lại!",
+                            type: "error",
+                            delay: 5000
+                        });
+                    }
+                }
+                sendCommentBtn.addEventListener("click", handleSendComment);
+                commentInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendComment();
+                    }
+                });
+                async function fetchComments(append = false) {
+                    if (! postId || isLoading || ! hasMoreComments) 
+                        return;
+                    
+                    isLoading = true;
+                    try {
+                        console.log(`Fetching comments for postId: ${postId}, page: ${page}`); // Debug log
+                        const response = await fetch(`/comment/post/${postId}?limit=${limit}&page=${page}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        if (! response.ok) {
+                            throw new Error(`HTTP error! Status: ${
+                                response.status
+                            }`);
+                        }
+                        const {data: comments} = await response.json();
+                        console.log('Comments fetched:', comments); // Debug log
+                        if (comments.length === 0) {
+                            hasMoreComments = false;
+                            isLoading = false;
+                            return;
+                        }
+                        if (! append) {
+                            commentsContainer.innerHTML = '';
+                        }
+                        const commentMap = new Map();
+                        comments.forEach(comment => {
+                            commentMap.set(comment._id, comment);
+                        });
+                        comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        comments.forEach(comment => {
+                            console.log('Rendering comment:', comment); // Debug log
+                            const commentDiv = document.createElement("div");
+                            commentDiv.className = "flex flex-col space-y-1";
+                            commentDiv.setAttribute('data-comment-id', comment._id);
+                            const mainComment = document.createElement("div");
+                            mainComment.className = "flex items-start space-x-3";
+                            const avatar = document.createElement("img");
+                            avatar.alt = "User avatar";
+                            avatar.src = comment.author.avatar ||
+                            "https://storage.googleapis.com/a1aa/image/6e303d4d-7b8b-4278-02b8-dfc6c68b3a32.jpg";
+                            avatar.width = 40;
+                            avatar.height = 40;
+                            avatar.className = "w-10 h-10 rounded-full object-cover";
+                            const contentDiv = document.createElement("div");
+                            contentDiv.className = "bg-[#3a3b3c] rounded-lg p-3 text-sm flex-1";
+                            const nameP = document.createElement("p");
+                            nameP.className = "font-semibold text-white";
+                            nameP.textContent = comment.author.name || "Nguyễn Hùng";
+                            const textP = document.createElement("p");
+                            textP.className = "text-[#B0B3B8]";
+                            textP.textContent = comment.content;
+                            const timeP = document.createElement("p");
+                            timeP.className = "text-[#B0B3B8] text-xs mt-1";
+                            timeP.textContent = formatTimestamp(comment.createdAt);
+                            const replyBtn = document.createElement("button");
+                            replyBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1";
+                            replyBtn.setAttribute("data-reply-btn", "");
+                            replyBtn.innerHTML = '<i class="fas fa-reply mr-1"></i>Trả lời';
+                            replyBtn.addEventListener("click", () => {
+                                createReplyBox(contentDiv);
+                            });
+                            const toggleBtn = document.createElement("button");
+                            toggleBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1 ml-2";
+                            toggleBtn.textContent = "Hiện trả lời";
+                            toggleBtn.type = "button";
+                            const repliesContainer = document.createElement("div");
+                            repliesContainer.className = "ml-6 mt-3 space-y-3";
+                            repliesContainer.setAttribute("data-replies", "");
+                            repliesContainer.style.display = "none";
+                            toggleBtn.addEventListener("click", () => {
+                                if (repliesContainer.style.display === "none") {
+                                    repliesContainer.style.display = "block";
+                                    toggleBtn.textContent = "Ẩn/Hiện trả lời";
+                                } else {
+                                    repliesContainer.style.display = "none";
+                                    toggleBtn.textContent = "Hiện trả lời";
+                                }
+                            });
+                            contentDiv.appendChild(nameP);
+                            contentDiv.appendChild(textP);
+                            contentDiv.appendChild(timeP);
+                            contentDiv.appendChild(replyBtn);
+                            if (comment.replies ?. length) {
+                                contentDiv.appendChild(toggleBtn);
+                            }
+                            mainComment.appendChild(avatar);
+                            mainComment.appendChild(contentDiv);
+                            commentDiv.appendChild(mainComment);
+                            commentDiv.appendChild(repliesContainer);
+                            commentsContainer.appendChild(commentDiv); // Ensure commentDiv is appended
+                            function addReplies(replies, parentId) {
+                                console.log(`Adding replies for parentId: ${parentId}`, replies); // Debug log
+                                replies.forEach(reply => {
+                                    const replyDiv = document.createElement("div");
+                                    replyDiv.className = "flex items-start space-x-3";
+                                    replyDiv.setAttribute('data-comment-id', reply._id);
+                                    const replyAvatar = document.createElement("img");
+                                    replyAvatar.alt = "User avatar";
+                                    replyAvatar.src = reply.author.avatar || "https://storage.googleapis.com/a1aa/image/6e303d4d-7b8b-4278-02b8-dfc6c68b3a32.jpg";
+                                    replyAvatar.width = 32;
+                                    replyAvatar.height = 32;
+                                    replyAvatar.className = "w-8 h-8 rounded-full object-cover";
+                                    const replyContentDiv = document.createElement("div");
+                                    replyContentDiv.className = "bg-[#4a4b4c] rounded-lg p-2 text-sm flex-1";
+                                    const replyNameP = document.createElement("p");
+                                    replyNameP.className = "font-semibold text-white";
+                                    const parentComment = reply.parentComment;
+                                    const parentName = parentComment && parentComment.author
+                                        ? parentComment.author.name
+                                        : "Unknown";
+                                    replyNameP.textContent = `${
+                                        reply.author.name
+                                    } > ${parentName}`;
+                                    const replyTextP = document.createElement("p");
+                                    replyTextP.className = "text-[#B0B3B8]";
+                                    replyTextP.textContent = reply.content;
+                                    const replyTimeP = document.createElement("p");
+                                    replyTimeP.className = "text-[#B0B3B8] text-xs mt-1";
+                                    replyTimeP.textContent = formatTimestamp(reply.createdAt);
+                                    const replyReplyBtn = document.createElement("button");
+                                    replyReplyBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1";
+                                    replyReplyBtn.setAttribute("data-reply-btn", "");
+                                    replyReplyBtn.innerHTML = '<i class="fas fa-reply mr-1"></i>Trả lời';
+                                    replyReplyBtn.addEventListener("click", () => {
+                                        createReplyBox(replyContentDiv);
+                                    });
+                                    const replyToggleBtn = document.createElement("button");
+                                    replyToggleBtn.className = "text-[#B0B3B8] hover:text-white text-xs mt-1 ml-2";
+                                    replyToggleBtn.textContent = "Hiện trả lời";
+                                    replyToggleBtn.type = "button";
+                                    const replyRepliesContainer = document.createElement("div");
+                                    replyRepliesContainer.className = "ml-6 mt-3 space-y-3";
+                                    replyRepliesContainer.setAttribute("data-replies", "");
+                                    replyRepliesContainer.style.display = "none";
+                                    replyToggleBtn.addEventListener("click", () => {
+                                        if (replyRepliesContainer.style.display === "none") {
+                                            replyRepliesContainer.style.display = "block";
+                                            replyToggleBtn.textContent = "Ẩn/Hiện trả lời";
+                                        } else {
+                                            replyRepliesContainer.style.display = "none";
+                                            replyToggleBtn.textContent = "Hiện trả lời";
+                                        }
+                                    });
+                                    replyContentDiv.appendChild(replyNameP);
+                                    replyContentDiv.appendChild(replyTextP);
+                                    replyContentDiv.appendChild(replyTimeP);
+                                    replyContentDiv.appendChild(replyReplyBtn);
+                                    if (reply.replies ?. length) {
+                                        replyContentDiv.appendChild(replyToggleBtn);
+                                    }
+                                    replyDiv.appendChild(replyAvatar);
+                                    replyDiv.appendChild(replyContentDiv);
+                                    repliesContainer.appendChild(replyDiv);
+                                    repliesContainer.appendChild(replyRepliesContainer);
+                                    if (reply.replies ?. length) {
+                                        addReplies(reply.replies, reply._id);
+                                    }
+                                });
+                            }
+                            if (comment.replies ?. length) {
+                                addReplies(comment.replies, comment._id);
+                            }
+                        });
+                        page += 1;
+                        isLoading = false;
+                        if (! append) {
+                            commentsScrollContainer.scrollTop = 0;
+                        }
+                    } catch (error) {
+                        console.error('Lỗi khi lấy bình luận:', error);
+                        showToast({
+                            message: "Đã có lỗi xảy ra khi lấy bình luận. Vui lòng thử lại!",
+                            type: "error",
+                            delay: 5000
+                        });
+                        isLoading = false;
+                    }
+                }
+                commentsScrollContainer.addEventListener('scroll', () => {
+                    if (isLoading || ! hasMoreComments) 
+                        return;
+                    
+                    const {scrollTop, scrollHeight, clientHeight} = commentsScrollContainer;
+                    if (scrollTop + clientHeight >= scrollHeight - 50) {
+                        fetchComments(true);
+                    }
+                });
+                function init() {
+                    renderMedia();
+                    fetchComments();
+                    updateButtonState();
+                }
+                init();
+            })();
+        </script>
+    </body>
+</html>

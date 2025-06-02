@@ -1,0 +1,189 @@
+<aside
+    id="right-sidebar"
+    class="hidden xl:flex flex-col min-w-90 space-y-4 text-sm overflow-y-auto text-white ml-4 pb-20">
+    <div id="follow-requests-section"></div>
+    <!-- Danh sách người dùng -->
+    <section id="contacts-section"></section>
+    <!-- Spinner loading riêng biệt -->
+    <div id="loading-users-spinner" class="flex justify-center py-4 hidden">
+        <div class="w-6 h-6 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+</aside>
+<script>
+    function renderFollowRequests(requests) {
+        const section = document.getElementById('follow-requests-section');
+        if (! requests.length) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = ''; // Hiện lại nếu có data
+        const html = `
+            <div class="flex justify-between items-center text-[#b0b3b8] font-semibold">
+                <h2>Yêu cầu theo dõi</h2>
+                <a class="text-[#2e89ff] text-xs hover:underline" href="#">Xem tất cả</a>
+            </div>
+            <div id="follow-requests-container" class="space-y-3">
+                ${
+            requests.map(
+                user => `
+        <div class="bg-[#242526] rounded-lg p-3 flex items-center space-x-3 justify-between" id="request-${
+                    user._id
+                }">
+            <div class="flex items-center space-x-3">
+                <a href="/profile/user/${
+                    user._id
+                }" class="flex items-center space-x-3 hover:underline">
+                    <img class="w-10 h-10 rounded-full object-cover" src="${
+                    user.avatar
+                }" alt="${
+                    user.name
+                }" />
+                    <span class="font-semibold text-white">${
+                    user.name
+                }</span>
+                </a>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="acceptFollowRequest('${
+                    user._id
+                }')" class="bg-[#1877f2] text-white rounded-md px-3 py-1 text-xs font-semibold hover:bg-[#166fe5]">Xác nhận</button>
+                <button onclick="rejectFollowRequest('${
+                    user._id
+                }')" class="bg-[#3a3b3c] text-white rounded-md px-3 py-1 text-xs font-semibold hover:bg-[#4e4f50]">Xóa</button>
+            </div>
+        </div>
+        `
+            ).join('')
+        }
+            </div>
+        `;
+        section.innerHTML = html;
+    }
+    function renderContacts(users) {
+        const section = document.getElementById('contacts-section');
+        if (! users.length) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = '';
+        const html = `
+        <div class="flex justify-between items-center text-[#b0b3b8] font-semibold mb-2">
+            <h3>Người liên hệ</h3>
+        </div>
+        <ul class="space-y-3 border-b border-[#3a3b3c] pb-3">
+            ${
+            users.map(
+                user =>
+                    `
+                <li class="flex items-center space-x-3 cursor-pointer">
+                    <img class="w-8 h-8 rounded-full object-cover" src="${
+                    user.avatar
+                }" alt="${
+                    user.name
+                }" />
+                    <span class="font-semibold">${
+                    user.name
+                }</span>
+                </li>
+            `
+            ).join('')
+        }
+        </ul>
+    `;
+        section.innerHTML = html;
+    }
+    // Các function xử lý xác nhận và từ chối
+    async function acceptFollowRequest(userId) { // TODO: Gửi request đến server để chấp nhận
+        console.log('Đã xác nhận', userId);
+        try {
+            const res = await fetch(`/follow/acp/${userId}`, {method: 'POST'});
+            if (res.ok) {
+                const followData = await res.json();
+                showToast({
+                    type: 'success',
+                    message: followData.data.message || 'Yêu cầu đã được chấp nhận'
+                });
+                removeFollowRequest(userId);
+            } else {
+                const errJson = await res.json();
+                showToast({
+                    type: 'error',
+                    message: errJson.message || 'Không thể chấp nhận yêu cầu'
+                });
+            }
+        } catch (err) {
+            console.error('Lỗi kết nối:', err);
+            showToast({type: 'error', message: 'Lỗi kết nối tới máy chủ'});
+        }
+    }
+    async function rejectFollowRequest(userId) { // TODO: Gửi request đến server để từ chối
+        console.log('Đã từ chối', userId);
+        try {
+            const res = await fetch(`/follow/cancel/${userId}`, {method: 'POST'});
+            if (res.ok) {
+                const followData = await res.json();
+                showToast({
+                    type: 'success',
+                    message: followData.data.message || 'Yêu cầu đã được hủy'
+                });
+                removeFollowRequest(userId);
+            } else {
+                const errJson = await res.json();
+                showToast({
+                    type: 'error',
+                    message: errJson.message || 'Không thể hủy yêu cầu'
+                });
+            }
+        } catch (err) {
+            console.error('Lỗi kết nối:', err);
+            showToast({type: 'error', message: 'Lỗi kết nối tới máy chủ'});
+        }
+    }
+    function removeFollowRequest(userId) {
+        const element = document.getElementById(`request-${userId}`);
+        if (element) {
+            element.remove();
+        }
+        // Sau khi xóa, kiểm tra còn lại bao nhiêu yêu cầu
+        const requestSection = document.getElementById('follow-requests-section');
+        const remainingRequests = requestSection.querySelectorAll('[id^="request-"]');
+        if (remainingRequests.length === 0) {
+            requestSection.style.display = 'none';
+        }
+    }
+    async function fetchFollowRequests(tab) {
+        try {
+            const response = await fetch(`/follow/following?tab=${tab}&limit=5&page=1`);
+            if (! response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const datas = await response.json();
+            if (tab === 'incoming-requests') {
+                renderFollowRequests(datas
+                    .data
+                    .docs
+                    .map((item) => item.requester) || []);
+            } else if (tab === 'following') {
+                renderContacts(datas
+                    .data
+                    .docs
+                    .map((item) => item.target) || [])
+            }
+        } catch (error) {
+            console.error('Error fetching follow requests:', error);
+            return [];
+        }
+    }
+    if (!window
+            .location
+            .pathname
+            .startsWith('/home/search')) {
+        if (!window
+                .location
+                .pathname
+                .startsWith('/follow')) {
+            fetchFollowRequests('incoming-requests')
+        }
+        fetchFollowRequests('following')
+    }
+</script>

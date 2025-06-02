@@ -1,0 +1,282 @@
+{% extends 'layouts/app.njk' %}
+{% set title = 'Dashboard' %}
+{% set auth = false %}
+{% block content %}
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+    }
+    .list-group-item {
+        background-color: transparent;
+        border: none;
+        padding: 10px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .user-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+    .user-icon img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+    }
+    .user-info {
+        flex-grow: 1;
+        overflow: hidden;
+        margin-right: 10px;
+    }
+    .user-name-container {
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    /* Cách tiếp cận mới cho hiệu ứng cuộn liên tục */
+    .scrolling-wrapper {
+        display: inline-block;
+        white-space: nowrap;
+        animation: none;
+    }
+    
+    /* Đoạn này chứa nội dung cần cuộn */
+    .scrolling-content {
+        display: inline-block;
+        white-space: nowrap;
+        padding-right: 20px; /* Khoảng cách giữa hai lần lặp lại */
+    }
+    
+    /* Container có hiệu ứng cuộn */
+    .user-name-container.scrolling .scrolling-wrapper {
+        animation: scroll-text 15s linear infinite;
+    }
+    
+    .user-name {
+        font-size: 1rem;
+    }
+    
+    .request-count {
+        font-size: 0.9rem;
+        color: #ff4d4d;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    /* Hiệu ứng cuộn thực sự liên tục */
+    @keyframes scroll-text {
+        0% {
+            transform: translate3d(0, 0, 0);
+        }
+        100% {
+            transform: translate3d(-50%, 0, 0);
+        }
+    }
+</style>
+    <div class="row">
+        <!-- Left Column: Existing Statistics and Request Log -->
+        <div class="col-lg-9 col-md-12 order-1">
+            <!-- User and API Cards -->
+            <div class="row">
+                <!-- Total Users -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-user text-success bx-lg"></i>
+                                </div>
+                            </div>
+                            <p class="mb-1">Tổng số người dùng</p>
+                            <h4 class="card-title mb-3">{{ totalUsers }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <!-- Total APIs -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-signal-5 text-info bx-lg"></i>
+                                </div>
+                            </div>
+                            <p class="mb-1">Tổng số API</p>
+                            <h4 class="card-title mb-3">{{ totalEndpoints }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Banned IPs and Monthly Requests -->
+            <div class="row">
+                <!-- Banned IPs -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-no-signal text-warning bx-lg"></i>
+                                </div>
+                            </div>
+                            <p class="mb-1">Tổng số IP bị cấm</p>
+                            <h4 class="card-title mb-3">{{ bannedIps }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <!-- Monthly Requests -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-calendar text-danger bx-lg"></i>
+                                </div>
+                            </div>
+                            <p class="mb-1">Số yêu cầu trong tháng này/Tổng</p>
+                            <h4 class="card-title mb-3">{{ monthlyRequests }}/{{ totalRequests }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Request Log -->
+            <div class="col-12 mb-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Log Request Truy Cập</h5>
+                        <div class="log-container" id="logContainer" style="max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px; scrollbar-width: thin;">
+                            <pre id="requestLog" style="white-space: pre-wrap; word-wrap: break-word; font-family: monospace; overflow-x: auto;">{% for element in logsHistory %}<span style="color: gray;"> [{{ element.time }}]</span> - {% if element.type == 'info' %}<span style="color: black;">{{ element.text }}</span>{% elif element.type == 'warn' %}<span style="color: rgb(255, 187, 0);">{{ element.text }}</span>{% else %}<span style="color: red;">{{ element.text }}</span>{% endif %}<br>{% endfor %}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Top 10 Active Users -->
+        <div class="col-lg-3 col-md-12 order-2">
+            <div class="card h-100 shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title mb-4 text-center">Top 10 Người Dùng Hoạt Động Nhiều Nhất</h5>
+                    <div id="user-list" class="list-group" style="max-height: 600px; overflow-y: auto;">
+                        <!-- Danh sách người dùng sẽ được tạo động bằng JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Dữ liệu người dùng
+            const users = {{ topUsers|dump|safe }};
+            
+            // Lấy container chứa danh sách
+            const userListContainer = document.getElementById('user-list');
+            
+            // Tạo động các phần tử người dùng dựa trên mảng dữ liệu
+            users.forEach((user, index) => {
+                // Tạo phần tử item
+                const listItem = document.createElement('div');
+                listItem.className = 'list-group-item';
+                
+                // Tạo cấu trúc bên trong item
+                listItem.innerHTML = `
+                    <div class="d-flex align-items-center" style="width: 100%;">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar avatar-online">
+                                <span class="avatar-initial rounded-circle bg-label-${ getColor(user.name) }">
+                                    ${ user.name[0] }
+                                </span>
+                            </div>
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name-container">
+                                <!-- Tên người dùng sẽ được thêm bằng JavaScript -->
+                            </div>
+                        </div>
+                        <span class="request-count">Điểm: ${user.points.toLocaleString()}</span>
+                    </div>
+                `;
+                
+                // Thêm vào container chính
+                userListContainer.appendChild(listItem);
+                
+                // Thiết lập hiệu ứng cuộn cho tên người dùng
+                const nameContainer = listItem.querySelector('.user-name-container');
+                setupScrollingName(nameContainer, user.name);
+            });
+            
+            // Hàm thiết lập hiệu ứng cuộn liên tục cho tên
+            function setupScrollingName(container, name) {
+                // Xóa nội dung cũ
+                container.innerHTML = '';
+                
+                // Tạo wrapper cho hiệu ứng cuộn
+                const wrapper = document.createElement('div');
+                wrapper.className = 'scrolling-wrapper';
+                
+                // Kiểm tra kích thước
+                const tempSpan = document.createElement('span');
+                tempSpan.style.visibility = 'hidden';
+                tempSpan.style.position = 'absolute';
+                tempSpan.className = 'user-name';
+                tempSpan.textContent = name;
+                document.body.appendChild(tempSpan);
+                const nameWidth = tempSpan.offsetWidth;
+                document.body.removeChild(tempSpan);
+                
+                const containerWidth = container.offsetWidth;
+                
+                // Nếu tên quá dài, áp dụng hiệu ứng cuộn
+                if (nameWidth > containerWidth) {
+                    container.classList.add('scrolling');
+                    
+                    // Tạo nội dung với 2 bản sao để đảm bảo cuộn liên tục
+                    const content1 = document.createElement('span');
+                    content1.className = 'scrolling-content user-name';
+                    content1.textContent = name;
+                    
+                    const content2 = document.createElement('span');
+                    content2.className = 'scrolling-content user-name';
+                    content2.textContent = name;
+                    
+                    wrapper.appendChild(content1);
+                    wrapper.appendChild(content2);
+                    
+                } else {
+                    // Nếu tên ngắn, hiển thị bình thường
+                    container.classList.remove('scrolling');
+                    const content = document.createElement('span');
+                    content.className = 'user-name';
+                    content.textContent = name;
+                    wrapper.appendChild(content);
+                }
+                
+                container.appendChild(wrapper);
+            }
+            
+            // Xử lý khi thay đổi kích thước màn hình
+            window.addEventListener('resize', () => {
+                document.querySelectorAll('.user-name-container').forEach((container, index) => {
+                    if (index < users.length) {
+                        setupScrollingName(container, users[index].name);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,12 +1,25 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { WebContext } from './common/decorators';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { uploadCatbox } from './utils';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+  ) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getHello(@WebContext() { req, res }: WebContext) {
+    res.redirect('/home');
   }
 }

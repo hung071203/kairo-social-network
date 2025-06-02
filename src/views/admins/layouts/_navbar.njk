@@ -1,0 +1,83 @@
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+    <div class="app-brand demo">
+        <a href="{{ baseUrl }}/dashboard" class="app-brand-link">
+            <span class="app-brand-logo demo">
+                <img src="{{ baseUrl }}/images/favicon.png" alt="brand-logo"/>
+            </span>
+            <span class="app-brand-text demo menu-text fw-bold ms-2">KAIRO</span>
+        </a>
+        <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+            <i class="bx bx-chevron-left bx-sm d-flex align-items-center justify-content-center"></i>
+        </a>
+    </div>
+    <div class="menu-inner-shadow"></div>
+    <ul
+        class="menu-inner py-1">
+        <!-- Dashboards -->
+        <li class="menu-item {% if path == '/dashboard' %}active{% endif %}">
+            <a href="{{ baseUrl }}/dashboard" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-home-smile"></i>
+                <div class="text-truncate" data-i18n="Dashboards">Dashboards</div>
+            </a>
+        </li>
+        {% if user is defined %}
+            <!-- Apps & Pages -->
+            <li class="menu-header small text-uppercase">
+                <span class="menu-header-text">Users</span>
+            </li>
+            <li class="menu-item {% if path == '/users/edit-profile' %}active{% endif %}">
+                <a href="{{ baseUrl }}/users/edit-profile" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user-check"></i>
+                    <div class="text-truncate" data-i18n="Dashboards">
+                        Thông tin cá nhân
+                    </div>
+                </a>
+            </li>
+            {% if user.role <= 1 %}
+                <li class="menu-item {% if path == '/users' %}active{% endif %}">
+                    <a href="{{ baseUrl }}/users" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-user"></i>
+                        <div class="text-truncate" data-i18n="Dashboards">
+                            Quản lý người dùng!
+                        </div>
+                    </a>
+                </li>
+                <li class="menu-header small text-uppercase">
+                    <span class="menu-header-text">IPs</span>
+                </li>
+                <li class="menu-item {% if path == '/ips' %}active{% endif %}">
+                    <a href="{{ baseUrl }}/ips" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-package"></i>
+                        <div class="text-truncate" data-i18n="Dashboards">
+                            Quản lý IPs
+                        </div>
+                    </a>
+                </li>
+            {% endif %}
+        {% endif %}
+        {# <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">CHAT</span>
+        </li>
+        <li class="menu-item {% if path == '/chat' %}active{% endif %}">
+            <a href="{{ baseUrl }}/chat" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-chat"></i>
+                <div class="text-truncate" data-i18n="Dashboards">
+                    Chat
+                </div>
+            </a>
+        </li> #}
+        <!-- Apps & Pages -->
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">APIs</span>
+        </li>
+        <li class="menu-item {% if path == '/overview' %}active{% endif %}">
+            <a href="{{ baseUrl }}/api/docs" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                <div class="text-truncate" data-i18n="Dashboards">
+                    API Documentation
+                </div>
+            </a>
+        </li>
+    </ul>
+</aside>
+<!-- Layout container -->

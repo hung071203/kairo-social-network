@@ -1,0 +1,947 @@
+.app-chat {
+  position: relative;
+  height: calc(100vh - 11.3rem);
+}
+
+.layout-navbar-hidden .app-chat {
+  height: calc(100vh - 6.5rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat {
+    height: calc(100vh - 11.3rem - 3rem);
+  }
+}
+
+@media (max-width: 992px) {
+  .app-chat .app-sidebar {
+    z-index: 4;
+  }
+}
+
+.app-chat .app-sidebar .sidebar-header {
+  position: relative;
+}
+
+.app-chat .app-sidebar .sidebar-header .close-sidebar {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+}
+
+.app-chat .app-sidebar .sidebar-header .chat-sidebar-avatar {
+  width: 84px;
+  height: 84px;
+}
+
+.app-chat .app-sidebar .sidebar-header .chat-sidebar-avatar::after {
+  bottom: 6px;
+  width: 16.8px;
+  height: 16.8px;
+}
+
+.app-chat .app-chat-contacts {
+  position: absolute;
+  left: calc(-21rem - 1rem);
+  height: calc(100vh - 11.3rem);
+  width: 21rem;
+  flex-basis: 21rem;
+  transition: all 0.25s ease;
+}
+
+.app-chat .app-chat-contacts .sidebar-header {
+  height: 4.75rem;
+}
+
+.layout-navbar-hidden .app-chat .app-chat-contacts {
+  height: calc(100vh - 6.5rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-contacts {
+    height: calc(100vh - 11.3rem - 3rem);
+  }
+}
+
+@media (min-width: 992px) {
+  .app-chat .app-chat-contacts {
+    position: static;
+  }
+}
+
+.app-chat .app-chat-contacts.show {
+  left: 0rem;
+}
+
+.app-chat .app-chat-contacts .sidebar-body {
+  height: calc(calc(100vh - 11.3rem) - 4.7rem);
+}
+
+.layout-navbar-hidden .app-chat .app-chat-contacts .sidebar-body {
+  height: calc(calc(100vh - 6.5rem) - 4.7rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-contacts .sidebar-body {
+    height: calc(calc(100vh - 11.3rem) - 4.7rem - 3rem);
+  }
+}
+
+.app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.chat-contact-list-item {
+  display: flex;
+  justify-content: space-between;
+  border-radius: 0.375rem;
+  padding: 0.528rem 0.75rem;
+  margin: 0.25rem 0.75rem;
+  cursor: pointer;
+}
+
+.app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.chat-contact-list-item
+  a {
+  width: 100%;
+}
+
+.app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.chat-contact-list-item
+  .chat-contact-info {
+  min-width: 0;
+}
+
+.app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.chat-contact-list-item
+  .chat-contact-info
+  .chat-contact-name {
+  line-height: 1.5;
+}
+
+.app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.chat-contact-list-item
+  small {
+  white-space: nowrap;
+}
+
+.app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.chat-contact-list-item-title {
+  padding: 0.528rem 1.0032rem 0.264rem;
+}
+
+.app-chat .app-chat-sidebar-left {
+  position: absolute;
+  top: 0;
+  left: calc(-21rem - 1rem);
+  width: 21rem;
+  height: calc(100vh - 11.3rem);
+  opacity: 0;
+  z-index: 5;
+  transition: all 0.25s ease;
+}
+
+.layout-navbar-hidden .app-chat .app-chat-sidebar-left {
+  height: calc(100vh - 6.5rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-sidebar-left {
+    height: calc(100vh - 11.3rem - 3rem);
+  }
+}
+
+.app-chat .app-chat-sidebar-left.show {
+  left: 0;
+  opacity: 1;
+}
+
+.app-chat .app-chat-sidebar-left .sidebar-body {
+  height: calc(calc(100vh - 11.3rem) - 12.5rem);
+}
+
+.layout-navbar-hidden .app-chat .app-chat-sidebar-left .sidebar-body {
+  height: calc(calc(100vh - 6.5rem) - 12.5rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-sidebar-left .sidebar-body {
+    height: calc(calc(100vh - 11.3rem) - 12.3rem - 3rem);
+  }
+}
+
+.app-chat .app-chat-history {
+  position: relative;
+  height: calc(100vh - 11.3rem);
+  transition: all 0.25s ease;
+}
+
+.layout-navbar-hidden .app-chat .app-chat-history {
+  height: calc(100vh - 6.5rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-history {
+    height: calc(100vh - 11.3rem - 3rem);
+  }
+}
+
+.app-chat .app-chat-history .chat-history-header {
+  padding: 1.05rem 1.5rem;
+  margin-top: -1px;
+}
+
+.app-chat .app-chat-history .chat-history-body {
+  height: calc(100vh - 22rem);
+  padding: 1.5rem 1.5rem;
+  overflow-y: auto; /* Cho phép cuộn dọc */
+}
+
+.layout-navbar-hidden .app-chat .app-chat-history .chat-history-body {
+  height: calc(100vh - 17.6rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-history .chat-history-body {
+    height: calc(100vh - 22rem - 3rem);
+  }
+}
+
+.app-chat .app-chat-history .chat-history-body .chat-history .chat-message {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message
+  .chat-message-text {
+  border-radius: 0.375rem;
+  padding: 0.543rem 1rem;
+}
+
+.app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message.chat-message-right {
+  justify-content: flex-end;
+}
+
+.app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message.chat-message-right
+  .chat-message-text {
+  border-top-right-radius: 0;
+}
+
+.app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message.chat-message-right
+  .user-avatar {
+  margin-right: 0rem;
+  margin-left: 1rem;
+}
+
+.app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message:not(.chat-message-right)
+  .chat-message-text {
+  border-top-left-radius: 0;
+}
+
+.app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message
+  .thumbnail {
+  cursor: zoom-in;
+}
+
+.app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message:not(:last-child) {
+  margin-bottom: 3rem;
+}
+
+.app-chat .app-chat-history .chat-history-footer {
+  padding: 0.5rem;
+  padding-inline-start: 2px;
+  margin: 1.5rem;
+  border-radius: 0.375rem;
+}
+
+.app-chat .app-chat-history .chat-history-footer .form-control.message-input {
+  padding: calc(0.543rem - var(--bs-border-width))
+    calc(0.9375rem - var(--bs-border-width));
+}
+
+.app-chat .app-chat-sidebar-right {
+  position: absolute;
+  top: 0;
+  right: calc(-21rem - 1rem);
+  width: 21rem;
+  height: calc(100vh - 11.3rem);
+  opacity: 0;
+  z-index: 5;
+  transition: all 0.25s ease;
+}
+
+.layout-navbar-hidden .app-chat .app-chat-sidebar-right {
+  height: calc(100vh - 6.5rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-sidebar-right {
+    height: calc(100vh - 11.3rem - 3rem);
+  }
+}
+
+.app-chat .app-chat-sidebar-right.show {
+  opacity: 1;
+  right: 0;
+}
+
+.app-chat .app-chat-sidebar-right .sidebar-body {
+  height: calc(calc(100vh - 11.3rem) - 12.3rem);
+}
+
+.layout-navbar-hidden .app-chat .app-chat-sidebar-right .sidebar-body {
+  height: calc(calc(100vh - 6.5rem) - 12.3rem);
+}
+
+@media (min-width: 1200px) {
+  .layout-horizontal .app-chat .app-chat-sidebar-right .sidebar-body {
+    height: calc(calc(100vh - 11.3rem) - 12.1rem - 3rem);
+  }
+}
+
+@media (max-width: 576px) {
+  .app-chat .app-chat-sidebar-right.show,
+  .app-chat .app-chat-sidebar-left.show,
+  .app-chat .app-chat-contacts.show {
+    width: 100%;
+  }
+}
+
+.light-style
+  .app-chat
+  .app-sidebar
+  .sidebar-header
+  .chat-sidebar-avatar::after {
+  box-shadow: 0 0 0 0.25rem #fff;
+}
+
+.light-style .app-chat .app-chat-contacts,
+.light-style .app-chat .app-chat-sidebar-left {
+  background-color: #fff;
+}
+
+.light-style .app-chat .app-chat-contacts .chat-actions .chat-search-input,
+.light-style .app-chat .app-chat-sidebar-left .chat-actions .chat-search-input {
+  background-color: #f5f5f9;
+}
+
+.light-style
+  .app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.active,
+.light-style
+  .app-chat
+  .app-chat-sidebar-left
+  .sidebar-body
+  .chat-contact-list
+  li.active {
+  color: #fff;
+  box-shadow: 0px 0.125rem 0.25rem 0px rgba(105, 108, 255, 0.4);
+}
+
+.light-style
+  .app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  h6,
+.light-style
+  .app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  .text-muted,
+.light-style
+  .app-chat
+  .app-chat-sidebar-left
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  h6,
+.light-style
+  .app-chat
+  .app-chat-sidebar-left
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  .text-muted {
+  color: #fff !important;
+}
+
+.light-style .app-chat .app-chat-history {
+  background-color: #f7f8f8;
+}
+
+.light-style .app-chat .app-chat-history .chat-history-wrapper {
+  background-color: #f7f8f8;
+}
+
+.light-style .app-chat .app-chat-history .chat-history-header,
+.light-style .app-chat .app-chat-history .chat-history-footer {
+  background-color: #fff;
+}
+
+.light-style .app-chat .app-chat-history .chat-history-footer {
+  box-shadow: 0 0.0625rem 0.3175rem 0 rgba(34, 48, 62, 0.06);
+}
+
+.light-style
+  .app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message
+  .chat-message-text {
+  background-color: #fff;
+  box-shadow: 0 0.0625rem 0.3175rem 0 rgba(34, 48, 62, 0.06);
+}
+
+.light-style
+  .app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message.chat-message-right {
+  justify-content: flex-end;
+}
+
+.light-style
+  .app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message.chat-message-right
+  .chat-message-text {
+  color: #fff;
+}
+
+.light-style .app-chat .app-chat-sidebar-right {
+  background-color: #fff;
+  box-shadow: 16px 1px 45px 3px rgba(34, 48, 62, 0.5);
+}
+
+@media (max-width: 992px) {
+  .light-style .app-chat .app-chat-contacts .chat-actions .chat-search-input {
+    background-color: #fff;
+  }
+}
+
+.dark-style .app-chat .app-sidebar .sidebar-header .chat-sidebar-avatar::after {
+  box-shadow: 0 0 0 0.25rem #2b2c40;
+}
+
+.dark-style .app-chat .app-chat-contacts,
+.dark-style .app-chat .app-chat-sidebar-left {
+  background-color: #2b2c40;
+}
+
+.dark-style .app-chat .app-chat-contacts .chat-actions .chat-search-input,
+.dark-style .app-chat .app-chat-sidebar-left .chat-actions .chat-search-input {
+  background-color: #232333;
+}
+
+.dark-style
+  .app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.active,
+.dark-style
+  .app-chat
+  .app-chat-sidebar-left
+  .sidebar-body
+  .chat-contact-list
+  li.active {
+  color: #fff;
+  box-shadow: 0px 0.125rem 0.25rem 0px rgba(105, 108, 255, 0.4);
+}
+
+.dark-style
+  .app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  h6,
+.dark-style
+  .app-chat
+  .app-chat-contacts
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  .text-muted,
+.dark-style
+  .app-chat
+  .app-chat-sidebar-left
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  h6,
+.dark-style
+  .app-chat
+  .app-chat-sidebar-left
+  .sidebar-body
+  .chat-contact-list
+  li.active
+  .text-muted {
+  color: #fff !important;
+}
+
+.dark-style .app-chat .app-chat-history {
+  background-color: #20202e;
+}
+
+.dark-style .app-chat .app-chat-history .chat-history-wrapper {
+  background-color: #20202e;
+}
+
+.dark-style .app-chat .app-chat-history .chat-history-header,
+.dark-style .app-chat .app-chat-history .chat-history-footer {
+  background-color: #2b2c40;
+}
+
+.dark-style .app-chat .app-chat-history .chat-history-footer {
+  box-shadow: 0 0.0625rem 0.3175rem 0 rgba(20, 20, 29, 0.18);
+}
+
+.dark-style
+  .app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message
+  .chat-message-text {
+  background-color: #2b2c40;
+  box-shadow: 0 0.0625rem 0.3175rem 0 rgba(20, 20, 29, 0.18);
+}
+
+.dark-style
+  .app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message.chat-message-right {
+  justify-content: flex-end;
+}
+
+.dark-style
+  .app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat-message.chat-message-right
+  .chat-message-text {
+  color: #fff;
+}
+
+.dark-style .app-chat .app-chat-sidebar-right {
+  background-color: #2b2c40;
+}
+
+[dir='rtl'] .app-chat .app-chat-sidebar-left,
+[dir='rtl'] .app-chat .app-chat-contacts {
+  right: calc(-21rem - 1rem);
+  left: auto;
+}
+
+[dir='rtl'] .app-chat .app-chat-sidebar-left.show,
+[dir='rtl'] .app-chat .app-chat-contacts.show {
+  left: auto;
+  right: 0;
+}
+
+[dir='rtl'] .app-chat .app-chat-sidebar-right {
+  left: calc(-21rem - 1rem);
+  right: auto;
+}
+
+[dir='rtl'] .app-chat .app-chat-sidebar-right.show {
+  left: 0;
+  right: auto;
+}
+
+[dir='rtl']
+  .app-chat
+  .app-chat-history
+  .chat-history-body
+  .chat-history
+  .chat
+  .user-avatar {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+[dir='rtl']
+  .app-chat
+  .app-chat-history
+  .chat-message:not(.chat-message-right)
+  .chat-message-text {
+  border-top-right-radius: 0 !important;
+  border-top-left-radius: 0.375rem !important;
+}
+
+[dir='rtl']
+  .app-chat
+  .app-chat-history
+  .chat-message.chat-message-right
+  .chat-message-text {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0.375rem !important;
+}
+
+/* Class tùy chỉnh cuộn */
+.custom-scroll {
+  overflow-y: auto; /* Cho phép cuộn dọc */
+  scrollbar-width: thin; /* Đặt chiều rộng thanh cuộn cho trình duyệt Firefox */
+  scrollbar-color: rgb(153 149 149 / 50%) rgb(152 149 149 / 10%);
+}
+
+/* Tùy chỉnh scrollbar cho trình duyệt Webkit (Chrome, Safari) */
+.custom-scroll::-webkit-scrollbar {
+  width: 8px; /* Chiều rộng của thanh cuộn */
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(209, 201, 201, 0.5); /* Màu thanh cuộn */
+  border-radius: 10px; /* Bo góc cho thanh cuộn */
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.8); /* Màu của thanh cuộn khi hover */
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1); /* Màu nền của thanh cuộn */
+  border-radius: 10px; /* Bo góc cho track */
+}
+
+/* Kiểu mặc định cho thẻ li */
+.chat-contact-list-item {
+  transition:
+    background-color 0.3s,
+    color 0.3s; /* Hiệu ứng mượt khi thay đổi */
+}
+
+/* Hiệu ứng hover cho thẻ li */
+.chat-contact-list-item:hover {
+  background-color: #acacac; /* Màu nền khi di chuột qua */
+  color: #fff; /* Màu chữ chuyển sang màu trắng */
+  cursor: pointer; /* Thay đổi con trỏ chuột */
+}
+
+/* Ảnh hưởng đến tất cả văn bản con */
+.chat-contact-list-item:hover .chat-contact-info,
+.chat-contact-list-item:hover .chat-contact-info * {
+  color: #fff !important; /* Đổi màu chữ tất cả các phần tử bên trong */
+}
+
+/* Không áp dụng hover cho phần tử active */
+.chat-contact-list-item.active:hover {
+  background-color: #fff; /* Nền của thẻ active giữ nguyên */
+  color: inherit; /* Giữ nguyên màu chữ mặc định */
+  cursor: default; /* Con trỏ chuột không thay đổi */
+}
+
+/* Kiểu riêng cho thẻ active */
+.chat-contact-list-item.active {
+  background-color: #e3f2fd; /* Màu nền của thẻ active */
+  font-weight: bold; /* Chữ đậm hơn */
+}
+
+.no-messages {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  color: #6c757d;
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.no-messages {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  color: #6c757d;
+}
+
+/* Wrapper */
+.custom-message-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  /* border: 1px solid #ced4da; */
+  border-radius: 0.375rem;
+  background-color: #fff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+}
+
+/* Textarea styling */
+.custom-message-input {
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  border: none;
+  outline: none;
+  border-radius: 0.375rem;
+  box-shadow: none;
+  resize: none;
+  line-height: 1.5;
+  overflow-y: auto;
+  max-height: calc(5 * 1.5em); /* Giới hạn chiều cao */
+  font-size: 1rem;
+  color: #495057;
+  background-color: transparent;
+}
+
+/* Placeholder style */
+.custom-message-input::placeholder {
+  color: #adb5bd;
+}
+
+/* Button styling */
+.custom-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: #0d6efd;
+  color: #fff;
+  border: 1px solid #0d6efd;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+/* Button hover and focus */
+.custom-send-btn:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.custom-send-btn:focus {
+  background-color: #0056b3;
+  border-color: #004085;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Input active focus (for wrapper) */
+.custom-message-input:focus,
+.custom-message-input:active {
+  box-shadow: none;
+  background-color: #f8f9fa;
+}
+
+/* Responsive behavior for the button */
+.custom-send-btn span {
+  display: inline-block;
+}
+
+/* Tin nhắn của bản thân, hiển thị tối đa 70%, căn hẳn về bên phải */
+.chat-message.chat-message-right {
+  max-width: 70%;
+  margin-left: auto; /* Đẩy nội dung về phía bên phải */
+  margin-right: 0; /* Đảm bảo không bị cách lề phải */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-align: left; /* Canh văn bản bên trái */
+  border-radius: 12px; /* Bo góc đẹp hơn */
+}
+
+/* Tin nhắn của người khác, hiển thị tối đa 70%, căn hẳn về bên trái */
+.chat-message {
+  max-width: 70%;
+  margin-right: auto; /* Đẩy nội dung về phía bên trái */
+  margin-left: 0; /* Đảm bảo không bị cách lề trái */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-align: left; /* Canh văn bản bên trái */
+  border-radius: 12px; /* Bo góc đẹp hơn */
+}
+
+/* CSS cho các thẻ trong custom-message */
+
+.custom-message strong {
+  font-weight: bold;
+  color: #000;
+}
+
+.custom-message em {
+  font-style: italic;
+  color: #555;
+}
+
+.custom-message del {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.custom-message code {
+  background-color: #f4f4f4;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #d63384;
+}
+
+.custom-message a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.custom-message a:hover {
+  text-decoration: underline;
+}
+
+.custom-message-right strong {
+  font-weight: bold;
+  color: #f39c12; /* Màu vàng nổi bật cho in đậm */
+}
+
+.custom-message-right em {
+  font-style: italic;
+  color: #79fa00; /* Màu xanh cho in nghiêng */
+}
+
+.custom-message-right del {
+  text-decoration: line-through;
+  color: #e74c3c; /* Màu đỏ cho gạch ngang */
+}
+
+.custom-message-right code {
+  font-family: 'Courier New', monospace;
+  background-color: #f5f5f5; /* Màu nền sáng cho mã code */
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #2c3e50; /* Màu tối cho mã code */
+}
+
+.custom-message-right a {
+  color: #00ccff; /* Màu chữ của liên kết */
+  text-decoration: none;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.custom-message-right a:hover {
+  text-decoration: underline;
+  color: white; /* Màu chữ khi hover */
+}
+
+.chat-contact-status {
+  display: inline-block; /* Hoặc block nếu cần */
+  max-width: 200px; /* Độ rộng tối đa của phần tử */
+  white-space: nowrap; /* Không cho phép xuống dòng */
+  overflow: hidden; /* Ẩn nội dung tràn ra ngoài */
+  text-overflow: ellipsis; /* Thêm dấu ba chấm vào cuối */
+}
+
+/* Định dạng loading dots */
+.loading-indicator-chat {
+  display: flex; /* Đảm bảo căn giữa */
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.loading-indicator-chat span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 4px;
+  background-color: #3498db;
+  border-radius: 50%;
+  animation: wave 1.2s infinite ease-in-out both;
+}
+
+.loading-indicator-chat span:nth-child(1) {
+  animation-delay: -0.24s;
+}
+
+.loading-indicator-chat span:nth-child(2) {
+  animation-delay: -0.12s;
+}
+
+.loading-indicator-chat span:nth-child(3) {
+  animation-delay: 0;
+}
+
+@keyframes wave {
+  0%, 80%, 100% {
+      transform: scale(0);
+  }
+  40% {
+      transform: scale(1);
+  }
+}
+
+.message-restricted {
+  font-size: 0.9rem;
+  color: #856404;
+  background-color: #fff3cd;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+

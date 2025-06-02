@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Commit Notification</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 30px auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .header img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid #007bff;
+        }
+        .header h2 {
+            font-size: 24px;
+            color: #333;
+            margin-top: 10px;
+        }
+        .content {
+            line-height: 1.8;
+            color: #444;
+        }
+        .content a {
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .content a:hover {
+            text-decoration: underline;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .commit-list {
+            margin-top: 20px;
+        }
+        .commit {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .commit p {
+            margin: 5px 0;
+        }
+        .commit strong {
+            color: #333;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{sender.avatar_url}}" alt="User Avatar">
+            <h2>New Commit Notification</h2>
+        </div>
+        <div class="content">
+            <p><strong>Repository:</strong> <a href="{{repository.html_url}}" target="_blank">{{repository.full_name}}</a></p>
+            <p><strong>Branch:</strong> {{ref}}</p>
+            <p><strong>Pusher:</strong> {{pusher.name}} ({{pusher.email}})</p>
+            <p><strong>Compare Changes:</strong> <a href="{{compare}}" class="btn" target="_blank">View Changes</a></p>
+            <h3>Commits:</h3>
+            <div class="commit-list">
+                {{#each commits}}
+                <div class="commit">
+                    <p><strong>Message:</strong> {{this.message}}</p>
+                    <p><strong>Author:</strong> {{this.author.name}} ({{this.author.email}})</p>
+                    <p><strong>Timestamp:</strong> {{this.timestamp}}</p>
+                    <p><strong>URL:</strong> <a href="{{this.url}}" target="_blank">View Commit</a></p>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        <div class="footer">
+            <p>© 2024 {{admin}}. Bảo lưu mọi quyền.</p>
+            <p>Cần giúp đỡ? <a href="mailto:{{email}}">Liên hệ Hỗ trợ</a></p>
+        </div>
+    </div>
+</body>
+</html>

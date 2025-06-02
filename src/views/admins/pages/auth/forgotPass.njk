@@ -1,0 +1,138 @@
+{% extends 'admins/layouts/app.njk' %}
+{% set title = 'Forgot pasword' %}
+{% set auth = true %}
+{% block css %}
+    <style>
+        .authentication-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            max-width: 500px;
+            width: 100%;
+            margin: auto;
+        }
+        .turnstile-container {
+            display: flex;
+            justify-content: center; /* Căn giữa Turnstile theo chiều ngang */
+            margin-top: 1rem; /* Khoảng cách phía trên */
+        }
+    </style>
+{% endblock %}
+{% block js %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sendCodeBtn = document.getElementById('sendCodeBtn');
+            sendCodeBtn.addEventListener('click', async function () {
+                const email = document.getElementById('email').value;
+                const token = document.querySelector('.cf-turnstile [name="cf-turnstile-response"]') ?. value;
+                if (! email) {
+                    showToast({message: 'Vui lòng nhập email của bạn.', header: 'Thông báo', type: 'success', delay: 3000});
+                    return;
+                }
+                if (! token) {
+                    showToast({message: 'Vui lòng xác thực Captcha.', header: 'Lỗi', type: 'error', delay: 3000});
+                    return;
+                }
+                sendCodeBtn.disabled = true;
+                sendCodeBtn.innerHTML = 'Đang gửi...';
+                try {
+                    const response = await fetch('{{ baseUrl }}/auth/verify-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(
+                        {email: email, type: 'FORGOT', 'cf-turnstile-response': token})
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast({message: 'Mã xác minh đã được gửi.', header: 'Thông báo', type: 'success', delay: 3000});
+                        let countdown = 60;
+                        const interval = setInterval(() => {
+                            countdown--;
+                            sendCodeBtn.innerHTML = `Đợi ${countdown}s`;
+                            if (countdown === 0) {
+                                clearInterval(interval);
+                                sendCodeBtn.disabled = false;
+                                sendCodeBtn.innerHTML = 'Nhận mã';
+                            }
+                        }, 1000);
+                    } else {
+                        showToast({
+                            message: data.message || 'Đã xảy ra lỗi.',
+                            header: 'Lỗi',
+                            type: 'error',
+                            delay: 3000
+                        });
+                        sendCodeBtn.disabled = false;
+                        sendCodeBtn.innerHTML = 'Nhận mã';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast({
+                        message: error.message || 'Lỗi không xác định.',
+                        header: 'Lỗi',
+                        type: 'error',
+                        delay: 3000
+                    });
+                    sendCodeBtn.disabled = false;
+                    sendCodeBtn.innerHTML = 'Nhận mã';
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-xxl">
+        <div class="authentication-wrapper authentication-basic container-p-y">
+            <div class="authentication-inner">
+                <div class="card px-sm-6 px-0" style="max-width: 500px; margin: auto">
+                    <div class="card-body">
+                        <div class="app-brand justify-content-center mb-6">
+                            <a class="app-brand-link gap-2">
+                                <span class="app-brand-logo demo">
+                                    <img src="{{ baseUrl }}/images/favicon.png" alt="brand-logo"/>
+                                </span>
+                                <span class="app-brand-text demo text-heading fw-bold">KAIRO</span>
+                            </a>
+                        </div>
+                        <h4 class="mb-1">Chào Bạn đã quay trở lại!</h4>
+                        <p class="mb-6">Vui lòng điền email vào trường bên dưới!</p>
+                        <form id="formAuthentication" class="mb-6" method="post" action="{{ baseUrl }}/auth/forgot-password">
+                            <div class="mb-6">
+                                <label class="form-label" for="email">Email</label>
+                                <div class="input-group">
+                                    <input type="email" class="form-control" placeholder="email@gmail.com" name="email" id="email" required/>
+                                    <button class="btn btn-outline-primary" type="button" id="sendCodeBtn">
+                                        Nhận mã
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Turnstile Captcha -->
+                            <div class="turnstile-container">
+                                <div class="cf-turnstile" data-sitekey="{{ capchaPublicKey }}" data-theme="light"></div>
+                            </div>
+                            <div class="mb-6" id="verify-code">
+                                <label for="verificationCode" class="form-label">Mã xác minh</label>
+                                <input type="text" required class="form-control" id="verificationCode" name="otp" placeholder="Nhập mã xác minh"/>
+                            </div>
+                            <button class="btn btn-primary d-grid w-100" type="submit">
+                                Tiếp tục
+                            </button>
+                        </form>
+                        <p class="text-center">
+                            <span>Có sự nhầm lẫn?</span>
+                            <a href="{{ baseUrl }}/auth/login">
+                                <span>Đăng nhập ngay</span>
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

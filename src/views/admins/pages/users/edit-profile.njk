@@ -1,0 +1,268 @@
+{% extends 'layouts/app.njk' %}
+{% set title = 'Thông tin cá nhân' %}
+{% set auth = false %}
+{% block css %}
+    <style>
+        /* Đảm bảo toàn bộ trang chiếm ít nhất 100% chiều cao của viewport */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="content-wrapper">
+        <style>
+            .form-control:disabled {
+                color: #384551 !important;
+            }
+        </style>
+        <div class="container-xxl flex-grow-1 container-p-y">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="nav-align-top">
+                        <ul class="nav nav-pills flex-column flex-md-row mb-6">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="javascript:void(0);">
+                                    <i class="bx bx-sm bx-user me-1_5"></i>
+                                    Tài khoản
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0);" onclick="openFormChangeMail()">
+                                    <i class="bx bx-sm bx-envelope me-1_5"></i>
+                                    Đổi email
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0);" onclick="openFormChangePass()">
+                                    <i class="bx bx-sm bx-lock me-1_5"></i>
+                                    Đổi mật khẩu
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div
+                        class="card mb-6">
+                        <!-- Tài khoản -->
+                        <div
+                            class="card-body"><!-- Nội dung của bạn ở đây -->
+                        </div>
+                        <div class="card-body pt-4">
+                            <form id="formAccountSettings" method="POST" action="{{ baseUrl }}/users/edit-profile">
+                                <div class="row g-6">
+                                    <div class="col-md-6">
+                                        <label for="firstName" class="form-label">Họ và Tên</label>
+                                        <input class="form-control" type="text" id="firstName" name="name" value="{{ user.name }}" autofocus/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">E-mail</label>
+                                        <input class="form-control" type="email" id="email" disabled value="{{ user.email }}" placeholder="john.doe@example.com"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="phoneNumber">Số Điện Thoại</label>
+                                        <div class="input-group input-group-merge">
+                                            <input type="text" id="phoneNumber" name="phone" class="form-control" placeholder="202 555 0111" value="{{ user.phone }}"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 d-flex">
+                                        <div class="me-2 flex-grow-1">
+                                            <label class="form-label" for="role">Quyền Hạn</label>
+                                            <div class="input-group input-group-merge">
+                                                <input type="text" id="role" class="form-control" placeholder="" value="{% if user.role == 0 %} Dev {% elif user.role == 1 %} Admin {% else %} Người dùng {% endif %} " disabled/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <label class="form-label" for="role">Số request còn lại</label>
+                                            <div class="input-group input-group-merge">
+                                                <input type="text" class="form-control" placeholder="" value="{% if user.role == 2 %}{{ user.remainingRequests }}{% else %}Không giới hạn{% endif %}" disabled/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="apiKey">Khóa API</label>
+                                        <div class="input-group input-group-merge">
+                                            <input type="text" id="apiKey" class="form-control" placeholder="" value="{{ user.apikey }}" disabled/>
+                                            <button class="btn btn-outline-primary" type="button" id="getApiBtn">
+                                                Nhận apikey
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" id="listIP">
+                                        <label class="form-label" for="user-ip-list">Danh Sách IP</label>
+                                        <textarea id="ipList" class="form-control" placeholder="listIP" rows="4" style="max-height: 100px !important" disabled>{{ user.listIps | join('\n') }}</textarea>
+                                    </div>
+                                    <input type="hidden" name="type" value="CHANGE_PROFILE"/>
+                                    <div class="mt-6">
+                                        <button type="submit" class="btn btn-primary me-3">
+                                            Lưu Thay Đổi
+                                        </button>
+                                        <button type="reset" class="btn btn-outline-secondary">
+                                            Hủy
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- /Tài khoản -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Popup Đổi Mật Khẩu -->
+    <div class="modal fade" id="changePassModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Đổi mật khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formChangePass" method="POST" action="{{ baseUrl }}/users/edit-profile">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Mật khẩu mới</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required/>
+                        </div>
+                        <input type="hidden" name="type" value="CHANGE_PASS"/>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" form="formChangePass" class="me-2 btn btn-primary">
+                        Lưu thay đổi
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Popup Đổi Email -->
+    <div class="modal fade" id="changeMailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Đổi email</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formChangeMail" method="POST" action="{{ baseUrl }}/users/edit-profile">
+                        <div id="message-alert-email"></div>
+                        <div class="mb-3">
+                            <label class="form-label" for="apiKey">Nhập email mới</label>
+                            <div class="input-group input-group-merge">
+                                <input type="email" id="email-pre" class="form-control" name="email" placeholder="" required/>
+                                <button class="btn btn-outline-primary" type="button" onclick="sendCode(this)">
+                                    Nhận mã OTP
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="otp" class="form-label">Mã OTP</label>
+                            <input type="text" class="form-control" name="otp" required/>
+                        </div>
+                        <input type="hidden" name="type" value="CHANGE_EMAIL"/>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" form="formChangeMail" class="me-2 btn btn-primary">
+                        Lưu thay đổi
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="cf-turnstile mt-3" data-sitekey="{{ capchaPublicKey }}" data-theme="light"></div>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+        function openFormChangePass() {
+            var changePassModal = new bootstrap.Modal(document.getElementById('changePassModal'),);
+            changePassModal.show();
+        }
+        function openFormChangeMail() {
+            var changeMailModal = new bootstrap.Modal(document.getElementById('changeMailModal'),);
+            changeMailModal.show();
+        }
+        async function sendCode(button) {
+            button.disabled = true;
+            button.innerText = 'Đang gửi...';
+            const requestData = {
+                email: document.getElementById('email-pre').value,
+                'cf-turnstile-response': document.querySelector('.cf-turnstile [name="cf-turnstile-response"]',).value || '',
+                type: 'CHANGE_MAIL'
+            };
+            fetch('{{ baseUrl }}/authentication/verify-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        showToast({message: data.data, header: 'Thông báo', type: 'success', delay: 3000});
+                        startCountdown(button);
+                    } else {
+                        showToast({message: data.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                        button.disabled = false;
+                        button.innerText = 'Gửi lại mã';
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    showToast({message: error.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                });
+        }
+        function startCountdown(button) {
+            let countdown = 60;
+            const interval = setInterval(() => {
+                button.innerText = `${countdown}s`;
+                countdown--;
+                if (countdown < 0) {
+                    clearInterval(interval);
+                    button.disabled = false;
+                    button.innerText = 'Gửi lại mã';
+                }
+            }, 1000);
+        }
+        document.getElementById('getApiBtn').addEventListener('click', function () {
+            const requestData = {
+                type: 'GET_API_KEY'
+            };
+            fetch('{{ baseUrl }}/users/save-profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        document.getElementById('apiKey').value = data.data.apikey;
+                        showToast({message: 'Tạo khóa mới thành công', header: 'Thông báo', type: 'success', delay: 3000});
+                    } else {
+                        showToast({message: data.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    showToast({message: error.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                });
+        });
+    </script>
+{% endblock %}

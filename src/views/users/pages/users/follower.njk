@@ -1,0 +1,265 @@
+{% extends 'users/layouts/app.njk' %}
+{% set title = 'Theo dõi ' %}
+{% block content %}
+    <div class="bg-[#242526] rounded-lg p-3 space-y-3">
+        <div class="flex justify-center items-center">
+            <div
+                class="text-white text-sm font-medium uppercase text-center" id="post-text"><!-- Nội dung sẽ được chèn vào đây -->
+            </div>
+        </div>
+    </div>
+    <div id="posts-container" class="max-w-2xl mx-auto py-4 space-y-4">
+        <div id="posts-list" class="flex flex-wrap gap-4 justify-start"></div>
+        <div id="loading-posts-spinner" class="flex justify-center py-4 hidden">
+            <div class="w-6 h-6 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    </div>
+    <!-- Include Lucide icons -->
+    <script>
+        const currentUserId = '{{ user._id }}';
+        const postsList = document.getElementById('posts-list');
+        const navLinks = document.querySelectorAll('#follow-nav .tab-link');
+        const postText = document.getElementById('post-text');
+        let currentTabKey = 'incoming-requests';
+        const updateURLTab = (tabKey) => {
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabKey);
+            window.history.pushState({}, '', url);
+        };
+        async function renderPosts(tabKey) {
+            currentTabKey = tabKey;
+            postText.innerHTML = tabKey === 'incoming-requests'
+                ? '<i class="fas fa-user-plus mr-1"></i>Yêu cầu theo dõi của bạn'
+                : tabKey === 'sent-requests'
+                    ? '<i class="fas fa-paper-plane mr-1"></i>Yêu cầu đã gửi'
+                    : tabKey === 'suggestions'
+                        ? '<i class="fas fa-users mr-1"></i>Gợi ý kết bạn'
+                        : tabKey === 'following'
+                            ? '<i class="fas fa-user-check mr-1"></i>Đang theo dõi'
+                            : '<i class="fas fa-user-clock mr-1"></i>Đã theo dõi';
+            postsList.innerHTML = '';
+            try {
+                const res = await fetch (`/follow/following?tab=${tabKey}&limit=200&page=1`);
+                const data = await res.json();
+                const items = data.data.docs || [];
+                if (items.length === 0) {
+                    postsList.innerHTML = `
+                <div class="w-full text-center text-gray-400 py-8">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    ${
+                        tabKey === 'incoming-requests'
+                            ? 'Không có yêu cầu nào'
+                            : tabKey === 'sent-requests'
+                                ? 'Bạn chưa gửi yêu cầu nào'
+                                : tabKey === 'suggestions'
+                                    ? 'Không có gợi ý nào'
+                                    : tabKey === 'following'
+                                        ? 'Bạn chưa theo dõi ai'
+                                        : 'Không có người theo dõi'
+                                    }
+                </div>`;
+                    return;
+                }
+                items.forEach((item, idx) => {
+                    let user;
+                    if (tabKey === 'suggestions') {
+                        user = item;
+                    } else if (tabKey === 'followers') {
+                        user = item.requester;
+                    } else if (tabKey === 'following') {
+                        user = item.target;
+                    } else if (tabKey === 'sent-requests') {
+                        user = item.target;
+                    } else {
+                        user = item.requester;
+                    }
+                    const statusLabel = tabKey === 'incoming-requests' && item.status === 'pending'
+                        ? 'Yêu cầu chờ xử lý'
+                        : tabKey === 'sent-requests'
+                            ? 'Yêu cầu đã gửi'
+                            : tabKey === 'following'
+                                ? 'Đang theo dõi'
+                                : tabKey === 'followers'
+                                    ? 'Đã theo dõi bạn'
+                                    : 'Gợi ý kết bạn';
+                    let actionButtons = '';
+                    if (tabKey === 'incoming-requests' && item.status === 'pending') {
+                        actionButtons = `
+                        <div class="flex flex-col mt-2 w-full">
+                            <button class="w-full mb-2 px-3 py-1 text-sm rounded bg-blue-500 hover:bg-blue-600 text-white accept-btn" data-index="${idx}">Chấp nhận</button>
+                            <button class="w-full px-3 py-1 text-sm rounded bg-gray-600 hover:bg-gray-700 text-white reject-btn cancel-aaaa" data-index="${idx}">Từ chối</button>
+                        </div>`;
+                    } else if (tabKey === 'sent-requests' || tabKey === 'following') {
+                        actionButtons = `
+                        <div class="flex flex-col mt-2 w-full">
+                            <button class="w-full px-3 py-1 text-sm rounded bg-gray-600 hover:bg-gray-700 text-white reject-btn cancel-btn" data-index="${idx}">${
+                            tabKey === 'following'
+                                ? 'Hủy theo dõi'
+                                : 'Hủy yêu cầu'
+                            }</button>
+                        </div>`;
+                    } else if (tabKey === 'suggestions') {
+                        actionButtons = `
+                        <div class="flex flex-col mt-2 w-full">
+                            <button class="w-full px-3 py-1 text-sm rounded bg-blue-500 hover:bg-blue-600 text-white follow-suggest-btn" data-index="${idx}">Theo dõi</button>
+                        </div>`;
+                    } else if (tabKey === 'followers') {
+                        actionButtons = `
+                        <div class="flex flex-col mt-2 w-full">
+                            <button class="w-full px-3 py-1 text-sm rounded bg-gray-600 hover:bg-gray-700 text-white cancel-aaaa" data-index="${idx}">Xóa người theo dõi</button>
+                        </div>`;
+                    }
+                    const html = `
+                    <div class="w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.67rem)] bg-[#242526] rounded-lg p-4 flex flex-col items-center h-60 text-white">
+                        <a href="/profile/user/${
+                        user._id
+                    }" class="flex flex-col items-center group">
+                            <img src="${
+                        user.avatar
+                    }" alt="${
+                        user.name
+                    }" class="w-20 h-20 rounded-full object-cover transition duration-200 group-hover:scale-105">
+                            <div class="mt-3 text-base font-semibold text-center truncate w-full text-white hover:underline">
+                                ${
+                        user.name
+                    }
+                            </div>
+                        </a>
+                        <div class="text-sm text-gray-400">${statusLabel}</div>
+                        ${actionButtons}
+                    </div>`;
+                    postsList.insertAdjacentHTML('beforeend', html);
+                });
+                if (tabKey !== 'suggestions') {
+                    document.querySelectorAll('.accept-btn').forEach((btn) => {
+                        const index = btn.getAttribute('data-index');
+                        btn.onclick = async () => {
+                            const followId = items[index].requester ?. _id;
+                            try {
+                                const res = await fetch (`/follow/acp/${followId}`, {method: 'POST'});
+                                if (res.ok) {
+                                    const followData = await res.json();
+                                    showToast({
+                                        type: 'success',
+                                        message: followData.data.message || 'Yêu cầu đã được chấp nhận'
+                                    });
+                                    await renderPosts(currentTabKey);
+                                } else {
+                                    const errJson = await res.json();
+                                    showToast({
+                                        type: 'error',
+                                        message: errJson.message || 'Không thể chấp nhận yêu cầu'
+                                    });
+                                }
+                            } catch (err) {
+                                console.error('Lỗi kết nối:', err);
+                                showToast({type: 'error', message: 'Lỗi kết nối tới máy chủ'});
+                            }
+                        };
+                    });
+                    document.querySelectorAll('.cancel-aaaa').forEach((btn) => {
+                        const index = btn.getAttribute('data-index');
+                        btn.onclick = async () => {
+                            const followId = items[index].requester ?. _id;
+                            try {
+                                const res = await fetch (`/follow/cancel/${followId}`, {method: 'POST'});
+                                if (res.ok) {
+                                    const followData = await res.json();
+                                    showToast({
+                                        type: 'success',
+                                        message: followData.data.message || 'Yêu cầu đã được hủy'
+                                    });
+                                    await renderPosts(currentTabKey);
+                                } else {
+                                    const errJson = await res.json();
+                                    showToast({
+                                        type: 'error',
+                                        message: errJson.message || 'Không thể hủy yêu cầu'
+                                    });
+                                }
+                            } catch (err) {
+                                console.error('Lỗi kết nối:', err);
+                                showToast({type: 'error', message: 'Lỗi kết nối tới máy chủ'});
+                            }
+                        };
+                    });
+                    document.querySelectorAll('.cancel-btn').forEach((btn) => {
+                        const index = btn.getAttribute('data-index');
+                        btn.onclick = async () => {
+                            const followId = items[index].target ?. _id || items[index].requester ?. _id;
+                            try {
+                                const res = await fetch (`/follow/send/${followId}`, {method: 'POST'});
+                                if (res.ok) {
+                                    const followData = await res.json();
+                                    showToast({
+                                        type: 'success',
+                                        message: followData.data.message || 'Yêu cầu đã được hủy'
+                                    });
+                                    await renderPosts(currentTabKey);
+                                } else {
+                                    const errJson = await res.json();
+                                    showToast({
+                                        type: 'error',
+                                        message: errJson.message || 'Không thể hủy yêu cầu'
+                                    });
+                                }
+                            } catch (err) {
+                                console.error('Lỗi kết nối:', err);
+                                showToast({type: 'error', message: 'Lỗi kết nối tới máy chủ'});
+                            }
+                        };
+                    });
+                }
+                // Nút "Theo dõi" cho tab suggestions
+                if (tabKey === 'suggestions') {
+                    document.querySelectorAll('.follow-suggest-btn').forEach((btn) => {
+                        const index = btn.getAttribute('data-index');
+                        btn.onclick = async () => {
+                            const followId = items[index]._id;
+                            try {
+                                const res = await fetch (`/follow/send/${followId}`, {method: 'POST'});
+                                if (res.ok) {
+                                    const followData = await res.json();
+                                    showToast({
+                                        type: 'success',
+                                        message: followData.data.message || 'Đã gửi yêu cầu theo dõi'
+                                    });
+                                    await renderPosts(currentTabKey);
+                                } else {
+                                    const errJson = await res.json();
+                                    showToast({
+                                        type: 'error',
+                                        message: errJson.message || 'Không thể gửi yêu cầu'
+                                    });
+                                }
+                            } catch (err) {
+                                console.error('Lỗi kết nối:', err);
+                                showToast({type: 'error', message: 'Lỗi kết nối tới máy chủ'});
+                            }
+                        };
+                    });
+                }
+            } catch (error) {
+                console.error('Lỗi khi gọi API:', error);
+            }
+        }
+        navLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('bg-[#3a3b3c]'));
+                link.classList.add('bg-[#3a3b3c]');
+                const tabKey = link.getAttribute('data-tab');
+                updateURLTab(tabKey);
+                renderPosts(tabKey);
+            });
+        });
+        const urlParams = new URLSearchParams(window.location.search);
+        const defaultTab = urlParams.get('tab') || 'incoming-requests';
+        navLinks.forEach(link => {
+            if (link.getAttribute('data-tab') === defaultTab) {
+                link.classList.add('bg-[#3a3b3c]');
+            }
+        });
+        renderPosts(defaultTab);
+    </script>
+{% endblock %}

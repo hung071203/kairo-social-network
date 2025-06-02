@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Note online</title>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs/editor/editor.main.min.css"/>
+        <style>
+            body {
+                background-color: #282a36; /* Màu nền tổng thể */
+                color: #f8f8f2; /* Màu chữ (có thể thay đổi tùy ý) */
+            }
+            #editor-container {
+                background-color: #282a36; /* Đặt màu nền của Monaco Editor */
+            }
+            #editor {
+                background-color: #282a36; /* Đặt màu nền cho Monaco Editor */
+                color: #f8f8f2; /* Đặt màu chữ cho Monaco Editor */
+                height: 90vh;
+                width: 100%;
+                box-shadow: 0 0 0 1px black; /* Viền đen mờ */
+            }
+            #description {
+                color: #f8f8f2; /* Đặt màu chữ cho phần mô tả */
+                text-align: center;
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+            hr {
+                width: 50%;
+                margin: 0 auto;
+                border: none;
+                border-top: 1px solid black;
+            }
+            #notification {
+                position: fixed; /* Để thông báo nổi lên */
+                top: 20px;
+                right: 20px;
+                padding: 15px;
+                margin-top: 20px;
+                border-radius: 5px;
+                font-weight: bold;
+                transition: opacity 0.5s ease;
+                z-index: 1000; /* Để thông báo hiển thị trên các phần tử khác */
+                display: none; /* Ẩn thông báo mặc định */
+            }
+            .success {
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+            .error {
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+            .close-btn {
+                cursor: pointer;
+                float: right;
+                font-weight: bold;
+                font-size: 18px;
+                margin-left: 10px;
+            }
+            .progress-bar {
+                height: 5px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 5px;
+                margin-top: 5px;
+            }
+            .progress {
+                height: 100%;
+                border-radius: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="editor-container">
+            <div id="description">
+                {% if not note.readOnly %}
+                    Vui lòng đợi vài giây để code upload:
+                    <a href="{{ baseUrl }}/note/get-note?id={{ note._id }}" target="_blank">
+                        {{ baseUrl }}/note/get-note?id={{ note._id }}
+                    </a>
+                {% else %}
+                    Lấy nội dung node:
+                    <a href="{{ baseUrl }}/note/get-note?id={{ note._id }}" target="_blank">
+                        {{ baseUrl }}/note/get-note?id={{ note._id }}
+                    </a>
+                {% endif %}
+                <br/> {{ note.title }}
+            </div>
+            <hr/>
+            <div id="editor"></div>
+            <div id="notification">
+                <span class="close-btn" onclick="closeNotification()">×</span>
+                <span id="notification-message"></span>
+                <div class="progress-bar">
+                    <div id="progress" class="progress"></div>
+                </div>
+            </div>
+            <!-- Phần tử thông báo -->
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs/loader.js"></script>
+        <script>
+            require.config({
+                paths: {
+                    vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs"
+                }
+            });
+            require(["vs/editor/editor.main"], function () { // Tạo Monaco Editor
+                monaco.editor.defineTheme("custom-dark", {
+                    base: "vs-dark", // Theme cơ bản là dark
+                    inherit: true, // Kế thừa các thuộc tính từ theme 'vs-dark'
+                    rules: [
+                        {
+                            background: "282a36"
+                        }, // Đặt màu nền là #282a36
+                    ],
+                    colors: {
+                        "editor.background": "#282a36", // Màu nền cho Monaco Editor
+                        "editor.foreground": "#f8f8f2", // Màu chữ (có thể điều chỉnh nếu cần)
+                    }
+                });
+                var editor = monaco.editor.create(document.getElementById("editor"), {
+                        value: `{{ note.data | replace("` ", " \\ `") | replace("${
+                        ", " \\$ {
+                            ") | safe }}`,
+ language : "javascript",
+                            theme : "custom-dark",
+                            readOnly : {{ note.readOnly | default(true) }}
+                        });{% if not note.readOnly %}
+                            // Biến để quản lý timeout
+                            var timeout = null;
+                            var notificationTimeout = null;
+                            // Hàm đóng thông báo
+                            function closeNotification() {
+                                const notification = document.getElementById("notification");
+                                notification.style.display = "none"; // Ẩn thông báo
+                                clearInterval(notificationTimeout); // Dừng hẹn giờ nếu có
+                                clearTimeout(autoClose); // Ngừng hẹn giờ tự động đóng
+                            }
+                            // Hàm hiển thị thông báo
+                            function showNotification(message, type) {
+                                const notification = document.getElementById("notification");
+                                const notificationMessage = document.getElementById("notification-message");
+                                const progress = document.getElementById("progress");
+                                notificationMessage.textContent = message;
+                                notification.className = type; // Thêm class cho kiểu thông báo
+                                notification.style.display = "block";
+                                // Hiện thông báo Thiết lập thanh tiến trình
+                                progress.style.width = "100%";
+                                clearInterval(notificationTimeout);
+                                let width = 100;
+                                // Thời gian biến mất sau 5 giây
+                                notificationTimeout = setInterval(() => {
+                                    width -= 2; // Giảm độ rộng thanh tiến trình
+                                    progress.style.width = width + "%";
+                                    if (width <= 0) {
+                                        clearInterval(notificationTimeout);
+                                        closeNotification(); // Ẩn thông báo khi thanh tiến trình đầy
+                                    }
+                                }, 100);
+                                // 100 ms cho mỗi lần giảm Ẩn thông báo sau 5 giây nếu không có thao tác nào
+                                autoClose = setTimeout(() => {
+                                    closeNotification(); // Ẩn thông báo
+                                }, 5000);
+                            }
+                            // Hàm log nội dung code sau 3 giây
+                            async function logCode() {
+                                var code = editor.getValue();
+                                console.log(code);
+                                const url = "{{ baseUrl }}/notes/update/{{ note._id }}"; // Thay YOUR_API_KEY bằng API key của bạn
+                                try {
+                                    const response = await fetch(url, {
+                                        method: "POST", // Sử dụng phương thức POST
+                                        headers: {
+                                            "Content-Type": "application/json", // Định dạng dữ liệu gửi là JSON
+                                        },
+                                        body: JSON.stringify(
+                                        {data: code}), // Dữ liệu gửi
+                                    });
+                                    // Xử lý phản hồi từ server
+                                    if (response.ok) {
+                                        const result = await response.json();
+                                        if (result.success) {
+                                            showNotification("Dữ liệu đã được gửi thành công!", "success"); // Thông báo thành công
+                                        } else {
+                                            showNotification("Gửi dữ liệu không thành công!", "error"); // Thông báo lỗi từ server
+                                        }
+                                    } else {
+                                        console.error("Error:", response.statusText); // Xử lý lỗi nếu có
+                                        showNotification("Lỗi: " + response.statusText, "error"); // Thông báo lỗi
+                                    }
+                                } catch (error) {
+                                    console.error("Fetch error:", error); // Xử lý lỗi mạng
+                                    showNotification("Lỗi mạng: " + error.message, "error"); // Thông báo lỗi mạng
+                                }
+                            }
+                            // Lắng nghe sự kiện khi nội dung code thay đổi
+                            editor.onDidChangeModelContent(function () { // Xóa timeout cũ (nếu có)
+                                if (timeout) {
+                                    clearTimeout(timeout);
+                                }
+                                // Thiết lập timeout mới để log code sau 3 giây
+                                timeout = setTimeout(logCode, 3000);
+                            });{% endif %}
+                    });
+                    </script>
+                </body>
+            </html>
+        </html>
+    </body>
+</html></body></html></body></html></body></html>

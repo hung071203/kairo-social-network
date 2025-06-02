@@ -1,0 +1,61 @@
+<nav
+    class="hidden md:flex flex-col w-60 space-y-2 text-sm font-semibold pr-4" id="follow-nav">
+    {# Thẻ avatar luôn hiển thị #}
+    <a class="flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors" href="/profile/user/{{ user._id }}">
+        {# Hiển thị ảnh đại diện và tên người dùng #}
+        <img alt="Profile picture of {{ user.name }}" class="w-9 h-9 rounded-full object-cover" height="36" src="{{ user.avatar }}" width="36"/>
+        <span>{{ user.name }}</span>
+    </a>
+    {# Nếu đang ở trang /follow #}
+    {% if path == '/follow' %}
+        <a
+            href="#"
+            class="tab-link flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors"
+            data-tab="incoming-requests">
+            <i class="fas fa-user-plus text-[#2e89ff] text-lg"></i>
+            <span>Yêu cầu theo dõi</span>
+        </a>
+        <a
+            href="#"
+            class="tab-link flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors"
+            data-tab="sent-requests">
+            <i class="fas fa-paper-plane text-[#2e89ff] text-lg"></i>
+            <span>Yêu cầu đã gửi</span>
+        </a>
+        <a
+            href="#"
+            class="tab-link flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors"
+            data-tab="following">
+            <i class="fas fa-user-check text-[#2e89ff] text-lg"></i>
+            <span>Đang theo dõi</span>
+        </a>
+        <a
+            href="#"
+            class="tab-link flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors"
+            data-tab="followers">
+            <i class="fas fa-user-clock text-[#2e89ff] text-lg"></i>
+            <span>Đã theo dõi bạn</span>
+        </a>
+        <a
+            href="#"
+            class="tab-link flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors"
+            data-tab="suggestions">
+            <i class="fas fa-user-friends text-[#2e89ff] text-lg"></i>
+            <span>Có thể bạn sẽ biết</span>
+        </a>
+    {% else %}
+        {# Nội dung mặc định nếu không phải trang follow #}
+        <a class="flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors" href="/follow">
+            <i class="fas fa-user-friends text-[#2e89ff] text-lg"></i>
+            <span>Theo dõi</span>
+        </a>
+        <a class="flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors" href="/messages">
+            <i class="fab fa-facebook-messenger text-[#2e89ff] text-lg"></i>
+            <span>Đoạn chat</span>
+        </a>
+        <a class="flex items-center space-x-3 rounded-lg p-2 hover:bg-[#3a3b3c] transition-colors" href="/notifications">
+            <i class="fas fa-bell text-[#2e89ff] text-lg"></i>
+            <span>Thông báo</span>
+        </a>
+    {% endif %}
+</nav>

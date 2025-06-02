@@ -1,0 +1,150 @@
+import axios from 'axios';
+import * as mime from 'mime-types';
+import { generateRandomString } from './hash.utils';
+import * as fs from 'fs';
+import * as path from 'path';
+import { logger } from './logger.utils';
+
+interface DownloadOptions {
+  url: string;
+  includesExt?: string | string[];
+  expireIn?: number; // in minutes, default is 1
+}
+
+export async function downloadData({
+  url,
+  includesExt,
+  expireIn = 60000,
+}: DownloadOptions) {
+  const res = await axios.get(url, { responseType: 'arraybuffer' });
+  const contentType = res.headers['content-type'];
+  const extension = mime.extension(contentType);
+
+  if (includesExt) {
+    if (typeof includesExt === 'string') {
+      if (!extension.includes(includesExt))
+        throw new Error('Only supports format ' + includesExt);
+    } else if (Array.isArray(includesExt)) {
+      if (!includesExt.includes(extension))
+        throw new Error('Only supports formats ' + includesExt.join(', '));
+    } else {
+      throw new Error('includesExt must be a string or an array');
+    }
+  }
+  let pathFile = '';
+  if (expireIn >= 60000) {
+    pathFile = 'cache';
+  } else if (expireIn == -1) {
+    pathFile = 'safe';
+  } else {
+    throw new Error('expireIn must be -1 or greater than 60000');
+  }
+
+  const filename =
+    Date.now() + '-' + generateRandomString(10) + '.' + extension;
+  const filePath = path.join(
+    process.cwd(),
+    'src',
+    'common',
+    'assets',
+    pathFile,
+    filename,
+  );
+
+  fs.writeFileSync(filePath, res.data);
+  logger.info('Đã tải tệp: ' + filePath);
+
+  if (expireIn > 0) {
+    setTimeout(() => {
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          logger.error('Lỗi khi xóa tệp:', err);
+        } else {
+          logger.info('Đã xóa tệp thành công: ' + filePath);
+        }
+      });
+    }, expireIn);
+  }
+  return {
+    readStream: fs.createReadStream(filePath),
+    filePath,
+    fileName: filename,
+  };
+}
+
+export const imageExtensions = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'bmp',
+  'tiff',
+  'webp',
+  'svg',
+  'heif',
+  'heic',
+  'raw',
+  'cr2',
+  'nef',
+  'orf',
+  'sr2',
+  'psd',
+  'ai',
+  'eps',
+  'ico',
+];
+
+export const videoExtentions = [
+  'mp4',
+  'webm',
+  'ogg',
+  'avi',
+  'flv',
+  'mov',
+  'wmv',
+  'rm',
+  'rmvb',
+  'mkv',
+  'm4v',
+  '3gp',
+  '3g2',
+  'mpg',
+  'mpeg',
+  'm2v',
+  'vob',
+  'asf',
+  'divx',
+  'ts',
+  'swf',
+  'f4v',
+  'h264',
+  'h265',
+  'hevc',
+  'avchd',
+  'm2ts',
+  'mxf',
+  'mts',
+  'ogv',
+];
+
+export const audioExtensions = [
+  'mp3',
+  'wav',
+  'aac',
+  'flac',
+  'ogg',
+  'm4a',
+  'wma',
+  'alac',
+  'aiff',
+  'amr',
+  'opus',
+  'pcm',
+  'mid',
+  'midi',
+  'ape',
+  'ra',
+  'au',
+  'mp2',
+  'ac3',
+];

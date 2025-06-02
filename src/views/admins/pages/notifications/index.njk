@@ -1,0 +1,179 @@
+{% extends 'layouts/app.njk' %}
+{% set title = 'Quản lý thông báo' %}
+{% set auth = false %}
+{% block css %}
+    <style>
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px; /* Kích thước nút */
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+        }
+        .btn-primary {
+            background-color: #007bff; /* Màu xanh */
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3; /* Màu xanh đậm khi hover */
+        }
+        .dropdown-notifications-all {
+            color: #007bff;
+        }
+        .dropdown-notifications-all:hover {
+            color: #0056b3;
+        }
+        #notification-list .list-group-item {
+            cursor: pointer; /* Đổi con trỏ chuột thành hình bàn tay để chỉ người dùng có thể click */
+            transition: transform 0.2s ease-in-out; /* Thêm hiệu ứng chuyển đổi khi nổi lên */
+        }
+        /* Khi hover vào mục trong danh sách, làm cho nó nổi lên */
+        #notification-list .list-group-item:hover {
+            transform: translateY(-5px); /* Nổi lên 5px khi hover */
+        }
+        /* Đảm bảo mục đã đọc có hiệu ứng hover nhưng không bị ảnh hưởng đến trạng thái đọc */
+        #notification-list .list-group-item.marked-as-read:hover {
+            transform: translateY(-5px); /* Nổi lên 5px khi hover, dù đã đọc hay chưa */
+        }
+        #notification-list .list-group-item:hover {
+            background-color: #f9f9f9; /* Màu nền khi hover */
+        }
+        /* Chỉnh sửa các phần tử trong thông báo */
+        #notification-list .list-group-item .dropdown-notifications-actions a {
+            color: #888; /* Màu mặc định của nút (nút xóa) */
+            transition: color 0.2s ease-in-out; /* Hiệu ứng chuyển đổi màu */
+        }
+        #notification-list .list-group-item .dropdown-notifications-actions a:hover {
+            color: #555; /* Màu khi hover */
+        }
+        /* Đảm bảo biểu tượng "đã xem" hoặc "chưa xem" có màu chính xác */
+        #notification-list .list-group-item .dropdown-notifications-read .badge-dot {
+            background-color: #696cff; /* Màu xanh dương cho badge chưa xem */
+        }
+        #notification-list .list-group-item.marked-as-read .dropdown-notifications-read .badge-dot {
+            background-color: #888; /* Màu xám cho badge đã xem */
+        }
+        /* Chỉnh sửa màu sắc của nút xóa (X) */
+        #notification-list .list-group-item .dropdown-notifications-archive .icon-base {
+            color: #888; /* Màu mặc định của nút xóa */
+            font-size: 20px;
+        }
+        #notification-list .list-group-item .dropdown-notifications-archive:hover .icon-base {
+            color: #555; /* Màu khi hover nút xóa */
+        }
+        /* Đảm bảo các icon xóa có màu xám khi không hover */
+        #notification-list .list-group-item .dropdown-notifications-archive .icon-base.bx-x {
+            color: #aaa; /* Màu xám cho icon xóa */
+        }
+        /* Khi hover vào nút xóa thì đổi màu thành màu đậm hơn */
+        #notification-list .list-group-item .dropdown-notifications-archive:hover .icon-base.bx-x {
+            color: #888; /* Màu xám đậm hơn khi hover */
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="card-header mb-0">Danh sách thông báo</h5>
+        {% if user.role == 0 %}
+            <a
+                href="javascript:void(0)"
+                class="btn btn-icon btn-primary ms-3"
+                onclick="openAddNotification()"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                aria-label="Thêm Mới Thông Báo"
+                data-bs-original-title="Thêm Mới Thông Báo">
+                <i class="bx bx-plus"></i>
+            </a>
+        {% endif %}
+        <div class="d-flex align-items-center ms-auto">
+            <span class="badge bg-label-primary me-2 count-unread">0</span>
+            <a
+                href="javascript:void(0)"
+                class="dropdown-notifications-all p-2"
+                onclick="markAllRead()"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                aria-label="Đánh dấu tất cả là đã đọc"
+                data-bs-original-title="Đánh dấu tất cả là đã đọc">
+                <i class="icon-base bx bx-envelope-open text-heading"></i>
+            </a>
+        </div>
+    </div>
+    <br/>
+    <div class="list-group" id="notification-list">
+        <ul
+            class="list-group list-group-flush"><!-- Dữ liệu thông báo sẽ được đổ vào đây -->
+        </ul>
+        {% include 'layouts/_pagination.njk' %}
+    </div>
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddUser" aria-labelledby="offcanvasAddUserLabel">
+        <div class="offcanvas-header border-bottom">
+            <h5 id="offcanvasAddUserLabel" class="offcanvas-title">Thêm Thông Báo</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Đóng"></button>
+        </div>
+        <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
+            <form class="add-new-user pt-0 fv-plugins-bootstrap5 fv-plugins-framework" method="post" action="notifications/create">
+                <div class="mb-6 fv-plugins-icon-container">
+                    <label class="form-label">Tiêu đề</label>
+                    <input type="text" class="form-control" placeholder="Thông báo" name="title" required/>
+                    <div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
+                </div>
+                <div class="mb-6 fv-plugins-icon-container">
+                    <label class="form-label">Chi tiết</label>
+                    <input type="text" class="form-control" placeholder="THông tin chi tiết" name="message" required/>
+                    <div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
+                </div>
+                <div class="mb-6 d-flex justify-content-between">
+                    <div class="me-2">
+                        <label class="form-label" for="user-role">Loại thông báo</label>
+                        <select id="role" name="type" class="form-select">
+                            <option value="SUCCESS">Hoàn thành</option>
+                            <option value="INFO">Thông tin</option>
+                            <option value="WARNING">Cảnh báo</option>
+                            <option value="ERROR">Lỗi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="user-role">Đường dẫn liên kết(nếu cần)</label>
+                        <input type="text" class="form-control" placeholder="http(s)://example.com" name="link"/>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label for="choices-multiple-user" class="text-muted mb-1">Thành viên</label>
+                    <select id="choices-multiple-user" name="members" class="form-control" multiple></select>
+                </div>
+                <button type="submit" class="btn btn-primary me-3 data-submit">
+                    Gửi
+                </button>
+                <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">
+                    Hủy
+                </button>
+                <input type="hidden"/>
+            </form>
+        </div>
+    </div>
+    <script>
+        const listNoti = document.getElementById('notification-list');
+        // Hàm đổ dữ liệu thông báo vào danh sách
+        function renderNotifications(notifications) {
+            const notificationList = document.getElementById('notification-list');
+            if (! notifications || notifications.length === 0) {
+                notificationList.innerHTML = `
+        <div class="text-center text-body-secondary py-3">Không có thông báo nào</div>
+      `;
+                return;
+            }
+            appendNotifications(listNoti, notifications);
+        }
+        // Ví dụ dữ liệu giả lập (thay bằng dữ liệu thực tế từ API)
+        const exampleNotifications = {{ data.docs | dump | safe }};
+        // Gọi hàm đổ dữ liệu
+        document.addEventListener('DOMContentLoaded', function () {
+            renderNotifications(exampleNotifications);
+        });
+    </script>
+    <script src="{{ baseUrl }}/src/js/notificationManager.js"></script>
+{% endblock %}
