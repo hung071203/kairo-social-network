@@ -18,6 +18,23 @@ function handleFileSelect(event) {
   }
 }
 
+async function uploadFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const response = await fetch('/storage/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Upload failed');
+    const data = await response.json();
+    return data.data.url; // Assuming the API returns the file URL
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    showToast({ message: 'Lỗi khi tải lên tệp.', type: 'error' });
+  }
+}
+
 function openImageModal(imageUrl) {
   const modal = document.getElementById('imageModal');
   const modalImg = document.getElementById('modalImage');
