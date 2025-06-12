@@ -1,0 +1,859 @@
+{% extends 'users/layouts/app.njk' %}
+{% set title = 'Cài đặt và quyền riêng tư' %}
+{% block css %}
+    <style>
+        .authentication-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            max-width: 500px;
+            width: 100%;
+            margin: auto;
+        }
+        .turnstile-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background: #1C2526;
+            border: 1px solid #2A3940;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+        }
+        .loading-spinner {
+            border: 4px solid #2A3940;
+            border-top: 4px solid #FFFFFF;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <div class="flex w-full bg-[#18191a]">
+        <!-- Left panel -->
+        <section class="w-[350px] border-r border-[#2A3940] pr-4 py-6">
+            <h1 class="font-semibold text-lg mb-6 text-white">Tài khoản và bảo mật</h1>
+            <h2 class="font-medium text-sm mb-4 text-[#A1B2C3]">Cài đặt tài khoản</h2>
+            <nav id="menu" class="flex flex-col gap-2" role="tablist" aria-orientation="vertical">
+                <button
+                    data-tab="password"
+                    class="flex items-center gap-3 rounded-lg py-3 px-4 font-medium text-sm bg-[#2A3940] text-white hover:bg-[#3B4A50]
+                        transition-colors duration-200 focus:outline-none"
+                    aria-selected="true"
+                    role="tab"
+                    type="button"
+                    tabindex="0">
+                    <i class="fas fa-shield-alt text-lg"></i>
+                    Mật khẩu và bảo mật
+                </button>
+                <button
+                    data-tab="personal"
+                    class="flex items-center gap-3 rounded-lg py-3 px-4 font-medium text-sm text-[#A1B2C3] hover:bg-[#3B4A50]
+                        transition-colors duration-200 focus:outline-none"
+                    aria-selected="false"
+                    role="tab"
+                    type="button"
+                    tabindex="-1">
+                    <i class="fas fa-id-card text-lg"></i>
+                    Thông tin cá nhân
+                </button>
+            </nav>
+        </section>
+        <!-- Right panel -->
+        <section class="flex-1 px-6 py-6 w-[650px]" id="content">
+            <!-- Content for Mật khẩu và bảo mật -->
+            <div data-content="password" role="tabpanel" tabindex="0" aria-hidden="false">
+                <h2 class="font-semibold text-lg mb-6 text-white">Mật khẩu và bảo mật</h2>
+                <div id="password-content">
+                    <div data-sub-content="overview" role="tabpanel" tabindex="0" aria-hidden="false">
+                        <div class="mb-8">
+                            <h3 class="font-medium text-sm mb-2 text-white">Đăng nhập và khôi phục</h3>
+                            <p class="text-[#A1B2C3] text-sm mb-4">
+                                Quản lý mật khẩu và các phương thức đăng nhập của tài khoản.
+                            </p>
+                            <div class="border border-[#2A3940] rounded-lg overflow-hidden bg-[#1C2526]">
+                                <button
+                                    id="change-password-btn"
+                                    data-sub-tab="change-password"
+                                    class="w-full flex justify-between items-center px-4 py-3 text-sm font-medium text-white hover:bg-[#2A3940]
+                                        transition-colors duration-200 focus:outline-none"
+                                    type="button">
+                                    Đổi mật khẩu
+                                    <i class="fas fa-chevron-right text-[#A1B2C3]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div data-sub-content="change-password" class="hidden" role="tabpanel" tabindex="0" aria-hidden="true">
+                        <button
+                            id="back-to-password-overview"
+                            class="mb-4 px-3 py-2 border border-[#A1B2C3] text-[#A1B2C3] rounded-full hover:border-[#FFFFFF] hover:text-[#FFFFFF]
+                                active:scale-95 transition-all duration-200 focus:outline-none"
+                            type="button">
+                            <i class="fas fa-arrow-left text-base"></i>
+                        </button>
+                        <h3 class="font-medium text-sm mb-2 text-white">Đổi mật khẩu</h3>
+                        <p class="text-[#A1B2C3] text-sm mb-4">
+                            Cập nhật mật khẩu mới cho tài khoản của bạn.
+                        </p>
+                        <div class="border border-[#2A3940] rounded-lg p-4 bg-[#1C2526]">
+                            {% if user.password %}
+                                <div class="mb-4">
+                                    <label for="current-password" class="block text-sm font-medium text-white mb-1">Mật khẩu hiện tại</label>
+                                    <input
+                                        type="password"
+                                        id="current-password"
+                                        name="current-password"
+                                        autocomplete="off"
+                                        class="w-full px-3 py-2 bg-[#2A3940] text-white rounded-lg border border-[#2A3940] focus:outline-none
+                                            focus:border-[#3B4A50]"
+                                        placeholder="Nhập mật khẩu hiện tại"/>
+                                </div>
+                            {% endif %}
+                            <div class="mb-4">
+                                <label for="new-password" class="block text-sm font-medium text-white mb-1">Mật khẩu mới</label>
+                                <input
+                                    type="password"
+                                    id="new-password"
+                                    name="new-password"
+                                    class="w-full px-3 py-2 bg-[#2A3940] text-white rounded-lg border border-[#2A3940] focus:outline-none
+                                        focus:border-[#3B4A50]"
+                                    placeholder="Nhập mật khẩu mới"/>
+                            </div>
+                            <div class="mb-4">
+                                <label for="confirm-new-password" class="block text-sm font-medium text-white mb-1">Nhập lại mật khẩu mới</label>
+                                <input
+                                    type="password"
+                                    id="confirm-new-password"
+                                    name="confirm-new-password"
+                                    class="w-full px-3 py-2 bg-[#2A3940] text-white rounded-lg border border-[#2A3940] focus:outline-none
+                                        focus:border-[#3B4A50]"
+                                    placeholder="Nhập lại mật khẩu mới"/>
+                            </div>
+                            <p id="password-feedback" class="text-xs mt-1 hidden"></p>
+                            <button
+                                id="save-password-btn"
+                                class="w-full py-2 bg-[#3B4A50] text-white rounded-lg hover:bg-[#4A5B61] transition-colors duration-200
+                                    focus:outline-none"
+                                type="button">
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Content for Thông tin cá nhân -->
+            <div data-content="personal" class="hidden" role="tabpanel" tabindex="0" aria-hidden="true">
+                <h2 class="font-semibold text-lg mb-6 text-white">Thông tin cá nhân</h2>
+                <div id="personal-content">
+                    <div data-sub-content="overview" role="tabpanel" tabindex="0" aria-hidden="false">
+                        <div class="mb-8">
+                            <h3 class="font-medium text-sm mb-2 text-white">Hồ sơ cá nhân</h3>
+                            <p class="text-[#A1B2C3] text-sm mb-4">
+                                Quản lý thông tin cá nhân và hiển thị trên hồ sơ.
+                            </p>
+                            <div class="border border-[#2A3940] rounded-lg overflow-hidden bg-[#1C2526]">
+                                <button
+                                    id="username-btn"
+                                    data-sub-tab="change-username"
+                                    class="w-full flex justify-between items-center px-4 py-3 text-sm font-medium text-white hover:bg-[#2A3940]
+                                        transition-colors duration-200 focus:outline-none"
+                                    type="button">
+                                    Tên người dùng: {{ user.username }}
+                                    <i class="fas fa-chevron-right text-[#A1B2C3]"></i>
+                                </button>
+                                <button
+                                    id="email-btn"
+                                    data-sub-tab="change-email"
+                                    class="w-full flex justify-between items-center px-4 py-3 text-sm font-medium text-white hover:bg-[#2A3940]
+                                        transition-colors duration-200 focus:outline-none"
+                                    type="button">
+                                    Email: {{ user.email }}
+                                    <i class="fas fa-chevron-right text-[#A1B2C3]"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-8">
+                            <h3 class="font-medium text-sm mb-2 text-white">Quyền riêng tư</h3>
+                            <p class="text-[#A1B2C3] text-sm mb-4">
+                                Cài đặt quyền riêng tư cho tài khoản. (Click để thay đổi trạng thái)
+                            </p>
+                            <div class="border border-[#2A3940] rounded-lg overflow-hidden bg-[#1C2526]">
+                                <button
+                                    id="privacy-toggle-btn"
+                                    class="w-full flex justify-between items-center px-4 py-3 text-sm font-medium text-white hover:bg-[#2A3940]
+                                        transition-colors duration-200 focus:outline-none"
+                                    type="button">
+                                    Tài khoản riêng tư:
+                                    <span id="privacy-status">
+                                        {% if user.isPrivate %}
+                                            Bật
+                                        {% else %}
+                                            Tắt
+                                        {% endif %}
+                                    </span>
+                                </button>
+                                <button
+                                    id="blocked-users-btn"
+                                    data-sub-tab="blocked-users"
+                                    class="w-full flex justify-between items-center px-4 py-3 text-sm font-medium text-white hover:bg-[#2A3940]
+                                        transition-colors duration-200 focus:outline-none"
+                                    type="button">
+                                    Người dùng bị chặn
+                                    <i class="fas fa-chevron-right text-[#A1B2C3]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div data-sub-content="change-email" class="hidden" role="tabpanel" tabindex="0" aria-hidden="true">
+                        <button
+                            id="back-to-overview-from-email"
+                            class="mb-4 px-3 py-2 border border-[#A1B2C3] text-[#A1B2C3] rounded-full hover:border-[#FFFFFF] hover:text-[#FFFFFF]
+                                active:scale-95 transition-all duration-200 focus:outline-none"
+                            type="button">
+                            <i class="fas fa-arrow-left text-base"></i>
+                        </button>
+                        <h3 class="font-medium text-sm mb-2 text-white">Thay đổi email</h3>
+                        <p class="text-[#A1B2C3] text-sm mb-4">
+                            Cập nhật địa chỉ email mới cho tài khoản của bạn.
+                        </p>
+                        <div class="border border-[#2A3940] rounded-lg p-4 bg-[#1C2526]">
+                            <div class="mb-4">
+                                <label for="new-email" class="block text-sm font-medium text-white mb-1">Email mới</label>
+                                <div class="flex gap-3">
+                                    <input
+                                        type="email"
+                                        id="new-email"
+                                        name="new-email"
+                                        class="flex-1 px-3 py-2 bg-[#2A3940] text-white rounded-lg border border-[#2A3940] focus:outline-none
+                                            focus:border-[#3B4A50]"
+                                        placeholder="Nhập email mới"/>
+                                    <button
+                                        id="get-otp-btn"
+                                        class="px-4 py-2 bg-[#3B4A50] text-white rounded-lg hover:bg-[#4A5B61] transition-colors duration-200 focus:outline-none"
+                                        type="button">
+                                        Get OTP
+                                    </button>
+                                </div>
+                                <p id="otp-feedback" class="text-[#A1B2C3] text-xs mt-1 hidden"></p>
+                                <p id="otp-timer" class="text-[#A1B2C3] text-xs mt-1 hidden">
+                                    Gửi lại OTP sau:
+                                    <span id="countdown">60</span>
+                                    giây
+                                </p>
+                            </div>
+                            <div class="turnstile-container">
+                                <div class="cf-turnstile" data-sitekey="{{ capchaPublicKey }}" data-theme="light"></div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="otp" class="block text-sm font-medium text-white mb-1">Nhập OTP</label>
+                                <input
+                                    type="text"
+                                    id="otp"
+                                    name="otp"
+                                    class="w-full px-3 py-2 bg-[#2A3940] text-white rounded-lg border border-[#2A3940] focus:outline-none
+                                        focus:border-[#3B4A50]"
+                                    placeholder="Nhập mã OTP"/>
+                            </div>
+                            <button
+                                id="change-email-btn"
+                                class="w-full py-2 bg-[#3B4A50] text-white rounded-lg hover:bg-[#4A5B61] transition-colors duration-200
+                                    focus:outline-none"
+                                type="button">
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                    <div data-sub-content="change-username" class="hidden" role="tabpanel" tabindex="0" aria-hidden="true">
+                        <button
+                            id="back-to-overview-from-username"
+                            class="mb-4 px-3 py-2 border border-[#A1B2C3] text-[#A1B2C3] rounded-full hover:border-[#FFFFFF] hover:text-[#FFFFFF]
+                                active:scale-95 transition-all duration-200 focus:outline-none"
+                            type="button">
+                            <i class="fas fa-arrow-left text-base"></i>
+                        </button>
+                        <h3 class="font-medium text-sm mb-2 text-white">Thay đổi tên người dùng</h3>
+                        <p class="text-[#A1B2C3] text-sm mb-4">
+                            Nhập tên người dùng mới cho tài khoản của bạn.
+                        </p>
+                        <div class="border border-[#2A3940] rounded-lg p-4 bg-[#1C2526]">
+                            <div class="mb-4">
+                                <label for="new-username" class="block text-sm font-medium text-white mb-1">Tên người dùng mới</label>
+                                <input
+                                    type="text"
+                                    id="new-username"
+                                    name="new-username"
+                                    class="w-full px-3 py-2 bg-[#2A3940] text-white rounded-lg border border-[#2A3940] focus:outline-none
+                                        focus:border-[#3B4A50]"
+                                    placeholder="Nhập tên người dùng mới"/>
+                                <p id="username-feedback" class="text-xs mt-1 hidden"></p>
+                            </div>
+                            <button
+                                id="save-username-btn"
+                                class="w-full py-2 bg-[#3B4A50] text-white rounded-lg hover:bg-[#4A5B61] transition-colors duration-200
+                                    focus:outline-none"
+                                type="button">
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                    <div data-sub-content="blocked-users" class="hidden" role="tabpanel" tabindex="0" aria-hidden="true">
+                        <button
+                            id="back-to-overview-from-blocked"
+                            class="mb-4 px-3 py-2 border border-[#A1B2C3] text-[#A1B2C3] rounded-full hover:border-[#FFFFFF] hover:text-[#FFFFFF]
+                                active:scale-95 transition-all duration-200 focus:outline-none"
+                            type="button">
+                            <i class="fas fa-arrow-left text-base"></i>
+                        </button>
+                        <h3 class="font-medium text-sm mb-2 text-white">Người dùng bị chặn</h3>
+                        <p class="text-[#A1B2C3] text-sm mb-4">
+                            Quản lý danh sách người dùng bạn đã chặn.
+                        </p>
+                        <div class="border border-[#2A3940] rounded-lg p-4 bg-[#1C2526] max-h-[500px] overflow-y-auto custom-scrollbar">
+                            <div id="blocked-users-list" class="flex flex-col gap-3"></div>
+                            <div id="empty-state" class="text-[#A1B2C3] text-sm text-center hidden">
+                                Không có người dùng nào bị chặn.
+                            </div>
+                            <div id="loading-spinner" class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <!-- Unblock Confirmation Modal -->
+    <div id="unblock-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="font-medium text-sm mb-2 text-white">Bỏ chặn người dùng</h3>
+            <p class="text-[#A1B2C3] text-sm mb-4">
+                Bạn có chắc muốn bỏ chặn <span id="unblock-username" class="font-semibold"></span>?
+            </p>
+            <div class="flex justify-end gap-3">
+                <button
+                    id="cancel-unblock-btn"
+                    class="px-4 py-2 border border-[#A1B2C3] text-[#A1B2C3] rounded-lg hover:border-[#FFFFFF] hover:text-[#FFFFFF]
+                        transition-colors duration-200 focus:outline-none"
+                    type="button">
+                    Hủy
+                </button>
+                <button
+                    id="confirm-unblock-btn"
+                    class="px-4 py-2 bg-[#3B4A50] text-white rounded-lg hover:bg-[#4A5B61] transition-colors duration-200 focus:outline-none"
+                    type="button">
+                    Bỏ chặn
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Main tab switching
+        const menu = document.getElementById('menu');
+        const content = document.getElementById('content');
+        const buttons = menu.querySelectorAll('button[data-tab]');
+        const contents = content.querySelectorAll('[data-content]');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                buttons.forEach((btn) => {
+                    btn.classList.remove('bg-[#2A3940]', 'text-white');
+                    btn.classList.add('text-[#A1B2C3]');
+                    btn.setAttribute('aria-selected', 'false');
+                    btn.setAttribute('tabindex', '-1');
+                });
+                contents.forEach((c) => {
+                    c.classList.add('hidden');
+                    c.setAttribute('aria-hidden', 'true');
+                });
+                button.classList.add('bg-[#2A3940]', 'text-white');
+                button.classList.remove('text-[#A1B2C3]');
+                button.setAttribute('aria-selected', 'true');
+                button.setAttribute('tabindex', '0');
+                button.focus();
+                const tab = button.getAttribute('data-tab');
+                const activeContent = content.querySelector(`[data-content="${tab}"]`);
+                if (activeContent) {
+                    activeContent.classList.remove('hidden');
+                    activeContent.setAttribute('aria-hidden', 'false');
+                }
+            });
+        });
+
+        // Sub-tab switching for Mật khẩu và bảo mật
+        const passwordContent = document.getElementById('password-content');
+        const changePasswordBtn = document.getElementById('change-password-btn');
+        const backToPasswordOverview = document.getElementById('back-to-password-overview');
+        const passwordSubContents = passwordContent.querySelectorAll('[data-sub-content]');
+        function showPasswordSubTab(tabName) {
+            passwordSubContents.forEach((c) => {
+                c.classList.add('hidden');
+                c.setAttribute('aria-hidden', 'true');
+            });
+            const activeSubContent = passwordContent.querySelector(`[data-sub-content="${tabName}"]`);
+            if (activeSubContent) {
+                activeSubContent.classList.remove('hidden');
+                activeSubContent.setAttribute('aria-hidden', 'false');
+            }
+        }
+        changePasswordBtn.addEventListener('click', () => {
+            showPasswordSubTab('change-password');
+        });
+        backToPasswordOverview.addEventListener('click', () => {
+            showPasswordSubTab('overview');
+        });
+
+        // Sub-tab switching for Thông tin cá nhân
+        const personalContent = document.getElementById('personal-content');
+        const emailBtn = document.getElementById('email-btn');
+        const usernameBtn = document.getElementById('username-btn');
+        const blockedUsersBtn = document.getElementById('blocked-users-btn');
+        const backToOverviewFromEmail = document.getElementById('back-to-overview-from-email');
+        const backToOverviewFromUsername = document.getElementById('back-to-overview-from-username');
+        const backToOverviewFromBlocked = document.getElementById('back-to-overview-from-blocked');
+        const subContents = personalContent.querySelectorAll('[data-sub-content]');
+        function showSubTab(tabName) {
+            subContents.forEach((c) => {
+                c.classList.add('hidden');
+                c.setAttribute('aria-hidden', 'true');
+            });
+            const activeSubContent = personalContent.querySelector(`[data-sub-content="${tabName}"]`);
+            if (activeSubContent) {
+                activeSubContent.classList.remove('hidden');
+                activeSubContent.setAttribute('aria-hidden', 'false');
+                if (tabName === 'blocked-users') {
+                    loadBlockedUsers(1);
+                }
+            }
+        }
+        emailBtn.addEventListener('click', () => {
+            showSubTab('change-email');
+        });
+        usernameBtn.addEventListener('click', () => {
+            showSubTab('change-username');
+        });
+        blockedUsersBtn.addEventListener('click', () => {
+            showSubTab('blocked-users');
+        });
+        backToOverviewFromEmail.addEventListener('click', () => {
+            showSubTab('overview');
+        });
+        backToOverviewFromUsername.addEventListener('click', () => {
+            showSubTab('overview');
+        });
+        backToOverviewFromBlocked.addEventListener('click', () => {
+            showSubTab('overview');
+        });
+
+        // Blocked users logic
+        const blockedUsersList = document.getElementById('blocked-users-list');
+        const emptyState1 = document.getElementById('empty-state');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const unblockModal = document.getElementById('unblock-modal');
+        const unblockUsername = document.getElementById('unblock-username');
+        const cancelUnblockBtn = document.getElementById('cancel-unblock-btn');
+        const confirmUnblockBtn = document.getElementById('confirm-unblock-btn');
+        let currentPage = 1;
+        let isLoading = false;
+        let hasMoreBl = true;
+        let selectedUserId = null;
+
+        async function loadBlockedUsers(page) {
+            if (isLoading || !hasMoreBl) return;
+            isLoading = true;
+            loadingSpinner.style.display = 'block';
+
+            try {
+                const response = await fetch(`/follow/following?page=${page}&limit=10&tab=blockers`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.success && data.data.docs) {
+                    if (data.data.docs.length === 0 && page === 1) {
+                        emptyState1.classList.remove('hidden');
+                    } else {
+                        emptyState1.classList.add('hidden');
+                        data.data.docs.forEach(item => {
+                        const user = item.target
+                            const userItem = document.createElement('div');
+                            userItem.className = 'flex items-center justify-between p-2 hover:bg-[#2A3940] rounded-lg transition-colors duration-200';
+                            userItem.innerHTML = `
+                                <div class="flex items-center gap-3">
+                                    <img src="${user.avatar}" alt="${user.name}" class="w-10 h-10 rounded-full">
+                                    <span class="text-white text-sm">${user.name}</span>
+                                </div>
+                                <button
+                                    data-user-id="${user._id}"
+                                    class="unblock-btn px-3 py-1 bg-[#3B4A50] text-white rounded-lg hover:bg-[#4A5B61] transition-colors duration-200 focus:outline-none">
+                                    Bỏ chặn
+                                </button>
+                            `;
+                            blockedUsersList.appendChild(userItem);
+                        });
+                        hasMoreBl = data.data.hasNextPage;
+                    }
+                } else {
+                    emptyState1.classList.remove('hidden');
+                    emptyState1.textContent = data.message || 'Không có người dùng nào bị chặn.';
+                }
+            } catch (error) {
+                emptyState1.classList.remove('hidden');
+                emptyState1.textContent = 'Lỗi khi tải danh sách người dùng bị chặn.';
+            } finally {
+                isLoading = false;
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Infinite scroll
+        const blockedUsersContainer = document.querySelector('[data-sub-content="blocked-users"] .overflow-y-auto');
+        blockedUsersContainer.addEventListener('scroll', () => {
+            if (isLoading || !hasMoreBl) return;
+            if (blockedUsersContainer.scrollTop + blockedUsersContainer.clientHeight >= blockedUsersContainer.scrollHeight - 20) {
+                currentPage += 1;
+                loadBlockedUsers(currentPage);
+            }
+        });
+
+        // Unblock modal logic
+        blockedUsersList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('unblock-btn')) {
+                selectedUserId = e.target.getAttribute('data-user-id');
+                unblockUsername.textContent = e.target.parentElement.querySelector('span').textContent;
+                unblockModal.style.display = 'flex';
+            }
+        });
+
+        cancelUnblockBtn.addEventListener('click', () => {
+            unblockModal.style.display = 'none';
+            selectedUserId = null;
+        });
+
+        confirmUnblockBtn.addEventListener('click', async () => {
+            if (!selectedUserId) return;
+            try {
+                const response = await fetch('/follow/unblock/' + selectedUserId, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast({ message: 'Bỏ chặn người dùng thành công', type: 'success', delay: 3000 });
+                    blockedUsersList.innerHTML = '';
+                    currentPage = 1;
+                    hasMoreBl = true;
+                    loadBlockedUsers(1);
+                    unblockModal.style.display = 'none';
+                    selectedUserId = null;
+                } else {
+                    showToast({ message: data.message || 'Bỏ chặn thất bại', type: 'error', delay: 3000 });
+                }
+            } catch (error) {
+                showToast({ message: 'Lỗi khi bỏ chặn người dùng', type: 'error', delay: 3000 });
+            }
+        });
+
+        // Password handling
+        const currentPasswordInput = document.getElementById('current-password');
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmNewPasswordInput = document.getElementById('confirm-new-password');
+        const passwordFeedback = document.getElementById('password-feedback');
+        const savePasswordBtn = document.getElementById('save-password-btn');
+        savePasswordBtn.addEventListener('click', async () => {
+            const newPassword = newPasswordInput.value.trim();
+            const confirmNewPassword = confirmNewPasswordInput.value.trim();
+            const currentPassword = currentPasswordInput ? currentPasswordInput.value.trim() : null;
+            if (
+                (!currentPasswordInput && (!newPassword || !confirmNewPassword)) ||
+                (currentPasswordInput && (!currentPassword || !newPassword || !confirmNewPassword))
+            ) {
+                passwordFeedback.classList.remove('hidden');
+                passwordFeedback.textContent = 'Vui lòng điền đầy đủ thông tin';
+                passwordFeedback.classList.remove('text-green-500');
+                passwordFeedback.classList.add('text-red-500');
+                return;
+            }
+            if (newPassword !== confirmNewPassword) {
+                passwordFeedback.classList.remove('hidden');
+                passwordFeedback.textContent = 'Mật khẩu mới không khớp';
+                passwordFeedback.classList.remove('text-green-500');
+                passwordFeedback.classList.add('text-red-500');
+                return;
+            }
+            if (currentPasswordInput && newPassword === currentPassword) {
+                passwordFeedback.classList.remove('hidden');
+                passwordFeedback.textContent = 'Mật khẩu mới không được trùng với mật khẩu hiện tại';
+                passwordFeedback.classList.remove('text-green-500');
+                passwordFeedback.classList.add('text-red-500');
+                return;
+            }
+            try {
+                const response = await fetch('/profile/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(
+                        currentPasswordInput
+                            ? { currentPassword, newPassword }
+                            : { newPassword }
+                    )
+                });
+                const data = await response.json();
+                passwordFeedback.classList.remove('hidden');
+                if (data.success) {
+                    passwordFeedback.textContent = 'Đổi mật khẩu thành công';
+                    passwordFeedback.classList.remove('text-red-500');
+                    passwordFeedback.classList.add('text-green-500');
+                    setTimeout(() => {
+                        showPasswordSubTab('overview');
+                        if (currentPasswordInput) currentPasswordInput.value = '';
+                        newPasswordInput.value = '';
+                        confirmNewPasswordInput.value = '';
+                        passwordFeedback.classList.add('hidden');
+                    }, 1000);
+                } else {
+                    passwordFeedback.textContent = data.message || 'Đổi mật khẩu thất bại';
+                    passwordFeedback.classList.remove('text-green-500');
+                    passwordFeedback.classList.add('text-red-500');
+                }
+            } catch (error) {
+                passwordFeedback.classList.remove('hidden');
+                passwordFeedback.textContent = 'Lỗi khi đổi mật khẩu';
+                passwordFeedback.classList.remove('text-green-500');
+                passwordFeedback.classList.add('text-red-500');
+            }
+        });
+
+        // OTP Timer
+        const getOtpBtn = document.getElementById('get-otp-btn');
+        const otpTimer = document.getElementById('otp-timer');
+        const countdownSpan = document.getElementById('countdown');
+        const newEmailInput = document.getElementById('new-email');
+        const otpFeedback = document.getElementById('otp-feedback');
+        let countdown = 60;
+        let timer;
+        getOtpBtn.addEventListener('click', async () => {
+            const email = newEmailInput.value.trim();
+            if (!email) {
+                otpFeedback.classList.remove('hidden');
+                otpFeedback.textContent = 'Vui lòng nhập email';
+                otpFeedback.classList.remove('text-green-500');
+                otpFeedback.classList.add('text-red-500');
+                return;
+            }
+            if (!timer) {
+                getOtpBtn.disabled = true;
+                getOtpBtn.textContent = 'Đang gửi...';
+                try {
+                    const response = await fetch('/auth/verify-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email,
+                            'cf-turnstile-response': document.querySelector('.cf-turnstile [name="cf-turnstile-response"]').value,
+                            type: 'CHANGE_MAIL'
+                        })
+                    });
+                    const data = await response.json();
+                    otpFeedback.classList.remove('hidden');
+                    if (data.success) {
+                        otpFeedback.textContent = 'OTP đã được gửi đến email của bạn';
+                        otpFeedback.classList.remove('text-red-500');
+                        otpFeedback.classList.add('text-green-500');
+                        otpTimer.classList.remove('hidden');
+                        getOtpBtn.textContent = 'Get OTP';
+                        timer = setInterval(() => {
+                            countdown--;
+                            countdownSpan.textContent = countdown;
+                            if (countdown <= 0) {
+                                clearInterval(timer);
+                                timer = null;
+                                countdown = 60;
+                                getOtpBtn.disabled = false;
+                                otpTimer.classList.add('hidden');
+                            }
+                        }, 1000);
+                    } else {
+                        otpFeedback.textContent = data.message || 'Gửi OTP thất bại';
+                        otpFeedback.classList.remove('text-green-500');
+                        otpFeedback.classList.add('text-red-500');
+                        getOtpBtn.disabled = false;
+                        getOtpBtn.textContent = 'Get OTP';
+                    }
+                } catch (error) {
+                    otpFeedback.classList.remove('hidden');
+                    otpFeedback.textContent = 'Lỗi khi gửi OTP';
+                    otpFeedback.classList.remove('text-green-500');
+                    otpFeedback.classList.add('text-red-500');
+                    getOtpBtn.disabled = false;
+                    getOtpBtn.textContent = 'Get OTP';
+                }
+            }
+        });
+
+        const changeEmailButton = document.getElementById('change-email-btn');
+        changeEmailButton.addEventListener('click', async () => {
+            const email = newEmailInput.value.trim();
+            const otpValue = document.getElementById('otp').value.trim();
+            if (!email || !otpValue) {
+                otpFeedback.classList.remove('hidden');
+                otpFeedback.textContent = 'Vui lòng điền đầy đủ thông tin';
+                otpFeedback.classList.remove('text-green-500');
+                otpFeedback.classList.add('text-red-500');
+                return;
+            }
+            try {
+                const response = await fetch('/profile/change-mail', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, otp: otpValue })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast({ message: 'Cập nhật email thành công', type: 'success', delay: 3000 });
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    otpFeedback.classList.remove('hidden');
+                    otpFeedback.textContent = data.message || 'Cập nhật email thất bại';
+                    otpFeedback.classList.remove('text-green-500');
+                    otpFeedback.classList.add('text-red-500');
+                }
+            } catch (error) {
+                console.error('Lỗi khi cập nhật email:', error);
+                otpFeedback.classList.remove('hidden');
+                otpFeedback.textContent = 'Lỗi khi cập nhật email';
+                otpFeedback.classList.remove('text-green-500');
+                otpFeedback.classList.add('text-red-500');
+            }
+        });
+
+        // Username validation
+        const newUsernameInput = document.getElementById('new-username');
+        const usernameFeedback = document.getElementById('username-feedback');
+        const saveUsernameBtn = document.getElementById('save-username-btn');
+        newUsernameInput.addEventListener('input', async () => {
+            const username = newUsernameInput.value.trim();
+            if (username.length === 0) {
+                usernameFeedback.classList.add('hidden');
+                return;
+            }
+            try {
+                const response = await fetch('/profile/check-username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+                usernameFeedback.classList.remove('hidden');
+                if (data?.data?.valid) {
+                    usernameFeedback.textContent = data.data.message || 'Tên người dùng hợp lệ';
+                    usernameFeedback.classList.remove('text-red-500');
+                    usernameFeedback.classList.add('text-green-500');
+                } else {
+                    usernameFeedback.textContent = data.message || 'Tên người dùng không hợp lệ';
+                    usernameFeedback.classList.remove('text-green-500');
+                    usernameFeedback.classList.add('text-red-500');
+                }
+            } catch (error) {
+                usernameFeedback.classList.remove('hidden');
+                usernameFeedback.textContent = 'Lỗi khi kiểm tra tên người dùng';
+                usernameFeedback.classList.remove('text-green-500');
+                usernameFeedback.classList.add('text-red-500');
+            }
+        });
+
+        saveUsernameBtn.addEventListener('click', async () => {
+            const username = newUsernameInput.value.trim();
+            if (username.length === 0) {
+                usernameFeedback.classList.remove('hidden');
+                usernameFeedback.textContent = 'Vui lòng nhập tên người dùng';
+                usernameFeedback.classList.remove('text-green-500');
+                usernameFeedback.classList.add('text-red-500');
+                return;
+            }
+            try {
+                const response = await fetch('/profile/update-username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast({ message: 'Cập nhật tên người dùng thành công', type: 'success', delay: 3000 });
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    usernameFeedback.classList.remove('hidden');
+                    usernameFeedback.textContent = data.message || 'Cập nhật tên người dùng thất bại';
+                    usernameFeedback.classList.remove('text-green-500');
+                    usernameFeedback.classList.add('text-red-500');
+                }
+            } catch (error) {
+                console.error('Lỗi khi cập nhật tên người dùng:', error);
+                usernameFeedback.classList.remove('hidden');
+                usernameFeedback.textContent = 'Lỗi khi cập nhật tên người dùng';
+                usernameFeedback.classList.remove('text-green-500');
+                usernameFeedback.classList.add('text-red-500');
+            }
+        });
+
+        // Privacy toggle
+        const privacyToggleBtn = document.getElementById('privacy-toggle-btn');
+        const privacyStatus = document.getElementById('privacy-status');
+        let isPrivate = {{ user.isPrivate }};
+        privacyToggleBtn.addEventListener('click', () => {
+            isPrivate = !isPrivate;
+            privacyStatus.textContent = isPrivate ? 'Bật' : 'Tắt';
+            fetch('/profile/update', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ isPrivate })
+            }).catch((error) => {
+                console.error('Lỗi khi cập nhật trạng thái quyền riêng tư:', error);
+            });
+        });
+    </script>
+{% endblock %}

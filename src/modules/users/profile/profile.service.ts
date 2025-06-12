@@ -1,12 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { PaginationDto } from 'src/common/decorators';
-import { FollowInteractionStatusEnum, UserRole } from 'src/common/enums';
+import {
+  FollowInteractionStatusEnum,
+  TypeVerifyEmailEnum,
+  UserRole,
+} from 'src/common/enums';
 import { UserRepositoryInterface } from 'src/database/interface/user.interface';
 import { FollowService } from '../follow/follow.service';
 import { FollowInteractionRepositoryInterface } from 'src/database/interface/followInteraction.interface';
-import { UpdateUserDto } from './dto/user.dto';
-import { hashPassword } from 'src/utils';
+import { ChangeMailDto, UpdatePassDto, UpdateUserDto } from './dto/user.dto';
+import { comparePassword, hashPassword } from 'src/utils';
+import { RedisService } from 'src/common/services';
 
 @Injectable()
 export class ProfileService {
@@ -15,6 +20,7 @@ export class ProfileService {
     private readonly userRepository: UserRepositoryInterface,
     @Inject('FollowInteractionRepositoryInterface')
     private readonly followRepository: FollowInteractionRepositoryInterface,
+    private readonly redisService: RedisService, // Assuming you have a RedisService for caching or other purposes
   ) {}
 
   getRepository() {
@@ -71,20 +77,29 @@ export class ProfileService {
         ],
       });
 
-      const isBlocked = follows.some(f => f.status === FollowInteractionStatusEnum.BLOCKED);
+      const isBlocked = follows.some(
+        (f) => f.status === FollowInteractionStatusEnum.BLOCKED,
+      );
 
       if (isBlocked) {
         throw new Error('Bạn không có quyền xem trang cá nhân này');
       }
     }
     // console.log(user, follows);
-    
-    return { user: {...user, ...(user.birthday && {birthday: user.birthday.toISOString().split('T')[0]})}, follows, isThisAccount: userId == user._id.toString() };
+
+    return {
+      user: {
+        ...user,
+        ...(user.birthday && {
+          birthday: user.birthday.toISOString().split('T')[0],
+        }),
+      },
+      follows,
+      isThisAccount: userId == user._id.toString(),
+    };
   }
 
-  async updateProfile(
-    userId: string,
-    dto: UpdateUserDto) {
+  async updateProfile(userId: string, dto: UpdateUserDto) {
     const user = await this.userRepository.findOne({
       _id: new Types.ObjectId(userId),
     });
@@ -92,8 +107,98 @@ export class ProfileService {
       throw new Error('Người dùng không tồn tại');
     }
 
-      return this.userRepository.update(userId, {...dto,
-        ...(dto.password && { password: await hashPassword(dto.password) }),
-      })
+    return this.userRepository.update(userId, {
+      ...dto,
+      ...(dto.password && { password: await hashPassword(dto.password) }),
+    });
+  }
+
+  async updatePassword(userId: string, dto: UpdatePassDto) {
+    const user = await this.userRepository.findOne({
+      _id: new Types.ObjectId(userId),
+    });
+    if (!user) {
+      throw new Error('Người dùng không tồn tại');
     }
+
+    if (user.password) {
+      if (
+        (await comparePassword(dto.currentPassword, user.password)) === false
+      ) {
+        throw new Error('Mật khẩu hiện tại không đúng');
+      }
+    }
+
+    return this.userRepository.update(userId, {
+      password: await hashPassword(dto.newPassword),
+    });
+  }
+
+  async unlinkGoogle(userId: string) {
+    const user = await this.userRepository.findOne({
+      _id: new Types.ObjectId(userId),
+    });
+    if (!user) {
+      throw new Error('Người dùng không tồn tại');
+    }
+
+    return this.userRepository.update(userId, {
+      googleId: null,
+    });
+  }
+
+  async checkUsername(username: string) {
+    if (username.length < 8 || username.includes(' ')) {
+      throw new Error(
+        'Tên người dùng phải có ít nhất 8 ký tự, không có khoảng trắng',
+      );
+    }
+    const user = await this.userRepository.findOne({
+      username: username,
+    });
+    if (user) {
+      throw new Error('Tên người dùng đã tồn tại');
+    }
+    return { valid: true, message: 'Tên người dùng có thể sử dụng' };
+  }
+
+  async updateUsername(userId: string, username: string) {
+    if (username.length < 8 || username.includes(' ')) {
+      throw new Error(
+        'Tên người dùng phải có ít nhất 8 ký tự, không có khoảng trắng',
+      );
+    }
+    const user = await this.userRepository.findOne({
+      _id: new Types.ObjectId(userId),
+    });
+    if (!user) {
+      throw new Error('Người dùng không tồn tại');
+    }
+
+    const existingUser = await this.userRepository.findOne({
+      username: username,
+    });
+    if (existingUser && existingUser._id.toString() !== userId) {
+      throw new Error('Tên người dùng đã tồn tại');
+    }
+
+    return this.userRepository.update(userId, { username });
+  }
+
+  async changeMail(userId: string, dto: ChangeMailDto) {
+    const key = `${process.env.APP_ID}:verify-email:${TypeVerifyEmailEnum.CHANGE_MAIL}:${dto.email}`;
+    const dataRedis = await this.redisService.get(key);
+    if (!dataRedis) {
+      throw new Error('Vui lòng xác thực email trước khi thay đổi');
+    }
+    const data = JSON.parse(dataRedis || '{}');
+    
+    if (data.code != dto.otp) {
+      throw new Error('Mã xác thực không đúng');
+    }
+
+    return this.userRepository.update(userId, {
+      email: dto.email,
+    });
+  }
 }

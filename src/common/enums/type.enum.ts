@@ -23,3 +23,17 @@ export enum PostTypeEnum {
   PUBLIC = 'PUBLIC',
   PRIVATE = 'PRIVATE',
 }
+
+export enum MessageTypeEnum {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  FILE = 'FILE',
+}
+
+export enum MessageStatusEnum {
+  SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
+  READ = 'READ',
+  FAILED = 'FAILED',
+}

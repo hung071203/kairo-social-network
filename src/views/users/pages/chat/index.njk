@@ -1,0 +1,563 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta content="width=device-width, initial-scale=1" name="viewport"/>
+        <title>
+            Chat Application
+        </title>
+        <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#7c3aed",
+                            secondary: "#a78bfa"
+                        },
+                        borderRadius: {
+                            none: "0px",
+                            sm: "4px",
+                            DEFAULT: "8px",
+                            md: "12px",
+                            lg: "16px",
+                            xl: "20px",
+                            "2xl": "24px",
+                            "3xl": "32px",
+                            full: "9999px",
+                            button: "8px"
+                        }
+                    }
+                }
+            };
+        </script>
+        <link href="https://fonts.googleapis.com" rel="preconnect"/>
+        <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+        <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet"/>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet"/>
+        <link href="/src/css/customchat.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <div
+            class="flex chat-container mx-auto my-4 bg-gray-900 rounded-lg overflow-hidden shadow-xl max-w-full">
+            <!-- Left sidebar -->
+            <div
+                class="w-80 flex flex-col border-r border-gray-700 min-w-[320px]">
+                <!-- Search bar -->
+                <div class="p-4 border-b border-gray-700">
+                    <div class="flex items-center">
+                        <div class="text-xl font-['Pacifico'] text-primary mr-2 select-none">
+                            logo
+                        </div>
+                        <div class="text-lg font-semibold select-none">
+                            Đoạn chat
+                        </div>
+                        <button aria-label="New chat" class="ml-auto w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white">
+                            <i class="ri-edit-line ri-lg"></i>
+                        </button>
+                    </div>
+                    <div class="mt-3 relative">
+                        <input
+                            aria-label="Search chats"
+                            class="w-full bg-gray-800 text-white text-sm rounded-full py-2 pl-10 pr-4 border-none"
+                            placeholder="Tìm kiếm trên Messenger"
+                            type="text"/>
+                        <div class="absolute left-3 top-2 w-5 h-5 flex items-center justify-center text-gray-400 pointer-events-none">
+                            <i class="ri-search-line"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Online friends -->
+                <div class="p-4 border-b border-gray-700 overflow-x-auto scrollbar-hide">
+                    <div class="flex space-x-4 min-w-max pb-2">
+                        <div class="flex flex-col items-center">
+                            <div class="relative">
+                                <div class="w-14 h-14 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                    <img
+                                        alt="Portrait of an Asian man smiling, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/184defe0-8e09-4b4e-e1f6-beacd115cb26.jpg"
+                                        width="100"/>
+                                </div>
+                                <div class="online-indicator"></div>
+                            </div>
+                            <span class="text-xs mt-1 text-center select-none">
+                                Thu
+                            </span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="relative">
+                                <div class="w-14 h-14 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                    <img
+                                        alt="Portrait of an Asian woman smiling, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/45b578bc-88e2-4c4b-4754-f448a804621f.jpg"
+                                        width="100"/>
+                                </div>
+                                <div class="online-indicator"></div>
+                            </div>
+                            <span class="text-xs mt-1 text-center select-none">
+                                Long
+                            </span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="relative">
+                                <div class="w-14 h-14 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                    <img
+                                        alt="Portrait of an Asian man serious expression, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/44126a1a-2047-4764-a409-6257eff74181.jpg"
+                                        width="100"/>
+                                </div>
+                                <div class="online-indicator"></div>
+                            </div>
+                            <span class="text-xs mt-1 text-center select-none">
+                                Phát
+                            </span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="relative">
+                                <div class="w-14 h-14 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                    <img
+                                        alt="Portrait of an Asian woman casual style, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/1cf58fe3-48ac-4946-952d-8da781dd9203.jpg"
+                                        width="100"/>
+                                </div>
+                                <div class="online-indicator"></div>
+                            </div>
+                            <span class="text-xs mt-1 text-center select-none">
+                                Tiên
+                            </span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="relative">
+                                <div class="w-14 h-14 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                    <img
+                                        alt="Portrait of an Asian man casual style, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/78398ef8-e8a8-408c-38b2-552b13e89f5a.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <span class="text-xs mt-1 text-center select-none">
+                                Quân
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chat list -->
+                <div class="overflow-y-auto chat-list flex-1">
+                    <div class="p-2 space-y-1">
+                        <div
+                            aria-label="Chat with Công chúa của anhhh3, last message: Nha hru em mua trả sau hết mấy 600k oy hihi, time 19:31"
+                            class="flex items-center p-2 rounded-lg bg-primary bg-opacity-20 cursor-pointer"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Cute Hello Kitty plush toy on pink background, high quality product photography, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/c16666aa-6bed-4ade-a776-fe6adb06f829.jpg"
+                                        width="100"/>
+                                </div>
+                                <div class="online-indicator"></div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Công chúa của anhhh3 ❤️❤️❤️❤️
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        19:31
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Nha hru em mua trả sau hết mấy 600k oy hihi
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Nguyễn Hiếu, last message: Lúc:, time 11 phút ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer mt-1"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese man casual style, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/dc31d222-39f5-4c0e-be51-28d71901dc63.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Nguyễn Hiếu
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        11 phút
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Lúc:
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Hoàng Lê, last message: Bạn: Lời, time 12 phút ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer mt-1"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese man professional style, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/b99c8e37-5e43-4180-7b13-95711fa354d6.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Hoàng Lê
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        12 phút
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Bạn: Lời
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Mẹ yêu❤️, last message: Bạn: con nhắn ra, time 16 phút ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer mt-1"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese middle-aged woman, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/58bb188c-c40b-4351-e9fb-3b63e312d562.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Mẹ yêu❤️
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        16 phút
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Bạn: con nhắn ra
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Century BotChat VietNam, last message: Gửi vào Link này nha, time 31 phút ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer mt-1"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Tech company logo, modern design, blue and white colors, professional style, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/d80b9f84-3855-4664-b38c-9c6596b12ecd.jpg"
+                                        width="100"/>
+                                </div>
+                                <div class="online-indicator"></div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Century BotChat VietNam
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        31 phút
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Gửi vào Link này nha
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Hương Giang, last message: Bạn: Gửi cho mình báo giá nhé, time 1 giờ ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese young woman, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/2cbf05ee-d9cc-49df-dc4a-9009c9231651.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Hương Giang
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        1 giờ
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Bạn: Gửi cho mình báo giá nhé
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Minh Tuấn, last message: Đã gửi một ảnh, time 2 giờ ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese business man, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/dee1b687-1e04-4ac1-0383-8d961d20b425.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Minh Tuấn
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        2 giờ
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Đã gửi một ảnh
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Thanh Hà, last message: Bạn: Tôi sẽ gửi báo cáo vào ngày mai, time 3 giờ ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese office worker, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/7e8c4fc7-b61d-4b0c-e494-0a58beeb4a32.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Thanh Hà
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        3 giờ
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Bạn: Tôi sẽ gửi báo cáo vào ngày mai
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Quang Minh, last message: Đã gửi một video, time 5 giờ ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese student, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/7433f687-0424-4fa3-2cc6-050aa6f2152d.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Quang Minh
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        5 giờ
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Đã gửi một video
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            aria-label="Chat with Thu Trang, last message: Bạn: Cảm ơn bạn rất nhiều, time 6 giờ ago"
+                            class="flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer"
+                            role="button"
+                            tabindex="0">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+                                    <img
+                                        alt="Portrait of Vietnamese professional woman, professional headshot with studio lighting, square format"
+                                        class="w-full h-full object-cover"
+                                        height="100"
+                                        loading="lazy"
+                                        src="https://storage.googleapis.com/a1aa/image/ecb7272f-fcc5-40a5-a28a-f997a2eff0c9.jpg"
+                                        width="100"/>
+                                </div>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <span class="font-medium truncate flex-1 select-text">
+                                        Thu Trang
+                                    </span>
+                                    <span class="text-xs text-gray-400 ml-2 whitespace-nowrap select-none">
+                                        6 giờ
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate select-text">
+                                    Bạn: Cảm ơn bạn rất nhiều
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Right chat area -->
+            <div
+                class="flex-1 flex flex-col min-w-0">
+                <!-- Chat header -->
+                <div
+                    aria-label="Chat header with Công chúa của anhhh3"
+                    class="p-4 border-b border-gray-700 flex items-center min-w-0 flex-shrink-0">
+                    <div class="flex items-center min-w-0">
+                        <div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                            <img
+                                alt="Cute Hello Kitty plush toy on pink background, high quality product photography, square format"
+                                class="w-full h-full object-cover"
+                                height="100"
+                                loading="lazy"
+                                src="https://storage.googleapis.com/a1aa/image/c16666aa-6bed-4ade-a776-fe6adb06f829.jpg"
+                                width="100"/>
+                        </div>
+                        <div class="ml-3 min-w-0 overflow-hidden">
+                            <div class="font-medium truncate select-text">
+                                Công chúa của anhhh3 ❤️❤️❤️❤️
+                            </div>
+                            <div class="text-xs text-gray-400 truncate select-none">
+                                Đang hoạt động
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ml-auto flex space-x-3">
+                        <button aria-label="Call" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-800">
+                            <i class="ri-phone-line ri-lg text-gray-300"></i>
+                        </button>
+                        <button aria-label="Video call" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-800">
+                            <i class="ri-vidicon-line ri-lg text-gray-300"></i>
+                        </button>
+                        <button aria-label="Information" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-800">
+                            <i class="ri-information-line ri-lg text-gray-300"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Chat messages -->
+                <div class="flex-1 overflow-y-auto p-4 chat-messages bg-gray-900">
+                    <div
+                        class="flex flex-col space-y-4" id="messagesContainer"><!-- Messages will be populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- Chat input -->
+                <div class="p-3 border-t border-gray-700 bg-gray-900 flex-shrink-0">
+                    <div id="replyPreview" class="hidden mb-3 p-3 bg-gray-700 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="text-sm text-purple-400 font-medium">Trả lời</div>
+                                <div class="text-sm text-gray-300" id="replyContent"></div>
+                            </div>
+                            <button onclick="cancelReply()" class="text-gray-400 hover:text-white">
+                                <i class="ri-close-line text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="relative flex-1 mx-2">
+                            <textarea
+                                aria-label="Type a message"
+                                id="messageInput"
+                                class="w-full bg-gray-800 text-white rounded-lg py-2 px-4 chat-input border-none resize-none max-h-[120px]
+                                    overflow-y-auto"
+                                placeholder="Aa"
+                                oninput="autoResize(this)"
+                                onkeypress="handleKeyPress(event)"
+                                rows="1"
+                                style="line-height: 1.5;"></textarea>
+                            <div class="absolute right-3 top-2">
+                                <label for="fileInput" class="cursor-pointer">
+                                    <i class="ri-attachment-2 text-gray-400"></i>
+                                </label>
+                                <input id="fileInput" type="file" accept="image/*,video/*" class="hidden" onchange="handleFileSelect(event)"/>
+                            </div>
+                        </div>
+                        <button
+                            aria-label="Send message"
+                            onclick="sendMessage()"
+                            class="w-9 h-9 flex items-center justify-center rounded-full text-primary hover:bg-gray-800">
+                            <i class="ri-send-plane-fill ri-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal xem ảnh -->
+        <div id="imageModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 flex items-center justify-center">
+            <div class="relative">
+                <img id="modalImage" class="max-h-[90vh] max-w-[90vw] rounded-lg" src="" alt="Preview"/>
+                <button onclick="closeImageModal()" class="absolute top-2 right-2 text-white text-2xl">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+        </div>
+        <script src="/src/js/user-chat.js"></script>
+    </body>
+</html>

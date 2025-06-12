@@ -637,6 +637,7 @@
                     mediaUrls,
                     likes,
                     commentsCount,
+                    sharesCount,
                     type,
                     tags,
                     createdAt,
@@ -652,7 +653,7 @@
                 const typeIcon = renderType(type);
                 const currentUserId = '{{ user._id }}';
                 // Check if current user has liked the post
-                const isLiked = likes.includes(currentUserId);
+                const isLiked = likes.map((item) => item._id).includes(currentUserId);
                 // Set like button color based on like status
                 const likeButtonColor = isLiked ? 'text-blue-600' : 'text-gray-400';
 
@@ -705,17 +706,42 @@
                             </button>
                             <button type="button" onclick="goToPostDetail('${_id}')">
                                 <i class="far fa-comment"></i>
-                                <span>${commentsCount} Comment</span>
+                                <span>${commentsCount} Bình luận</span>
                             </button>
-                            <button type="button" onclick="copyLink('${_id}')">
-                                <i class="fas fa-copy"></i>
-                                <span>Copy link</span>
+                            <button id="shareButton-${_id}" type="button" onclick="handleShare('${_id}')">
+                                <i class="fas fa-share"></i>
+                                <span>${sharesCount} Chia sẻ</span>
                             </button>
                         </div>
                     </article>
                 `;
             }
 
+            async function handleShare(postId) {
+                const shareButton = document.getElementById('shareButton-' + postId);
+                const shareCount = shareButton.querySelector('span');
+                try {
+                    const response = await fetch(`/posts/share/${postId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Thêm header xác thực nếu cần, ví dụ: 'Authorization': `Bearer ${yourToken}`
+                        }
+                    });
+                    if (! response.ok) {
+                        throw new Error(`HTTP error! Status: ${
+                            response.status
+                        }`);
+                    }
+                    // Lấy dữ liệu từ response
+                    const data = await response.json();
+                    // Cập nhật giao diện
+                    const newShares = data?.data?.sharesCount || parseInt(shareCount.textContent) + 1
+                    shareCount.textContent = `${newShares} Chia sẻ`;
+
+                    copyLink(postId)
+                } catch (error) {}
+            }
             // Handle like button click
             async function handleLike(postId, buttonElement) {
                 try {

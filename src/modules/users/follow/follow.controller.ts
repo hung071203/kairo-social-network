@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Render,
@@ -98,4 +99,31 @@ export class FollowController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Post('block/:id')
+  @UseFilters(AllExceptionsFilter)
+  async blockUser(
+    @GetUser() user: User,
+    @Param('id') id: string,
+  ) {
+    try {
+      return await this.followService.blockUser(user._id as string, id);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Patch('unblock/:id')
+  @UseFilters(AllExceptionsFilter)
+  async unblockUser(
+    @GetUser() user: User,
+    @Param('id') id: string,
+  ) {
+    try {
+      return await this.followService.unblockUser(user._id as string, id);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+  
 }

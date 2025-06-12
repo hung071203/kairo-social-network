@@ -8,7 +8,7 @@ import { SystemNotification } from './systemNotifications.schema';
 @Schema({ timestamps: true })
 export class Notification extends Document {
   @Prop({ type: Types.ObjectId, ref: User.name })
-  userId: Types.ObjectId;
+  user: Types.ObjectId;
 
   @Prop({ required: true })
   title: string;
@@ -23,7 +23,7 @@ export class Notification extends Document {
   isRead: boolean;
 
   @Prop({ type: Types.ObjectId, ref: SystemNotification.name, default: null })
-  systemNotificationId?: Types.ObjectId;
+  systemNotification?: Types.ObjectId;
 
   @Prop({ type: String }) // Đường dẫn frontend để redirect
   redirectUrl?: string;

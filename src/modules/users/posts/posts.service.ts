@@ -86,7 +86,10 @@ export class PostsService {
     if (postId && pagination.page === 1) {
       const pinnedQuery = {
         _id: postId,
-        $or: [{ type: PostTypeEnum.PUBLIC, author: {$nin: blockedIds} }, { author: { $in: followingIds } }],
+        $or: [
+          { type: PostTypeEnum.PUBLIC, author: { $nin: blockedIds } },
+          { author: { $in: followingIds } },
+        ],
       };
 
       pinnedPost = await postModel
@@ -102,7 +105,10 @@ export class PostsService {
     }
 
     const filter: any = {
-      $or: [{ author: { $in: followingIds } }, { type: PostTypeEnum.PUBLIC, author: {$nin: blockedIds} }],
+      $or: [
+        { author: { $in: followingIds } },
+        { type: PostTypeEnum.PUBLIC, author: { $nin: blockedIds } },
+      ],
     };
 
     const excludePostIds = [
@@ -116,7 +122,7 @@ export class PostsService {
 
     if (author) {
       filter.author = new Types.ObjectId(author);
-      if(id === author) {
+      if (id === author) {
         filter.$or.push({ type: PostTypeEnum.PRIVATE });
       }
     }
@@ -170,6 +176,16 @@ export class PostsService {
 
     await post.save();
     return post;
+  }
+
+  async sharePost(userId: string, postId: string) {
+    const post = await this.postRepository.findOneById(postId);
+    if (!post) {
+      throw new Error('Không tìm thấy bài viết');
+    }
+    return await this.postRepository.update(postId, {
+      sharesCount: post.sharesCount + 1,
+    });
   }
 
   async getPostDetail(userId: string, postId: string) {

@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
   ExecutionContext,
+  Inject,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserRole } from 'src/common/enums';
@@ -30,6 +31,7 @@ export class UsersAuthGuard extends AuthGuard('users-jwt') {
 
     return can;
   }
+  
 }
 
 @Injectable()
@@ -75,6 +77,25 @@ export class AdminAuthGuard extends AuthGuard('users-jwt') {
       throw new ForbiddenException(
         'Bạn không có quyền truy cập vào tài nguyên này.',
       );
+    }
+
+    response.locals.user = user; // ✅ Gán vào locals
+    return can;
+  }
+}
+
+@Injectable()
+export class AllGuard extends AuthGuard('users-jwt') {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const can = (await super.canActivate(context)) as boolean;
+
+    const ctx = context.switchToHttp();
+    const request = ctx.getRequest();
+    const response = ctx.getResponse();
+
+    const user = request.user;
+    if (!user) {
+      throw new UnauthorizedException('Không xác thực được người dùng.');
     }
 
     response.locals.user = user; // ✅ Gán vào locals

@@ -92,6 +92,60 @@
                 animation: fadeOutRight 0.5s ease forwards;
             }
         </style>
+        <style>
+            .notification-item:hover {
+                background-color: #3a3b3c;
+            }
+            .notification-item.unread {
+                background-color: #2d3748;
+            }
+            .notification-badge {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+            
+            /* Tab styling */
+            .tab-btn {
+                transition: all 0.2s ease;
+            }
+            .tab-btn:hover {
+                color: white;
+            }
+            
+            /* Responsive dropdown positioning */
+            @media (max-width: 640px) {
+                .dropdown-container {
+                    position: fixed !important;
+                    right: 8px !important;
+                    left: 8px !important;
+                    top: 60px !important;
+                    width: auto !important;
+                }
+            }
+            
+            /* Text overflow handling */
+            .text-clamp-2 {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background-color: #4B5563; /* gray-600 */
+                border-radius: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: #1F2937; /* gray-800 */
+            }
+        </style>
     </head>
     <body class="bg-[#18191A] text-white font-sans min-h-screen flex justify-center">
         <div id="toast-container" class="fixed z-50 space-y-3 p-6 top-6 right-6 max-w-full w-auto"></div>
@@ -137,17 +191,181 @@
                     <div class="flex items-center space-x-2">
                         <button class="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center text-[#B0B3B8] hover:text-white
                                 hover:bg-[#4a4b4c]">
-                            <i class="fab fa-facebook-messenger text-xl"></i>
+                            <i class="fab fa-facebook-messenger text-white"></i>
                         </button>
-                        <button class="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center text-[#B0B3B8] hover:text-white
-                                hover:bg-[#4a4b4c] relative">
-                            <i class="fas fa-bell text-xl"></i>
-                            <!-- Số thông báo chưa đọc -->
-                            <span class="absolute top-0 right-0 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">4</span>
-                        </button>
-                        <div class="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center overflow-hidden">
-                            <img alt="User avatar" class="w-full h-full object-cover" src="{{ user.avatar }}" width="40" height="40"/>
+                        <div class="relative inline-block text-left">
+                            <!-- Notification Button -->
+                            <button id="notificationBtn" class="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center text-[#B0B3B8] hover:text-white
+                                hover:bg-[#4a4b4c]">
+                                <i class="fas fa-bell text-white"></i>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-600 text-[10px] font-semibold rounded-full w-4 h-4 flex items-center
+                    justify-center leading-none">
+                                    0
+                                </span>
+                            </button>
+
+                            <!-- Dropdown -->
+                            <div id="notificationDropdown" class="hidden origin-top-right absolute right-0 mt-2 w-80 sm:w-96 max-w-[90vw] rounded-md shadow-lg bg-[#242526] ring-1 ring-black ring-opacity-5 z-50 overflow-y-auto custom-scrollbar">
+                                <div class="py-2 max-h-[80vh]">
+                                    <!-- Header -->
+                                    <div class="flex justify-between items-center px-4 py-2 border-b border-gray-600">
+                                        <div class="text-lg font-bold text-white">Thông báo</div>
+                                        <button id="markAllRead" class="text-sm text-blue-400 hover:underline focus:outline-none">
+                                            Đánh dấu tất cả đã đọc
+                                        </button>
+                                    </div>
+
+                                    <!-- Tabs -->
+                                    <div class="flex border-b border-gray-600 px-4 mb-2">
+                                        <button class="tab-btn px-3 py-2 text-sm font-semibold text-white border-b-2 border-blue-500 focus:outline-none" data-tab="all">
+                                            Tất cả (<span id="allCount">0</span>)
+                                        </button>
+                                        <button class="tab-btn px-3 py-2 text-sm text-gray-400 hover:text-white border-b-2 border-transparent focus:outline-none" data-tab="unread">
+                                            Chưa đọc (<span id="unreadCount">0</span>)
+                                        </button>
+                                    </div>
+
+                                    <!-- Loading State -->
+                                    <div id="loadingState" class="px-4 py-8 text-center text-gray-400">
+                                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                        <p>Đang tải thông báo...</p>
+                                    </div>
+
+                                    <!-- Empty State -->
+                                    <div id="emptyState" class="hidden px-4 py-8 text-center text-gray-400">
+                                        <i class="fas fa-bell-slash text-3xl mb-2"></i>
+                                        <p>Không có thông báo nào</p>
+                                    </div>
+
+                                    <!-- Notifications List -->
+                                    <div id="notificationsList" class="px-2 pb-2 hidden"></div>
+                                </div>
+                            </div>
                         </div>
+                        <div class="relative" id="dropdownContainer">
+                            <!-- Nút avatar người dùng -->
+                            <button 
+                                id="userAvatar"
+                                class="w-10 h-10 rounded-full border border-gray-600 hover:border-gray-500 transition-colors overflow-hidden focus:outline-none"
+                                aria-label="User profile"
+                            >
+                                <img 
+                                    src="{{ user.avatar}}" 
+                                    alt="Avatar người dùng" 
+                                    class="w-full h-full object-cover"
+                                />
+                            </button>
+
+                            <!-- Menu dropdown -->
+                            <div 
+                                id="dropdownMenu"
+                                class="absolute right-0 mt-2 w-80 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-600 z-50 hidden"
+                                style="background-color: #242526;"
+                            >
+                                <!-- Thông tin người dùng -->
+                                <div class="p-4 border-b border-gray-600" style="border-color: #3a3b3c;">
+                                    <div class="flex items-center space-x-3">
+                                        <img 
+                                            src="{{ user.avatar }}" 
+                                            alt="Avatar"
+                                            class="w-10 h-10 rounded-full"
+                                        />
+                                        <div class="font-medium" style="color: #e4e6ea;">{{user.name}}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Các mục menu -->
+                                <div class="py-2">
+                                    <button class="menu-item w-full flex items-center space-x-3 px-4 py-3 transition-colors text-left" 
+                                            style="color: #e4e6ea;" 
+                                            onclick="window.location.href='/profile/user/{{ user._id }}'"
+                                            onmouseover="this.style.backgroundColor='#3a3b3c'" 
+                                            onmouseout="this.style.backgroundColor='transparent'">
+                                        <i class="fas fa-user w-5" style="color: #b0b3b8;"></i>
+                                        <span class="flex-1">Trang cá nhân</span>
+                                    </button>
+
+                                    <button class="menu-item w-full flex items-center justify-between px-4 py-3 transition-colors group text-left" 
+                                            style="color: #e4e6ea;" 
+                                            onclick="window.location.href='/profile/settings'"
+                                            onmouseover="this.style.backgroundColor='#3a3b3c'" 
+                                            onmouseout="this.style.backgroundColor='transparent'">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-cog w-5" style="color: #b0b3b8;"></i>
+                                            <span>Cài đặt và quyền riêng tư</span>
+                                        </div>
+                                    </button>
+
+                                    <button class="menu-item w-full flex items-center space-x-3 px-4 py-3 transition-colors text-left" 
+                                            style="color: #e4e6ea;" 
+                                            onclick="window.location.href='/auth/logout'"
+                                            onmouseover="this.style.backgroundColor='#3a3b3c'" 
+                                            onmouseout="this.style.backgroundColor='transparent'">
+                                        <i class="fas fa-sign-out-alt w-5" style="color: #b0b3b8;"></i>
+                                        <span class="flex-1">Đăng xuất</span>
+                                    </button>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="px-4 py-3 border-t" style="border-color: #3a3b3c;">
+                                    <div class="text-xs leading-4" style="color: #b0b3b8;">
+                                        <span class="hover:underline cursor-pointer">Quyền riêng tư</span>
+                                        <span class="mx-1">•</span>
+                                        <span class="hover:underline cursor-pointer">Điều khoản</span>
+                                        <span class="mx-1">•</span>
+                                        <span class="hover:underline cursor-pointer">Quảng cáo</span>
+                                        <span class="mx-1">•</span>
+                                        <span class="hover:underline cursor-pointer">Lựa chọn quảng cáo</span>
+                                        <span class="mx-1">•</span>
+                                        <span class="hover:underline cursor-pointer">Cookie</span>
+                                        <span class="mx-1">•</span>
+                                        <span class="hover:underline cursor-pointer">Xem thêm</span>
+                                        <span class="mx-1">•</span>
+                                        <span>KAIRO © 2025</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            // Lấy các phần tử DOM
+                            const userAvatar = document.getElementById('userAvatar');
+                            const dropdownMenu = document.getElementById('dropdownMenu');
+                            const menuItems = document.querySelectorAll('.menu-item');
+                            const dropdownContainer = document.getElementById('dropdownContainer');
+
+                            // Xử lý sự kiện click vào avatar
+                            userAvatar.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                toggleDropdown1();
+                            });
+
+                            // Hàm bật/tắt dropdown
+                            function toggleDropdown1() {
+                                dropdownMenu.classList.toggle('hidden');
+                            }
+
+                            // Đóng dropdown khi click bên ngoài
+                            document.addEventListener('click', function(e) {
+                                if (!dropdownContainer.contains(e.target)) {
+                                    dropdownMenu.classList.add('hidden');
+                                }
+                            });
+
+                            // Ngăn dropdown đóng khi click bên trong menu (trừ menu items)
+                            dropdownMenu.addEventListener('click', function(e) {
+                                if (!e.target.closest('.menu-item')) {
+                                    e.stopPropagation();
+                                }
+                            });
+
+                            // Đóng dropdown khi nhấn ESC
+                            document.addEventListener('keydown', function(e) {
+                                if (e.key === 'Escape') {
+                                    dropdownMenu.classList.add('hidden');
+                                }
+                            });
+                        </script>
                     </div>
                 </div>
                 <!-- Existing post header -->
@@ -181,7 +399,7 @@
                         <i class="far fa-comment text-xl"></i>
                         <span class="text-sm">{{ commentsCount }}</span>
                     </button>
-                    <button class="flex items-center space-x-1 hover:text-[#1877F2]">
+                    <button class="flex items-center space-x-1 hover:text-[#1877F2]" id="shareButton" data-post-id="{{ _id }}">
                         <i class="fas fa-share text-xl"></i>
                         <span class="text-sm">{{ sharesCount }}</span>
                     </button>
@@ -200,6 +418,9 @@
                     const likeButton = document.getElementById('likeButton');
                     const likeIcon = document.getElementById('likeIcon');
                     const likeCount = likeButton.querySelector('span');
+                    const shareButton = document.getElementById('shareButton');
+                    const shareCount = shareButton.querySelector('span');
+
                     // Phần tử hiển thị số like Hàm xử lý sự kiện click nút Like
                     async function handleLike() {
                         const postId = likeButton.getAttribute('data-post-id'); // Lấy ID bài viết
@@ -229,7 +450,37 @@
                             }
                         } catch (error) {}
                     }
+                    async function handleShare() {
+                        const postId = shareButton.getAttribute('data-post-id'); // Lấy ID bài viết
+                        try {
+                            const response = await fetch(`/posts/share/${postId}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    // Thêm header xác thực nếu cần, ví dụ: 'Authorization': `Bearer ${yourToken}`
+                                }
+                            });
+                            if (! response.ok) {
+                                throw new Error(`HTTP error! Status: ${
+                                    response.status
+                                }`);
+                            }
+                            // Lấy dữ liệu từ response
+                            const data = await response.json();
+                            // Cập nhật giao diện
+                            shareCount.textContent = data?.data?.sharesCount || parseInt(shareCount.textContent) + 1; // Tăng số share
+
+                            const postUrl = window.location.origin + `/posts/detail/${postId}`;
+                            await navigator.clipboard.writeText(postUrl);
+                            showToast({
+                                message: "Đã sao chép liên kết bài viết vào clipboard!",
+                                type: "success",
+                                delay: 3000
+                            });
+                        } catch (error) {}
+                    }
                     // Gắn sự kiện click cho nút Like
+                    shareButton.addEventListener('click', handleShare);
                     likeButton.addEventListener('click', handleLike);
                 </script>
                 <div class="flex-1 flex flex-col border-t border-[#3a3b3c] min-h-0">
@@ -861,5 +1112,7 @@
                 init();
             })();
         </script>
+        <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+        <script src="{{ baseUrl }}/src/js/noti-user.js"></script>
     </body>
 </html>

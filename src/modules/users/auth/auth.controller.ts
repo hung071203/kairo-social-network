@@ -131,4 +131,15 @@ export class AuthController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Get('logout')
+  async logout(@WebContext() { req, res }: WebContext) {
+    try {
+      res.clearCookie('hungdev_token_media');
+      req.session.successMessage = 'Đăng xuất thành công!';
+      res.redirect('/auth/login');
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
 }

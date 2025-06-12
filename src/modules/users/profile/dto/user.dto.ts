@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { PaginationDto } from 'src/common/decorators';
 import { UserGenderEnum } from 'src/common/enums';
-import { IsPhoneInVn, MinAge } from 'src/common/validators/custom.validator';
+import { IsPhoneInVn, IsValidPass, MinAge } from 'src/common/validators/custom.validator';
 
 export class SearchUserDto extends PaginationDto {
   @IsString()
@@ -69,4 +69,21 @@ export class UpdateUserDto {
     message: 'Số điện thoại không hợp lệ',
   })
   phone?: string;
+}
+
+export class UpdatePassDto {
+  @IsString()
+  @IsOptional()
+  currentPassword: string;
+
+  @IsValidPass()
+  newPassword: string;
+}
+
+export class ChangeMailDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  otp: string;
 }

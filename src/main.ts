@@ -37,7 +37,7 @@ async function bootstrap() {
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       exceptionFactory: (validationErrors) => {
         const messages = validationErrors.map((error) => {
-          return `Trường ${error.property}: ${Object.values(error.constraints).join(', ')}`;
+          return `${Object.values(error.constraints).join(', ')}`;
         });
 
         // Tạo object lỗi chi tiết thay vì chỉ ném mảng messages

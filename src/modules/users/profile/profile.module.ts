@@ -9,6 +9,7 @@ import {
   FollowInteractionSchema,
 } from 'src/schemas/followInteractions.chema';
 import { FollowInteractionRepository } from 'src/database/repository/followInteraction.repository';
+import { RedisService } from 'src/common/services';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FollowInteractionRepository } from 'src/database/repository/followInter
   controllers: [ProfileController],
   providers: [
     ProfileService,
+    RedisService, // Assuming you have a RedisService for caching or other purposes
     {
       provide: 'UserRepositoryInterface',
       useClass: UserRepository,

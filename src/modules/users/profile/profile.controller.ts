@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   Render,
   UseFilters,
@@ -13,7 +14,12 @@ import {
 import { ProfileService } from './profile.service';
 import { UsersAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { GetUser, Pagination, PaginationDto } from 'src/common/decorators';
-import { SearchUserDto, UpdateUserDto } from './dto/user.dto';
+import {
+  ChangeMailDto,
+  SearchUserDto,
+  UpdatePassDto,
+  UpdateUserDto,
+} from './dto/user.dto';
 import { User } from 'src/schemas/users.schema';
 import { WebExceptionFilter } from 'src/common/filters';
 
@@ -44,7 +50,11 @@ export class ProfileController {
   @Render('users/pages/users/profile.njk')
   async getProfile(@Param('username') username: string, @GetUser() user: User) {
     try {
-      const {user: target, follows, isThisAccount} = await this.profileService.getProfile(user._id as string, username);
+      const {
+        user: target,
+        follows,
+        isThisAccount,
+      } = await this.profileService.getProfile(user._id as string, username);
 
       return {
         title: 'Trang cá nhân' + target.name,
@@ -58,6 +68,20 @@ export class ProfileController {
     }
   }
 
+  @Get('settings')
+  @Render('users/pages/users/settings.njk')
+  async getSettings() {
+    try {
+      return {
+        title: 'Cài đặt tài khoản',
+        content: 'users/pages/users/settings.njk',
+        capchaPublicKey: process.env.CAPTCHA_PUBLIC_KEY,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   @Patch('update')
   async updateProfile(
     @GetUser() user: User,
@@ -65,6 +89,60 @@ export class ProfileController {
   ) {
     try {
       return await this.profileService.updateProfile(user._id as string, dto);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('change-password')
+  async updatePassword(
+    @GetUser() user: User,
+    @Body() dto: UpdatePassDto, // Replace with actual DTO
+  ) {
+    try {
+      return await this.profileService.updatePassword(user._id as string, dto);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('unlink-google')
+  async unlinkGoogle(@GetUser() user: User) {
+    try {
+      return await this.profileService.unlinkGoogle(user._id as string);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('check-username')
+  async checkUsername(@Body('username') username: string) {
+    try {
+      return await this.profileService.checkUsername(username);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('update-username')
+  async updateUsername(
+    @GetUser() user: User,
+    @Body('username') username: string,
+  ) {
+    try {
+      return await this.profileService.updateUsername(
+        user._id as string,
+        username,
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Patch('change-mail')
+  async changeMail(@GetUser() user: User, @Body() dto: ChangeMailDto) {
+    try {
+      return await this.profileService.changeMail(user._id as string, dto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

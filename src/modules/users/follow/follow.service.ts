@@ -1,10 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { FollowInteractionStatusEnum, UserRole } from 'src/common/enums';
+import {
+  FollowInteractionStatusEnum,
+  NotificationType,
+  UserRole,
+} from 'src/common/enums';
 import { FollowInteractionRepositoryInterface } from 'src/database/interface/followInteraction.interface';
 import { FilterFollowDto } from './dto/follow.dto';
 import { PaginationDto } from 'src/common/decorators';
 import { ProfileService } from '../profile/profile.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class FollowService {
@@ -12,6 +17,7 @@ export class FollowService {
     @Inject('FollowInteractionRepositoryInterface')
     private readonly followInteractionRepository: FollowInteractionRepositoryInterface,
     private readonly profileService: ProfileService,
+    private readonly notificationService: NotificationService, // Assuming you have a NotificationService for notifications
   ) {}
 
   getRepository() {
@@ -81,6 +87,9 @@ export class FollowService {
       form.target = new Types.ObjectId(id);
     } else if (tab == 'following') {
       form.status = FollowInteractionStatusEnum.ACCEPTED;
+      form.requester = new Types.ObjectId(id);
+    } else if (tab == 'blockers') {
+      form.status = FollowInteractionStatusEnum.BLOCKED;
       form.requester = new Types.ObjectId(id);
     }
 
@@ -193,6 +202,15 @@ export class FollowService {
         : FollowInteractionStatusEnum.ACCEPTED,
     });
 
+    await this.notificationService.create(targetId, {
+      title: target.isPrivate ? 'Yêu cầu theo dõi mới' : 'Theo dõi mới',
+      type: NotificationType.FOLLOW,
+      message: target.isPrivate
+        ? `${requester.name} đã gửi yêu cầu theo dõi bạn`
+        : `${requester.name} đã theo dõi bạn`,
+      redirectUrl: `/profile/user/${requester._id}`,
+    });
+
     return {
       message: target.isPrivate
         ? 'Yêu cầu theo dõi đã được gửi thành công'
@@ -260,6 +278,26 @@ export class FollowService {
       throw new Error('Người dùng không tồn tại hoặc tài khoản riêng tư');
     }
 
+    const existingBlock = await this.followInteractionRepository
+      .getModel()
+      .findOne({
+        $or: [
+          {
+            requester: new Types.ObjectId(userId),
+            target: new Types.ObjectId(targetId),
+          },
+          {
+            requester: new Types.ObjectId(targetId),
+            target: new Types.ObjectId(userId),
+          },
+        ],
+        status: FollowInteractionStatusEnum.BLOCKED,
+      });
+
+    if (existingBlock) {
+      throw new Error('Không thể thực hiện hành động!');
+    }
+
     await this.followInteractionRepository.getModel().deleteMany({
       $or: [
         {
@@ -278,5 +316,38 @@ export class FollowService {
       target: new Types.ObjectId(targetId),
       status: FollowInteractionStatusEnum.BLOCKED,
     });
+  }
+
+  async unblockUser(userId: string, targetId: string) {
+    const user = await this.profileService.getRepository().findOne({
+      _id: new Types.ObjectId(userId),
+      role: UserRole.USER,
+    });
+    if (!user) {
+      throw new Error('Người dùng không tồn tại');
+    }
+
+    const target = await this.profileService.getRepository().findOne({
+      _id: new Types.ObjectId(targetId),
+      role: UserRole.USER,
+    });
+
+    if (!target) {
+      throw new Error('Người dùng không tồn tại hoặc tài khoản riêng tư');
+    }
+
+    const existingBlock = await this.followInteractionRepository
+      .getModel()
+      .findOne({
+        requester: new Types.ObjectId(userId),
+        target: new Types.ObjectId(targetId),
+        status: FollowInteractionStatusEnum.BLOCKED,
+      });
+
+    if (!existingBlock) {
+      throw new Error('Không có người dùng nào bị chặn');
+    }
+
+    return this.followInteractionRepository.getModel().findByIdAndDelete(existingBlock._id);
   }
 }

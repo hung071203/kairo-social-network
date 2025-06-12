@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateAuthenticationDto } from './create-authentication.dto';
-import { IsGmail } from 'src/common/validators/custom.validator';
+import { IsGmail, IsValidPass } from 'src/common/validators/custom.validator';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { TypeVerifyEmailEnum } from 'src/common/enums';
 
@@ -14,7 +14,7 @@ export class LoginDto {
   })
   email: string;
 
-  @IsString()
+  @IsValidPass()
   password: string;
 
   @IsString()
@@ -52,7 +52,7 @@ export class SignupDto {
   @IsString()
   name: string;
 
-  @IsString()
+  @IsValidPass()
   password: string;
 
   @IsString()

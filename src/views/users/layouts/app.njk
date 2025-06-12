@@ -13,6 +13,7 @@
     <link href="{{ baseUrl }}/social/styles/app.css" rel="stylesheet"/>
     <link
     href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet"/>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     {# customCss #}
     {% block css %}{% endblock %}
     {# customJs #}
@@ -25,7 +26,7 @@
     <!-- Top Nav -->
     <main>
       <div class="flex min-h-screen justify-center">
-        {% if not path.includes('profile/user') %}
+        {% if not path.includes('profile') %}
           <!-- Left Sidebar -->
           {% include 'users/layouts/_leftbar.njk' %}
           <!-- Left Sidebar -->
@@ -36,7 +37,7 @@
           {% block content %}
             <p>Mặc định</p>
           {% endblock %}
-          {% if not path.includes('profile/user') %}
+          {% if not path.includes('profile') %}
             <!-- Post creation box -->
           </section>
           <!-- Main Content -->
@@ -191,6 +192,7 @@
       }
     }
   </script>
+  <script src="{{ baseUrl }}/src/js/noti-user.js"></script>
   {% if successMessage is defined %}
     <script>
       showToast({message: "{{ successMessage }}", type: "success", delay: 5000});

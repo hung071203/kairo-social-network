@@ -85,6 +85,16 @@ export class PostsController {
     }
   }
 
+  @Patch('share/:id')
+  @UseFilters(AllExceptionsFilter)
+  async sharePost(@GetUser() user: User, @Param('id') id: string) {
+    try {
+      return await this.postsService.sharePost(user._id as string, id);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   @Get('detail/:id')
   @Render('users/pages/posts/detail')
   async getPostDetail(@GetUser() user: User, @Param('id') id: string) {

@@ -14,7 +14,7 @@ export class SystemNotification extends Document {
   @Prop({ required: true })
   message: string;
 
-  @Prop({ required: true, Type: [String], enum: SystemNotificationRecipientEnum })
+  @Prop({ required: true, type: [String], enum: SystemNotificationRecipientEnum })
   recipients: SystemNotificationRecipientEnum[];
 
   @Prop({ type: String }) // Đường dẫn frontend để redirect

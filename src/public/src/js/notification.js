@@ -326,7 +326,7 @@ const socketNoti = io(window.location.origin + '/notifications', {
   transports: ['websocket'],
 });
 
-socketNoti.on('connect', () => {
+socketNoti.on('connected', () => {
   console.log('Connected to notifications socketNoti');
 });
 
