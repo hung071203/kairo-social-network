@@ -31,15 +31,10 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   replyTo?: string;
-}
 
-export class MarkAsReadDto {
+  @IsOptional()
   @IsString()
-  conversationId: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  messageIds: string[];
+  tempId?: string;
 }
 
 export class SearchMessageDto {
@@ -49,7 +44,13 @@ export class SearchMessageDto {
 
 export class AddReactionDto {
   @IsString()
-  emoji: string;
+  reaction?: string;
+
+  @IsString()
+  messageId: string;
+
+  @IsString()
+  conversationId: string;
 }
 
 export class UpdateNicknameDto {

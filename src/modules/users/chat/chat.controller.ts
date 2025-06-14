@@ -1,9 +1,24 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Render, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Render,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { AllGuard } from 'src/common/guards/jwt/jwt.guard';
 import { GetUser, Pagination, PaginationDto } from 'src/common/decorators';
 import { User } from 'src/schemas/users.schema';
-import { CreateConversationDto, GetConversationsDto, GetMessagesDto, SendMessageDto } from './dto/chat.dto';
+import {
+  CreateConversationDto,
+  GetConversationsDto,
+  GetMessagesDto,
+  SendMessageDto,
+} from './dto/chat.dto';
 
 @Controller('chat')
 @UseGuards(AllGuard)
@@ -39,7 +54,11 @@ export class ChatController {
     @Pagination() pagi: PaginationDto,
   ) {
     try {
-      return await this.chatService.getConversations(user._id as string, dto.search, pagi);
+      return await this.chatService.getConversations(
+        user._id as string,
+        dto.search,
+        pagi,
+      );
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -52,22 +71,7 @@ export class ChatController {
     @Pagination() pagi: PaginationDto,
   ) {
     try {
-      return await this.chatService.getMessages(
-        dto,
-        pagi,
-      );
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
-  }
-
-  @Post('message')
-  async createMessage(
-    @GetUser() user: User,
-    @Body() dto: SendMessageDto
-  ) {
-    try {
-      return await this.chatService.createMessage(user._id as string, dto);
+      return await this.chatService.getMessages(dto, pagi);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

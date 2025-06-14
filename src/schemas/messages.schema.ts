@@ -19,11 +19,8 @@ export class Message extends Document {
   @Prop({ type: [{ type: Types.ObjectId, ref: User.name }], default: [] })
   readBy: Types.ObjectId[];
 
-  @Prop({ type: Boolean, default: false })
-  isDeletedBySender: boolean;
-
-  @Prop({ type: Boolean, default: false })
-  isDeletedByReceiver: boolean;
+  @Prop({ type: [{ type: Types.ObjectId, ref: User.name }], default: [] })
+  deletedBy: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: Conversation.name, required: true })
   conversation: Types.ObjectId;
@@ -34,15 +31,15 @@ export class Message extends Document {
   @Prop({
     type: [
       {
-        emoji: { type: String }, // ví dụ: 👍, ❤️, 😂
-        userId: { type: Types.ObjectId, ref: User.name },
+        reaction: { type: String }, // ví dụ: 👍, ❤️, 😂
+        user: { type: Types.ObjectId, ref: User.name },
       },
     ],
     default: [],
   })
   reactions: {
-    emoji: string;
-    userId: Types.ObjectId;
+    reaction: string;
+    user: Types.ObjectId;
   }[];
 }
 

@@ -12,6 +12,10 @@ import { Server, Socket } from 'socket.io';
 import { MessageTypeEnum } from 'src/common/enums';
 import { RedisService } from 'src/common/services';
 import { ChatService } from 'src/modules/users/chat/chat.service';
+import {
+  AddReactionDto,
+  SendMessageDto,
+} from 'src/modules/users/chat/dto/chat.dto';
 
 @WebSocketGateway({
   cors: {
@@ -62,12 +66,7 @@ export class MessageGateway {
   @SubscribeMessage('send-message')
   async handleSendMessage(
     @MessageBody()
-    dto: {
-      conversationId: string;
-      content: string;
-      type: MessageTypeEnum; // Assuming type is a string, adjust as necessary
-      replyTo?: string;
-    },
+    dto: SendMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
     const userId = client.data.user?.sub as string;
@@ -87,13 +86,55 @@ export class MessageGateway {
       });
       return;
     }
-    
+
     try {
       const message = await this.chatService.createMessage(userId, dto);
-      this.server.to(dto.conversationId).emit('messageReceived', message);
-      client.emit('messageSent', message);
+      this.server
+        .to(dto.conversationId)
+        .emit('messageReceived', { ...message, tempId: dto.tempId });
       this.logger.log(
         `User ${userId} sent a message in conversation ${dto.conversationId}`,
+      );
+    } catch (error) {
+      client.emit('error', { message: error.message });
+    }
+  }
+
+  @SubscribeMessage('reaction-message')
+  async handleReactionMessage(
+    @MessageBody() dto: AddReactionDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userId = client.data.user?.sub as string;
+    if (!dto.messageId || !dto.conversationId || !dto.reaction) {
+      client.emit('error', {
+        message: 'Dữ liệu yêu cầu thiếu.',
+      });
+      return;
+    }
+
+    const checkConversation = await this.redisService.sIsMember(
+      `${process.env.APP_ID}:socket:users-inroom:${userId}`,
+      dto.conversationId,
+    );
+    if (!checkConversation) {
+      client.emit('error', {
+        message: 'Bạn không có quyền gửi phản ứng trong nhóm trò chuyện này.',
+      });
+      return;
+    }
+
+    try {
+      const reactions = await this.chatService.addReaction(
+        userId,
+        dto.messageId,
+        dto.reaction,
+      );
+      this.server
+        .to(dto.conversationId)
+        .emit('reactionReceived', { reactions, messageId: dto.messageId });
+      this.logger.log(
+        `User ${userId} reacted to message ${dto.messageId} in conversation ${dto.conversationId}`,
       );
     } catch (error) {
       client.emit('error', { message: error.message });
