@@ -30,8 +30,3 @@ export enum MessageTypeEnum {
   VIDEO = 'VIDEO',
   FILE = 'FILE',
 }
-
-export enum MessageStatusEnum {
-  SENT = 'SENT',
-  FAILED = 'FAILED',
-}

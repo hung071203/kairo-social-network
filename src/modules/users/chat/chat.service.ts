@@ -4,7 +4,6 @@ import { PaginationDto } from 'src/common/decorators';
 import { ConversationRepositoryInterface } from 'src/database/interface/conversation.interface';
 import { MessageRepositoryInterface } from 'src/database/interface/message.interface';
 import { CreateConversationDto, GetMessagesDto, SendMessageDto } from './dto/chat.dto';
-import { MessageStatusEnum } from 'src/common/enums';
 import { FollowService } from '../follow/follow.service';
 
 @Injectable()
@@ -93,7 +92,6 @@ export class ChatService {
       sender: new Types.ObjectId(userId),
       content: dto.content,
       type: dto.type,
-      status: MessageStatusEnum.SENT,
       replyTo: dto.replyTo ? new Types.ObjectId(dto.replyTo) : null,
     });
   }

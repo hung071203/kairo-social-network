@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 import { User } from './users.schema';
-import { MessageStatusEnum, MessageTypeEnum } from 'src/common/enums';
+import { MessageTypeEnum } from 'src/common/enums';
 import { Conversation } from './conversation.schema';
 
 @Schema({ timestamps: true })
@@ -24,9 +24,6 @@ export class Message extends Document {
 
   @Prop({ type: Boolean, default: false })
   isDeletedByReceiver: boolean;
-
-  @Prop({ type: String, enum: MessageStatusEnum, default: MessageStatusEnum.SENT })
-  status: MessageStatusEnum;
 
   @Prop({ type: Types.ObjectId, ref: Conversation.name, required: true })
   conversation: Types.ObjectId;
