@@ -71,7 +71,7 @@ export class ChatController {
     @Pagination() pagi: PaginationDto,
   ) {
     try {
-      return await this.chatService.getMessages(dto, pagi);
+      return await this.chatService.getMessages(user._id.toString(), dto, pagi);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

@@ -69,6 +69,10 @@ export class MessageGateway {
     dto: SendMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
+    //Lưu ý: chỉ hỗ trợ text, ảnh hoặc video
+    //Nếu đầu vào là ảnh hoạc video phải gọi function uploadFile rồi lấy kết quả url emit lên
+    // Quan trọng: 1 lần chỉ gửi dc 1 ảnh hoặc 1 video, và không thể gửi kèm text
+
     const userId = client.data.user?.sub as string;
     if (!dto.conversationId || !dto.content || !dto.type) {
       client.emit('error', {
@@ -135,6 +139,80 @@ export class MessageGateway {
         .emit('reactionReceived', { reactions, messageId: dto.messageId });
       this.logger.log(
         `User ${userId} reacted to message ${dto.messageId} in conversation ${dto.conversationId}`,
+      );
+    } catch (error) {
+      client.emit('error', { message: error.message });
+    }
+  }
+
+  @SubscribeMessage('hide-message')
+  async handleHideMessage(
+    @MessageBody() dto: { messageId: string; conversationId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userId = client.data.user?.sub as string;
+    if (!dto.messageId || !dto.conversationId) {
+      client.emit('error', {
+        message: 'Dữ liệu yêu cầu thiếu.',
+      });
+      return;
+    }
+
+    const checkConversation = await this.redisService.sIsMember(
+      `${process.env.APP_ID}:socket:users-inroom:${userId}`,
+      dto.conversationId,
+    );
+    if (!checkConversation) {
+      client.emit('error', {
+        message: 'Bạn không có quyền ẩn tin nhắn trong nhóm trò chuyện này.',
+      });
+      return;
+    }
+
+    try {
+      await this.chatService.hideMessageForUser(userId, dto.messageId);
+      this.server
+        .to(dto.conversationId)
+        .emit('messageHidden', { messageId: dto.messageId });
+      this.logger.log(
+        `User ${userId} hide message ${dto.messageId} in conversation ${dto.conversationId}`,
+      );
+    } catch (error) {
+      client.emit('error', { message: error.message });
+    }
+  }
+
+  @SubscribeMessage('delete-message')
+  async handleDeleteMessage(
+    @MessageBody() dto: { messageId: string; conversationId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userId = client.data.user?.sub as string;
+    if (!dto.messageId || !dto.conversationId) {
+      client.emit('error', {
+        message: 'Dữ liệu yêu cầu thiếu.',
+      });
+      return;
+    }
+
+    const checkConversation = await this.redisService.sIsMember(
+      `${process.env.APP_ID}:socket:users-inroom:${userId}`,
+      dto.conversationId,
+    );
+    if (!checkConversation) {
+      client.emit('error', {
+        message: 'Bạn không có quyền xóa tin nhắn trong nhóm trò chuyện này.',
+      });
+      return;
+    }
+
+    try {
+      await this.chatService.delMessage(userId, dto.messageId);
+      this.server
+        .to(dto.conversationId)
+        .emit('messageDeleted', { messageId: dto.messageId });
+      this.logger.log(
+        `User ${userId} deleted message ${dto.messageId} in conversation ${dto.conversationId}`,
       );
     } catch (error) {
       client.emit('error', { message: error.message });

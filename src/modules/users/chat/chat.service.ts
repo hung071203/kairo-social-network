@@ -66,13 +66,16 @@ export class ChatService {
     return this.conversationRepository.findAllCustom(userId, search, pagi);
   }
 
-  async getMessages(dto: GetMessagesDto, pagi: PaginationDto) {
+  async getMessages(userId: string, dto: GetMessagesDto, pagi: PaginationDto) {
     return this.messageRepository.findAll(
       {
         conversation: new Types.ObjectId(dto.conversationId),
         ...(dto.createdAt
           ? { createdAt: { $lt: new Date(dto.createdAt) } }
           : {}),
+          deletedBy: {
+            $nin: [new Types.ObjectId(userId)],
+          },
       },
       {
         ...pagi,
