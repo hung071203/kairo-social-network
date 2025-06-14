@@ -33,7 +33,5 @@ export enum MessageTypeEnum {
 
 export enum MessageStatusEnum {
   SENT = 'SENT',
-  DELIVERED = 'DELIVERED',
-  READ = 'READ',
   FAILED = 'FAILED',
 }

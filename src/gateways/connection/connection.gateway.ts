@@ -50,7 +50,10 @@ export class ConnectionGateway implements OnGatewayConnection {
           `${process.env.APP_ID}:socket:users-online`,
           decoded.sub,
         );
-        client.join(decoded.sub);
+        await this.redis.sAdd(
+          `${process.env.APP_ID}:socket:users-inroom:${decoded.sub}`,
+          decoded.sub,
+        );
         await this.redis.set(decoded.sub, client.id); // Lưu socket ID với thời gian hết hạn 1 giờ
         client.data.user = decoded; // Lưu user ID vào dữ liệu của client
         client.emit('connected', {
@@ -83,13 +86,15 @@ export class ConnectionGateway implements OnGatewayConnection {
         user.sub,
       );
       await this.redis.del(
+        `${process.env.APP_ID}:socket:users-inroom:${user.sub}`, // Xóa socket ID khỏi Redis
+      );
+      await this.redis.del(
         user.sub, // Xóa socket ID khỏi Redis
       );
       this.sendUserOnline();
       this.logger.log(
         `User ${user.sub} disconnected from socket ID ${client.id}`,
       );
-      client.leave(user.sub);
     }
   }
 

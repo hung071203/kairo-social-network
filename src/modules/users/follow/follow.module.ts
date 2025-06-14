@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { forwardRef, Global, Module } from '@nestjs/common';
 import { FollowService } from './follow.service';
 import { FollowController } from './follow.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -11,6 +11,7 @@ import { UsersModule } from '../users.module';
 import { ProfileModule } from '../profile/profile.module';
 import { NotificationModule } from '../notification/notification.module';
 
+@Global() // Đánh dấu module là global
 @Module({
   imports: [
     //

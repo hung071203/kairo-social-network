@@ -16,6 +16,12 @@ export class Conversation extends Document {
   })
   participants: { user: Types.ObjectId; nickname?: string }[];
 
+  @Prop({ type: String, default: null })
+  lastMessage?: string; // id của message cuối cùng
+
+  @Prop({ type: Date, default: null })
+  lastMessageAt?: Date; // thời gian của message cuối cùng
+
   @Prop({ type: Boolean, default: false })
   isGroup: boolean;
 

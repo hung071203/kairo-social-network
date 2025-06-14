@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -7,6 +7,7 @@ import { MessageRepository } from 'src/database/repository/message.repository';
 import { Conversation, ConversationSchema } from 'src/schemas/conversation.schema';
 import { ConversationRepository } from 'src/database/repository/conversation.repository';
 
+@Global() // Đánh dấu module là global
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }, {
@@ -25,5 +26,6 @@ import { ConversationRepository } from 'src/database/repository/conversation.rep
       useClass: ConversationRepository, // Assuming you have a repository class for Conversation
     }
   ],
+  exports: [ChatService]
 })
 export class ChatModule {}
