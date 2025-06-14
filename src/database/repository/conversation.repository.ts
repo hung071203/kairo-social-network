@@ -65,6 +65,7 @@ export class ConversationRepository
           name: 1,
           isGroup: 1,
           lastMessageAt: 1,
+          lastMessage: 1,
           participants: 1,
           populatedUsers: {
             username: 1,

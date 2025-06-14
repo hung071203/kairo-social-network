@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Post, Query, Render, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Render, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { AllGuard } from 'src/common/guards/jwt/jwt.guard';
 import { GetUser, Pagination, PaginationDto } from 'src/common/decorators';
@@ -61,10 +61,10 @@ export class ChatController {
     }
   }
 
-  @Get('create/message')
+  @Post('message')
   async createMessage(
     @GetUser() user: User,
-    @Query() dto: SendMessageDto
+    @Body() dto: SendMessageDto
   ) {
     try {
       return await this.chatService.createMessage(user._id as string, dto);

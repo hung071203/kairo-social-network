@@ -87,6 +87,14 @@ export class ChatService {
       );
     }
 
+    await this.conversationRepository.update(
+      dto.conversationId,
+      {
+        lastMessage: dto.content,
+        lastMessageAt: new Date(),
+      }
+    )
+
     return this.messageRepository.create({
       conversation: new Types.ObjectId(dto.conversationId),
       sender: new Types.ObjectId(userId),
