@@ -71,6 +71,7 @@ export class MessageGateway {
   ) {
     //Lưu ý: chỉ hỗ trợ text, ảnh hoặc video
     //Nếu đầu vào là ảnh hoạc video phải gọi function uploadFile rồi lấy kết quả url emit lên
+    // Khi gửi tin nhắn, cần hiện tin nhắn đó với trạng thái đang gửi trước, nếu nhận sk messageReceived với tempId trùng thì sẽ xóa trạng thái đang gửi đó
     // Quan trọng: 1 lần chỉ gửi dc 1 ảnh hoặc 1 video, và không thể gửi kèm text
 
     const userId = client.data.user?.sub as string;
