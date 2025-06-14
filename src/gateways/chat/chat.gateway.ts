@@ -69,11 +69,18 @@ export class MessageGateway {
     dto: SendMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
-    //Lưu ý: chỉ hỗ trợ text, ảnh hoặc video
-    //Nếu đầu vào là ảnh hoạc video phải gọi function uploadFile rồi lấy kết quả url emit lên
-    // Khi gửi tin nhắn, cần hiện tin nhắn đó với trạng thái đang gửi trước, nếu nhận sk messageReceived với tempId trùng thì sẽ xóa trạng thái đang gửi đó
-    // Quan trọng: 1 lần chỉ gửi dc 1 ảnh hoặc 1 video, và không thể gửi kèm text
-
+    // Chỉ hỗ trợ gửi một trong ba loại: tin nhắn văn bản, hình ảnh hoặc video.
+    // Nếu nội dung là hình ảnh hoặc video, cần gọi hàm uploadFile trước để lấy URL,
+    // sau đó mới emit tin nhắn với URL đó lên server.
+    //
+    // Khi gửi tin nhắn, cần hiển thị tạm thời tin nhắn với trạng thái "đang gửi".
+    // Nếu nhận được sự kiện 'messageReceived' từ server với cùng tempId,
+    // cần xoá tin nhắn tạm thời đó để thay thế bằng bản chính thức.
+    //
+    // Lưu ý quan trọng:
+    // - Mỗi lần gửi chỉ được một trong ba loại: text, ảnh hoặc video.
+    // - Không được gửi kèm text với ảnh hoặc video trong cùng một tin nhắn.
+    
     const userId = client.data.user?.sub as string;
     if (!dto.conversationId || !dto.content || !dto.type) {
       client.emit('error', {
