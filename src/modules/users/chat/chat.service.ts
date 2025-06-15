@@ -45,6 +45,18 @@ export class ChatService {
       if (blockedIds.map((item) => item.toString()).includes(participantId)) {
         throw new Error('Bạn không thể trò chuyện với người dùng đã chặn bạn.');
       }
+
+      const isExist = await this.conversationRepository.findOne({
+        participants: {
+          $all: [
+            { $elemMatch: { user: new Types.ObjectId(userId) } },
+            { $elemMatch: { user: new Types.ObjectId(participantId) } },
+          ],
+        },
+      });
+      if (isExist) {
+        throw new Error('Nhóm trò chuyện đã tồn tại.');
+      }
     }
 
     if (!dto.participantIds.includes(userId)) dto.participantIds.push(userId);

@@ -1075,7 +1075,7 @@ function selectConversation(conversation) {
   
   // Join conversation room via socket
   if (socket && socket.connected) {
-    socket.emit('join-room', { conversationId: conversation._id });
+    //socket.emit('join-room', { conversationId: conversation._id });
   }
   
   // Load messages
@@ -1200,7 +1200,7 @@ function initializeSocket() {
   // Socket event handlers
   socket.on('connected', (data) => {
     console.log('Connected to chat server:', data);
-    showToast({ message: 'Đã kết nối thành công', type: 'success' });
+    socket.emit('join-room', { });
   });
 
   socket.on('joined-room', (data) => {
