@@ -35,6 +35,72 @@
         <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet"/>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet"/>
         <link href="/src/css/customchat.css" rel="stylesheet"/>
+        <style>
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @keyframes fadeOutRight {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(50px);
+                }
+            }
+            .toast {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background-color: #3a3b3c;
+                color: #e4e6eb;
+                border-radius: 0.75rem;
+                padding: 1rem 1.25rem;
+                min-width: 320px;
+                max-width: 400px;
+                font-size: 0.95rem;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+                animation: slideInRight 0.4s ease forwards;
+                position: relative;
+                opacity: 1;
+                transition: opacity 0.5s ease, transform 0.5s ease;
+            }
+            .toast.success {
+                background-color: #4e944f;
+            }
+            .toast.error {
+                background-color: #a94442;
+            }
+            .toast.warning {
+                background-color: #b58b00;
+            }
+            .toast.info {
+                background-color: #3a3b3c;
+            }
+            .toast .message {
+                flex-grow: 1;
+                color: #fff;
+            }
+            .toast .close-btn {
+                background: transparent;
+                border: none;
+                color: #b0b3b8;
+                font-size: 1.2rem;
+                margin-left: 1rem;
+                cursor: pointer;
+            }
+            .toast.closing {
+                animation: fadeOutRight 0.5s ease forwards;
+            }
+        </style>
     </head>
     <body>
         <div id="toast-container" class="fixed z-50 space-y-3 p-6 top-6 right-6 max-w-full w-auto"></div>
@@ -70,7 +136,8 @@
                 </div>
                 <!-- Chat list -->
                 <div class="overflow-y-auto chat-list flex-1">
-                    <div class="p-2 space-y-1">
+                    <div
+                        class="p-2 space-y-1">
                         <!-- Conversations will be loaded here via JavaScript -->
                         <div id="conversationLoading" class="hidden p-4 text-center">
                             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
@@ -89,11 +156,7 @@
                     class="p-4 border-b border-gray-700 flex items-center min-w-0 flex-shrink-0">
                     <div class="flex items-center min-w-0">
                         <div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
-                            <img
-                                id="headerAvatar"
-                                alt="Avatar"
-                                class="w-full h-full object-cover"
-                                src="/images/kairo.jpg"/>
+                            <img id="headerAvatar" alt="Avatar" class="w-full h-full object-cover" src="/images/kairo.jpg"/>
                         </div>
                         <div class="ml-3 min-w-0 overflow-hidden">
                             <div id="headerName" class="font-medium truncate select-text">
