@@ -851,6 +851,7 @@ async function loadMessages(conversationId, loadMore = false) {
     const params = new URLSearchParams({
       conversationId,
       limit: 20,
+      page: 1,
       ...(messageCreatedAt && { createdAt: messageCreatedAt })
     });
     
