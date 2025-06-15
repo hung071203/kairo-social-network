@@ -565,102 +565,221 @@ async function sendMessage() {
 
 // Socket event handlers
 function handleMessageReceived(data) {
-  console.log('Message received:', data);
-  
-  // Check if this is a response to a temporary message
-  if (data.tempId && tempMessages.has(data.tempId)) {
-    // Find and update the temporary message
-    const tempIndex = messages.findIndex(m => m._id === data.tempId);
-    if (tempIndex !== -1) {
-      // Update the temporary message to remove "sending" status
-      messages[tempIndex] = {
-        ...messages[tempIndex],  // Keep existing message data
-        ...data.message,         // Update with server response
-        _id: data.tempId,        // Keep the temp ID for UI consistency
-        isTemp: false,           // No longer temporary
-        status: 'sent'           // Mark as successfully sent
-      };
-      tempMessages.delete(data.tempId);
-      
-      // Just update the specific message element instead of re-rendering all
-      updateMessageStatus(data.tempId);
-      
-      // Still need to update conversation list for temp messages
-      updateConversationLastMessage(data.message);
+  try {
+    console.log('Message received:', data);
+    debugMessageReceived(data); // Add debug info
+    
+    // Handle two possible data structures:
+    // 1. data.message exists (old format)
+    // 2. data itself is the message (new format from your socket)
+    let message = data.message || data;
+    
+    // Validate incoming data
+    if (!message || !message._id) {
+      console.error('Invalid message data received:', data);
       return;
     }
-  }
-  
-  // Add new message if it's in current conversation
-  if (data.message.conversationId === currentConversationId) {
-    messages.push(data.message);
     
-    // Add the new message element to the container instead of re-rendering all
-    const container = document.getElementById('messagesContainer');
-    const messageElement = createMessageElement(data.message);
-    container.appendChild(messageElement);
+    // Check if this is a response to a temporary message (từ user hiện tại)
+    if (data.tempId && tempMessages.has(data.tempId)) {
+      // Validate that we have the necessary data for updating temp message
+      if (!message._id) {
+        console.error('Missing message ID in temp message response:', data);
+        return;
+      }
+      
+      // Find and update the temporary message
+      const tempIndex = messages.findIndex(m => m._id === data.tempId);
+      if (tempIndex !== -1) {
+        // Update the temporary message to remove "sending" status
+        messages[tempIndex] = {
+          ...messages[tempIndex],  // Keep existing message data
+          ...message,              // Update with server response
+          _id: message._id,        // Use real message ID from server
+          isTemp: false,           // No longer temporary
+          status: 'sent'           // Mark as successfully sent
+        };
+        tempMessages.delete(data.tempId);
+        
+        // Update the message element with real ID
+        const messageElement = document.querySelector(`[data-message-id="${data.tempId}"]`);
+        if (messageElement) {
+          messageElement.setAttribute('data-message-id', message._id);
+        }
+        
+        // Just update the specific message element instead of re-rendering all
+        updateMessageStatus(message._id);
+        
+        // Still need to update conversation list for temp messages
+        updateConversationLastMessage(message);
+        return;
+      }
+    }
     
-    // Scroll to bottom
-    const chatContainer = document.querySelector('.chat-messages');
-    setTimeout(() => {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }, 100);
+    // Xử lý tin nhắn mới từ người khác hoặc tin nhắn không có tempId
+    const isFromCurrentUser = message.sender && message.sender._id === currentUser?._id;
+    
+    // Nếu là tin nhắn từ user hiện tại mà không có tempId, có thể là tin nhắn đã gửi từ device khác
+    // Hoặc là tin nhắn từ người khác
+    // Kiểm tra xem tin nhắn đã tồn tại trong danh sách chưa (tránh duplicate)
+    const existingMessageIndex = messages.findIndex(m => m._id === message._id);
+    
+    if (existingMessageIndex === -1) {
+      // Tin nhắn mới chưa tồn tại, thêm vào danh sách
+      // Add new message if it's in current conversation
+      if (message.conversation === currentConversationId || message.conversationId === currentConversationId) {
+        // Insert message in correct chronological order
+        const insertIndex = insertMessageInOrder(message);
+        
+        // Render message at correct position
+        renderNewMessageAtPosition(message, insertIndex);
+        
+        // Scroll to bottom for new messages from others, or maintain position for own messages from other devices
+        const chatContainer = document.querySelector('.chat-messages');
+        if (chatContainer) {
+          if (!isFromCurrentUser) {
+            // Tin nhắn từ người khác - scroll to bottom
+            setTimeout(() => {
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+          } else {
+            // Tin nhắn từ chính mình nhưng từ device khác - có thể giữ vị trí hoặc scroll nhẹ
+            setTimeout(() => {
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+          }
+        }
+        
+        // Show notification for messages from others
+        if (!isFromCurrentUser) {
+          showNewMessageNotification(message);
+        }
+      }
+    }
+    
+    // Always update conversation list last message regardless of current conversation
+    // Make sure to add conversationId if it doesn't exist
+    const messageForConversation = {
+      ...message,
+      conversationId: message.conversationId || message.conversation
+    };
+    updateConversationLastMessage(messageForConversation);
+  } catch (error) {
+    console.error('Error in handleMessageReceived:', error);
+    console.error('Data that caused error:', data);
+    showToast({
+      message: 'Lỗi khi xử lý tin nhắn nhận được',
+      type: 'error'
+    });
   }
-  
-  // Update conversation list last message
-  updateConversationLastMessage(data.message);
 }
 
 function handleReactionReceived(data) {
-  console.log('Reaction received:', data);
-  
-  // Find and update message with new reactions
-  const messageIndex = messages.findIndex(m => m._id === data.messageId);
-  if (messageIndex !== -1) {
-    // Update the message reactions with the complete reactions array from server
-    messages[messageIndex].reactions = data.reactions || [];
+  try {
+    console.log('Reaction received:', data);
     
-    // Update only the specific message element instead of re-rendering all messages
-    updateMessageReactions(data.messageId, data.reactions);
+    // Validate data
+    if (!data || !data.messageId) {
+      console.error('Invalid reaction data received:', data);
+      return;
+    }
+    
+    // Find and update message with new reactions
+    const messageIndex = messages.findIndex(m => m._id === data.messageId);
+    if (messageIndex !== -1) {
+      // Update the message reactions with the complete reactions array from server
+      messages[messageIndex].reactions = data.reactions || [];
+      
+      // Update only the specific message element instead of re-rendering all messages
+      updateMessageReactions(data.messageId, data.reactions);
+    }
+  } catch (error) {
+    console.error('Error in handleReactionReceived:', error);
+    showToast({
+      message: 'Lỗi khi xử lý phản ứng',
+      type: 'error'
+    });
   }
 }
 
 function handleMessageDeleted(data) {
-  console.log('Message deleted:', data);
-  
-  // Remove message from current conversation
-  if (data.conversationId === currentConversationId) {
-    messages = messages.filter(m => m._id !== data.messageId);
-    renderMessages();
+  try {
+    console.log('Message deleted:', data);
+    
+    // Validate data
+    if (!data || !data.messageId || !data.conversationId) {
+      console.error('Invalid message delete data received:', data);
+      return;
+    }
+    
+    // Remove message from current conversation
+    if (data.conversationId === currentConversationId) {
+      messages = messages.filter(m => m._id !== data.messageId);
+      renderMessages();
+    }
+  } catch (error) {
+    console.error('Error in handleMessageDeleted:', error);
+    showToast({
+      message: 'Lỗi khi xử lý xóa tin nhắn',
+      type: 'error'
+    });
   }
 }
 
 function handleMessageHidden(data) {
-  console.log('Message hidden:', data);
-  
-  // Similar to delete but maybe with different UI indication
-  handleMessageDeleted(data);
+  try {
+    console.log('Message hidden:', data);
+    
+    // Similar to delete but maybe with different UI indication
+    handleMessageDeleted(data);
+  } catch (error) {
+    console.error('Error in handleMessageHidden:', error);
+    showToast({
+      message: 'Lỗi khi xử lý ẩn tin nhắn',
+      type: 'error'
+    });
+  }
 }
 
 function updateConversationLastMessage(message) {
-  console.log('Updating conversation last message:', message);
-  
-  // Find and update conversation in the list
-  const conversationIndex = conversations.findIndex(c => c._id === message.conversationId);
-  console.log('Found conversation index:', conversationIndex);
+  try {
+    console.log('Updating conversation last message:', message);
+    
+    // Validate message data
+    if (!message || !message.conversationId) {
+      console.error('Invalid message data for conversation update:', message);
+      return;
+    }
+    
+    // Find and update conversation in the list
+    const conversationIndex = conversations.findIndex(c => c._id === message.conversationId);
+    console.log('Found conversation index:', conversationIndex);
   
   if (conversationIndex !== -1) {
-    // Format last message based on type
+    // Format last message based on type and sender
     let lastMessageText = message.content;
+    const isFromCurrentUser = message.sender && message.sender._id === currentUser?._id;
+    const senderName = message.sender?.name || 'Ai đó';
+    
     switch (message.type) {
       case 'IMAGE':
-        lastMessageText = '📷 Đã gửi một hình ảnh';
+        lastMessageText = isFromCurrentUser ? '📷 Bạn đã gửi một hình ảnh' : `📷 ${senderName} đã gửi một hình ảnh`;
         break;
       case 'VIDEO':
-        lastMessageText = '🎥 Đã gửi một video';
+        lastMessageText = isFromCurrentUser ? '🎥 Bạn đã gửi một video' : `🎥 ${senderName} đã gửi một video`;
         break;
       default:
-        lastMessageText = message.content;
+        // For text messages, show sender name if not from current user
+        if (!isFromCurrentUser && conversations[conversationIndex]?.isGroup) {
+          // In group chats, show sender name for others' messages
+          lastMessageText = `${senderName}: ${message.content}`;
+        } else if (!isFromCurrentUser && !conversations[conversationIndex]?.isGroup) {
+          // In 1-on-1 chats, just show the message content
+          lastMessageText = message.content;
+        } else {
+          // For current user's messages
+          lastMessageText = `Bạn: ${message.content}`;
+        }
     }
     
     console.log('Updating conversation with last message:', lastMessageText);
@@ -668,6 +787,12 @@ function updateConversationLastMessage(message) {
     // Update conversation data
     conversations[conversationIndex].lastMessage = lastMessageText;
     conversations[conversationIndex].lastMessageAt = message.createdAt;
+    
+    // Add unread indicator for messages from others
+    if (!isFromCurrentUser && message.conversationId !== currentConversationId) {
+      // Mark conversation as having unread messages
+      conversations[conversationIndex].hasUnread = true;
+    }
     
     // Only move to top if it's not already at index 0
     if (conversationIndex !== 0) {
@@ -695,12 +820,28 @@ function updateConversationLastMessage(message) {
         if (timeEl) {
           timeEl.textContent = formatTime(message.createdAt);
         }
+        
+        // Add/remove unread indicator
+        if (!isFromCurrentUser && message.conversationId !== currentConversationId) {
+          // Add unread indicator
+          let unreadDot = existingElement.querySelector('.unread-dot');
+          if (!unreadDot) {
+            const avatarContainer = existingElement.querySelector('.relative');
+            if (avatarContainer) {
+              unreadDot = document.createElement('div');
+              unreadDot.className = 'unread-dot absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900';
+              avatarContainer.appendChild(unreadDot);
+            }
+          }
+        }
       }
-    }
-  } else {
+    }  } else {
     console.warn('Conversation not found in list:', message.conversationId);
     // If conversation not found, try to reload conversations
     loadConversations();
+  }
+  } catch (error) {
+    console.error('Error updating conversation last message:', error);
   }
 }
 
@@ -1001,8 +1142,7 @@ function createConversationElement(conversation) {
   const lastMessageTime = conversation.lastMessageAt 
     ? formatTime(conversation.lastMessageAt) 
     : '';
-  
-  div.innerHTML = `
+    div.innerHTML = `
     <div class="relative">
       <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
         <img
@@ -1013,6 +1153,7 @@ function createConversationElement(conversation) {
           src="${avatar}"
           width="48"/>
       </div>
+      ${conversation.hasUnread ? '<div class="unread-dot absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900"></div>' : ''}
     </div>
     <div class="ml-3 flex-1 min-w-0">
       <div class="flex items-center">
@@ -1044,6 +1185,18 @@ function selectConversation(conversation) {
   const conversationElement = document.querySelector(`[data-conversation-id="${conversation._id}"]`);
   if (conversationElement) {
     conversationElement.classList.add('bg-primary', 'bg-opacity-20');
+    
+    // Remove unread indicator when selecting conversation
+    const unreadDot = conversationElement.querySelector('.unread-dot');
+    if (unreadDot) {
+      unreadDot.remove();
+    }
+  }
+  
+  // Mark conversation as read in data
+  const conversationIndex = conversations.findIndex(c => c._id === conversation._id);
+  if (conversationIndex !== -1) {
+    conversations[conversationIndex].hasUnread = false;
   }
   
   // Reset message state for new conversation
@@ -1227,20 +1380,23 @@ function initializeSocket() {
     // Clear all temporary messages
     tempMessages.clear();
   });
-
   socket.on('messageReceived', (data) => {
+    console.log('Socket received messageReceived event:', data);
     handleMessageReceived(data);
   });
 
   socket.on('reactionReceived', (data) => {
+    console.log('Socket received reactionReceived event:', data);
     handleReactionReceived(data);
   });
 
   socket.on('messageDeleted', (data) => {
+    console.log('Socket received messageDeleted event:', data);
     handleMessageDeleted(data);
   });
 
   socket.on('messageHidden', (data) => {
+    console.log('Socket received messageHidden event:', data);
     handleMessageHidden(data);
   });
 
@@ -1360,6 +1516,7 @@ async function initializeApp() {
   
   try {
     await getCurrentUser();
+    requestNotificationPermission(); // Request notification permission
     await initializeSocket();
     initializeScrollHandlers();
     initializeSearch();
@@ -1552,4 +1709,135 @@ function updateMessageReactions(messageId, reactions) {
       messageBubble.insertAdjacentHTML('beforeend', reactionsHtml);
     }
   }
+}
+
+// Helper function to show new message notification
+function showNewMessageNotification(message) {
+  if (!message.sender) return;
+  
+  const isFromCurrentUser = message.sender._id === currentUser?._id;
+  if (isFromCurrentUser) return; // Don't show notification for own messages
+  
+  // Only show notification if:
+  // 1. The message is not from current conversation, OR
+  // 2. The page is not in focus/visible
+  const shouldShowNotification = 
+    message.conversationId !== currentConversationId || 
+    !document.hasFocus() || 
+    document.hidden;
+    
+  if (shouldShowNotification) {
+    let notificationText = '';
+    const senderName = message.sender.name || 'Ai đó';
+    
+    switch (message.type) {
+      case 'IMAGE':
+        notificationText = `${senderName} đã gửi một hình ảnh`;
+        break;
+      case 'VIDEO':
+        notificationText = `${senderName} đã gửi một video`;
+        break;
+      default:
+        notificationText = `${senderName}: ${message.content}`;
+    }
+    
+    showToast({
+      message: notificationText,
+      type: 'info',
+      delay: 3000
+    });
+    
+    // Try to show browser notification if permission granted
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Tin nhắn mới', {
+        body: notificationText,
+        icon: message.sender.avatar || '/images/kairo.jpg'
+      });
+    }
+  }
+}
+
+// Request notification permission on app init
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// Helper function to insert message in correct chronological order
+function insertMessageInOrder(newMessage) {
+  if (!newMessage || !newMessage.createdAt) {
+    console.error('Invalid message for insertion:', newMessage);
+    return messages.length; // Return end position as fallback
+  }
+  
+  const messageTime = new Date(newMessage.createdAt).getTime();
+  
+  // Find the correct position to insert the message
+  let insertIndex = messages.length;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const existingMessageTime = new Date(messages[i].createdAt).getTime();
+    if (messageTime > existingMessageTime) {
+      insertIndex = i + 1;
+      break;
+    }
+    if (messageTime <= existingMessageTime) {
+      insertIndex = i;
+    }
+  }
+  
+  // Insert the message at the correct position
+  messages.splice(insertIndex, 0, newMessage);
+  
+  return insertIndex;
+}
+
+// Helper function to render new message at correct position
+function renderNewMessageAtPosition(message, position) {
+  const container = document.getElementById('messagesContainer');
+  if (!container) {
+    console.error('Messages container not found');
+    return null;
+  }
+  
+  if (!message) {
+    console.error('Invalid message for rendering:', message);
+    return null;
+  }
+  
+  const messageElement = createMessageElement(message);
+  
+  if (position >= container.children.length) {
+    // Add to end
+    container.appendChild(messageElement);
+  } else {
+    // Insert at specific position
+    const nextElement = container.children[position];
+    container.insertBefore(messageElement, nextElement);
+  }
+  
+  return messageElement;
+}
+
+// Debug function to check message received
+function debugMessageReceived(data) {
+  console.group('🔔 Message Received Debug');
+  console.log('Raw data:', data);
+  
+  // Handle both data structures
+  const message = data.message || data;
+  
+  console.log('Data has message property:', !!data?.message);
+  console.log('Message object:', message);
+  console.log('Message has _id:', !!message?._id);
+  console.log('Message has sender:', !!message?.sender);
+  console.log('Current user:', currentUser);
+  console.log('Current conversation:', currentConversationId);
+  console.log('Message conversation (conversationId):', message?.conversationId);
+  console.log('Message conversation (conversation):', message?.conversation);
+  console.log('Message sender:', message?.sender);
+  console.log('Is from current user:', message?.sender?._id === currentUser?._id);
+  console.log('Has tempId:', !!data.tempId);
+  console.log('TempMessages map:', tempMessages);
+  console.groupEnd();
 }

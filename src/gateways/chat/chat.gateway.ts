@@ -65,7 +65,6 @@ export class MessageGateway {
             ],
           },
         });
-        console.log(isExist, participantId, userId);
 
         if (!isExist) {
           await conversationRepository.create({
