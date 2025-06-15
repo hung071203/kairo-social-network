@@ -79,7 +79,10 @@ export class MessageGateway {
     @ConnectedSocket() client: Socket,
   ) {
     const userId = client.data.user?.sub as string;
+    dto = dto[0] || dto; // Handle array or single object
     if (!dto.conversationId || !dto.content || !dto.type) {
+      console.log('dto', dto);
+      
       client.emit('error', {
         message: 'Dữ liệu yêu cầu thiếu.',
       });
@@ -97,10 +100,10 @@ export class MessageGateway {
     }
 
     try {
-      const message = await this.chatService.createMessage(userId, dto);
+      const message: any = await this.chatService.createMessage(userId, dto);
       this.server
         .to(dto.conversationId)
-        .emit('messageReceived', { ...message, tempId: dto.tempId });
+        .emit('messageReceived', { ...message._doc, tempId: dto.tempId });
       this.logger.log(
         `User ${userId} sent a message in conversation ${dto.conversationId}`,
       );

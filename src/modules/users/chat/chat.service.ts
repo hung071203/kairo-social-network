@@ -73,9 +73,9 @@ export class ChatService {
         ...(dto.createdAt
           ? { createdAt: { $lt: new Date(dto.createdAt) } }
           : {}),
-          deletedBy: {
-            $nin: [new Types.ObjectId(userId)],
-          },
+        deletedBy: {
+          $nin: [new Types.ObjectId(userId)],
+        },
       },
       {
         ...pagi,
@@ -114,13 +114,31 @@ export class ChatService {
       lastMessageAt: new Date(),
     });
 
-    return this.messageRepository.create({
+    const data = await this.messageRepository.create({
       conversation: new Types.ObjectId(dto.conversationId),
       sender: new Types.ObjectId(userId),
       content: dto.content,
       type: dto.type,
       replyTo: dto.replyTo ? new Types.ObjectId(dto.replyTo) : null,
     });
+
+    return this.messageRepository
+      .getModel()
+      .findById(data._id)
+      .populate([
+        {
+          path: 'sender',
+          select: 'name username avatar',
+        },
+        {
+          path: 'replyTo',
+          populate: {
+            path: 'sender',
+            select: 'name username avatar',
+          },
+        },
+      ])
+      .exec();
   }
 
   async addReaction(userId: string, messageId: string, reaction: string) {

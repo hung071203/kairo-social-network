@@ -73,15 +73,9 @@ function handleFileSelect(event) {
       event.target.value = '';
       return;
     }
-    console.log(
-      'Selected file:',
-      file.name,
-      'Type:',
-      file.type,
-      'Size:',
-      file.size,
-    );
-    // Add your logic to handle the file (e.g., preview, upload, etc.)
+    
+    // Auto-send when file is selected
+    sendMessage();
   }
 }
 
@@ -121,96 +115,27 @@ function autoResize(textarea) {
 
 let currentReply = null;
 let messageIdCounter = 0;
+let conversations = [];
+let messages = [];
+let currentConversationId = null;
+let currentUser = null;
+let isLoadingConversations = false;
+let isLoadingMessages = false;
+let conversationPage = 1;
+let messageCreatedAt = null;
+let hasMoreConversations = true;
+let hasMoreMessages = true;
+let currentSearchQuery = '';
 
-// Sample messages
-const sampleMessages = [
-  {
-    id: ++messageIdCounter,
-    type: 'received',
-    content: 'Công chúa của anhhh3 ❤️❤️❤️❤️',
-    time: '19:30',
-    author: 'Công chúa của anhhh3',
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'received',
-    content: 'image',
-    time: '19:32',
-    author: 'Công chúa của anhhh3',
-    isImage: true,
-    imageUrl:
-      'https://storage.googleapis.com/a1aa/image/f1fa1f8d-541c-4235-1226-2d7b8a6fdbab.jpg',
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'sent',
-    content: 'video',
-    time: '19:35',
-    author: 'Bạn',
-    isVideo: true,
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'received',
-    content: 'Iu chồng nhé 💋',
-    time: '19:40',
-    author: 'Công chúa của anhhh3',
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'received',
-    content: 'Em đã xét tiền đến hôm 18/6',
-    time: '19:42',
-    author: 'Công chúa của anhhh3',
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'received',
-    content: 'Là tun phạm (wel)',
-    time: '19:44',
-    author: 'Công chúa của anhhh3',
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'received',
-    content: 'Nha hru em mua trả sau hết mấy 600k oy hihi',
-    time: '22:06',
-    author: 'Công chúa của anhhh3',
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'sent',
-    content: 'a đây 25t r mà đi học báo 2k cx k ai tin',
-    time: '22:10',
-    author: 'Bạn',
-    reactions: [],
-  },
-  {
-    id: ++messageIdCounter,
-    type: 'sent',
-    content: 'Vậy à, em cẩn thận nhé!',
-    time: '22:12',
-    author: 'Bạn',
-    replyTo: {
-      author: 'Công chúa của anhhh3',
-      content: 'Nha hru em mua trả sau hết mấy 600k oy hihi',
-    },
-    reactions: ['❤️', '👍'],
-  },
-];
+// Socket connection
+let socket = null;
+let tempMessages = new Map(); // Store temporary messages while sending
 
 function renderMessages() {
   const container = document.getElementById('messagesContainer');
   container.innerHTML = '';
 
-  sampleMessages.forEach((message) => {
+  messages.forEach((message) => {
     const messageDiv = createMessageElement(message);
     container.appendChild(messageDiv);
   });
@@ -218,53 +143,60 @@ function renderMessages() {
 
 function createMessageElement(message) {
   const messageDiv = document.createElement('div');
-  messageDiv.className = `message-wrapper ${message.type}`;
-  messageDiv.dataset.messageId = message.id;
+  const isCurrentUser = message.sender && message.sender._id === currentUser?._id;
+  messageDiv.className = `message-wrapper ${isCurrentUser ? 'sent' : 'received'} ${message.isTemp ? 'temp-message' : ''}`;
+  messageDiv.dataset.messageId = message._id;
 
   let avatarHtml = '';
-  if (message.type === 'received') {
+  if (!isCurrentUser) {
+    const senderAvatar = message.sender?.avatar || '/images/kairo.jpg';
     avatarHtml = `
-                    <div class="avatar">
-                        <img class="w-full h-full object-cover" src="https://storage.googleapis.com/a1aa/image/c16666aa-6bed-4ade-a776-fe6adb06f829.jpg" alt="Avatar"/>
-                    </div>
-                `;
+      <div class="avatar">
+        <img class="w-full h-full object-cover" src="${senderAvatar}" alt="Avatar"/>
+      </div>
+    `;
   }
 
   let replyHtml = '';
   if (message.replyTo) {
+    const replyAuthor = message.replyTo.sender?.name || 'Người dùng';
+    const replyContent = message.replyTo.content || '';
     replyHtml = `
-                    <div class="reply-message">
-                        <div class="reply-author">${message.replyTo.author}</div>
-                        <div class="reply-content">${message.replyTo.content}</div>
-                    </div>
-                `;
+      <div class="reply-message">
+        <div class="reply-author">${replyAuthor}</div>
+        <div class="reply-content">${replyContent}</div>
+      </div>
+    `;
   }
 
   let contentHtml = '';
-  if (message.isImage) {
-    contentHtml = `
-    <img
-      class="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition"
-      src="${message.imageUrl}"
-      alt="Image"
-      onclick="openImageModal('${message.imageUrl}')"
-    />`;
-  } else if (message.isVideo) {
-    contentHtml = `
-                    <video controls class="rounded-lg w-full h-auto" preload="metadata">
-                        
-                        <source src="https://redirector.googlevideo.com/videoplayback?expire=1749713830&ei=RS9KaL_7POfOp-oP0KX7qAQ&ip=176.1.134.163&id=o-AFu126Q9r1wdA0TYia2oHsW5GxJInYxLNiRVo8HIONgj&itag=18&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1749692230%2C&mh=18&mm=31%2C29&mn=sn-uxax4vopj5qx-q0n6%2Csn-4g5edn6r&ms=au%2Crdu&mv=m&mvi=2&pl=17&rms=au%2Cau&initcwndbps=1965000&bui=AY1jyLOjN6MB1sb5x3Ynx44N5-UWstvWldkpEMivYokd7Ncjfq_EgB_jqeqbs_r85cQ9FnlaFuhfVFSf&spc=l3OVKTZVeu9sBr4oxx40cp6ZcsfpmyzmrlYMZzblxH-inJ-E2-1WfM4&vprv=1&svpuc=1&mime=video%2Fmp4&ns=_I02lB7b3-ufNp-wpXfFuWkQ&rqh=1&cnr=14&ratebypass=yes&dur=996.646&lmt=1739911603886714&mt=1749691739&fvip=4&fexp=51331020%2C51466643&c=MWEB&sefc=1&txp=5538534&n=1-35PzbS77i8qQ&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Ccnr%2Cratebypass%2Cdur%2Clmt&sig=AJfQdSswRAIgRovv1qLm_UQ2cJrEuZP2OBz5mNonwxWFAeIa1-4yvacCIAtL0vxUOfyKbY69fw7y6fe0Thruq_Eucm-ZgVyHuLWp&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=APaTxxMwRAIgK8DpnDxZ_pOkgjqspuank4MPizEqagrwYz7eqsKfnxsCIBSV6ZGRm4KSNospC93YVc1xZkQOHSgHvmbsenz_yMN9&pot=MnTYkNl6j5Owa9isxLC1xoArtf4ZuvD91TRSg1TSHePGD9fl8aPng-csKvwQYdFAIYp4WquIUg6g22mMEsf9hB-J9FNj9w0XltVTVp7PG3aWU0_mFcVLo4xcArSgbnduj8C6p41ekxb0TS7Boxsz0682kIFvXw==" type="video/mp4"/>
-                    </video>
-                `;
-  } else {
-    contentHtml = `<p>${message.content}</p>`;
+  switch (message.type) {
+    case 'IMAGE':
+      contentHtml = `
+        <img
+          class="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition"
+          src="${message.content}"
+          alt="Image"
+          onclick="openImageModal('${message.content}')"
+        />`;
+      break;
+    case 'VIDEO':
+      contentHtml = `
+        <video controls class="rounded-lg w-full h-auto" preload="metadata">
+          <source src="${message.content}" type="video/mp4"/>
+        </video>
+      `;
+      break;
+    default:
+      contentHtml = `<p>${message.content}</p>`;
   }
 
   let reactionsHtml = '';
   if (message.reactions && message.reactions.length > 0) {
     const reactionGroups = {};
-    message.reactions.forEach((reaction) => {
-      reactionGroups[reaction] = (reactionGroups[reaction] || 0) + 1;
+    message.reactions.forEach((reactionObj) => {
+      const emoji = reactionObj.reaction;
+      reactionGroups[emoji] = (reactionGroups[emoji] || 0) + 1;
     });
 
     const reactionElements = Object.entries(reactionGroups)
@@ -276,53 +208,72 @@ function createMessageElement(message) {
 
     reactionsHtml = `<div class="flex flex-wrap mt-1">${reactionElements}</div>`;
   }
+  // Message status indicator for temporary messages
+  let statusHtml = '';
+  if (message.isTemp) {
+    statusHtml = `
+      <div class="message-status text-xs text-gray-400 mt-1">
+        <i class="ri-time-line animate-pulse"></i> Đang gửi...
+      </div>
+    `;
+  } else if (message.isFailed) {
+    statusHtml = `
+      <div class="message-status text-xs text-red-400 mt-1 cursor-pointer" onclick="retryMessage('${message._id}')">
+        <i class="ri-error-warning-line"></i> Gửi thất bại. Nhấn để thử lại
+      </div>
+    `;
+  }
 
   const action = `
-                        <div class="message-controls">
-                            <div class="relative">
-                                <button onclick="toggleReactionPicker(event, ${message.id})" class="reaction-btn">
-                                    <i class="ri-emotion-line"></i>
-                                </button>
-                                <div class="reaction-picker" id="reactionPicker${message.id}">
-                                    <button onclick="addReaction(${message.id}, '❤️')">❤️</button>
-                                    <button onclick="addReaction(${message.id}, '😊')">😊</button>
-                                    <button onclick="addReaction(${message.id}, '😂')">😂</button>
-                                    <button onclick="addReaction(${message.id}, '👍')">👍</button>
-                                    <button onclick="addReaction(${message.id}, '😮')">😮</button>
-                                    <button onclick="addReaction(${message.id}, '😢')">😢</button>
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <button onclick="toggleMenu(event, ${message.id})" class="more-btn">
-                                    <i class="ri-more-line"></i>
-                                </button>
-                                <div class="context-menu hidden" id="menu${message.id}">
-                                    <button onclick="handleReply(${message.id}, '${message.content.replace(/'/g, "\\'")}', '${message.author}')">
-                                        <i class="ri-reply-line"></i>Reply
-                                    </button>
-                                    <button onclick="handleDelete(${message.id})">
-                                        <i class="ri-delete-bin-line"></i>Xóa tin nhắn
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
+    <div class="message-controls">
+      <div class="relative">
+        <button onclick="toggleReactionPicker(event, '${message._id}')" class="reaction-btn">
+          <i class="ri-emotion-line"></i>
+        </button>
+        <div class="reaction-picker" id="reactionPicker${message._id}">
+          <button onclick="addReaction('${message._id}', '❤️')">❤️</button>
+          <button onclick="addReaction('${message._id}', '😊')">😊</button>
+          <button onclick="addReaction('${message._id}', '😂')">😂</button>
+          <button onclick="addReaction('${message._id}', '👍')">👍</button>
+          <button onclick="addReaction('${message._id}', '😮')">😮</button>
+          <button onclick="addReaction('${message._id}', '😢')">😢</button>
+        </div>
+      </div>
+      <div class="relative">
+        <button onclick="toggleMenu(event, '${message._id}')" class="more-btn">
+          <i class="ri-more-line"></i>
+        </button>
+        <div class="context-menu hidden" id="menu${message._id}">
+          <button onclick="handleReply('${message._id}', '${message.content.replace(/'/g, "\\'")}', '${message.sender?.name || 'Người dùng'}')">
+            <i class="ri-reply-line"></i>Reply
+          </button>
+          ${isCurrentUser && !message.isTemp ? `<button onclick="handleDelete('${message._id}')">
+            <i class="ri-delete-bin-line"></i>Xóa tin nhắn
+          </button>` : ''}
+        </div>
+      </div>
+    </div>`;
+
+  const messageTime = formatTime(message.createdAt);
+  const senderName = message.sender?.name || 'Người dùng';
 
   messageDiv.innerHTML = `
-                ${avatarHtml}
-                <div class="message-content">
-                    ${message.type === 'received' ? `<div class="sender-name">${message.author}</div>` : ''}
-                    <div class="flex items-end ${message.type === 'sent' ? 'justify-end' : ''}">
-                        ${message.type === 'sent' ? action : ''}
-                        <div class="message-bubble ${message.type} p-3 rounded-lg ${message.replyTo ? 'reply-animation' : ''} p-1 max-w-[500px] group relative">
-                            ${replyHtml}
-                            ${contentHtml}
-                            <div class="time-tooltip">${message.time}</div>
-                            ${reactionsHtml}
-                        </div>
-                        ${message.type === 'received' ? action : ''}
-                    </div>
-                </div>
-            `;
+    ${avatarHtml}
+    <div class="message-content">
+      ${!isCurrentUser ? `<div class="sender-name">${senderName}</div>` : ''}
+      <div class="flex items-end ${isCurrentUser ? 'justify-end' : ''}">
+        ${isCurrentUser && !message.isTemp ? action : ''}
+        <div class="message-bubble ${isCurrentUser ? 'sent' : 'received'} p-3 rounded-lg ${message.replyTo ? 'reply-animation' : ''} p-1 max-w-[500px] group relative ${message.isTemp ? 'opacity-70' : ''}">
+          ${replyHtml}
+          ${contentHtml}
+          <div class="time-tooltip">${messageTime}</div>
+          ${reactionsHtml}
+          ${statusHtml}
+        </div>
+        ${!isCurrentUser && !message.isTemp ? action : ''}
+      </div>
+    </div>
+  `;
 
   return messageDiv;
 }
@@ -366,14 +317,16 @@ function toggleMenu(event, messageId) {
 }
 
 function addReaction(messageId, emoji) {
-  const message = sampleMessages.find((m) => m.id === messageId);
-  if (message) {
-    if (!message.reactions) {
-      message.reactions = [];
-    }
-    message.reactions.push(emoji);
-    renderMessages();
+  if (!socket || !currentConversationId) {
+    showToast({ message: 'Không thể gửi phản ứng lúc này.', type: 'error' });
+    return;
   }
+
+  socket.emit('reaction-message', {
+    messageId: messageId,
+    conversationId: currentConversationId,
+    reaction: emoji
+  });
 
   // Close reaction picker
   document
@@ -402,47 +355,235 @@ function cancelReply() {
 }
 
 function handleDelete(messageId) {
-  const messageIndex = sampleMessages.findIndex((m) => m.id === messageId);
-  if (messageIndex !== -1) {
-    sampleMessages.splice(messageIndex, 1);
-    renderMessages();
+  if (!socket || !currentConversationId) {
+    showToast({ message: 'Không thể xóa tin nhắn lúc này.', type: 'error' });
+    return;
+  }
+
+  if (confirm('Bạn có chắc chắn muốn xóa tin nhắn này?')) {
+    socket.emit('delete-message', {
+      messageId: messageId,
+      conversationId: currentConversationId
+    });
   }
 }
 
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById('messageInput');
+  const fileInput = document.getElementById('fileInput');
   const content = input.value.trim();
+  const file = fileInput.files[0];
 
-  if (content) {
-    const newMessage = {
-      id: ++messageIdCounter,
-      type: 'sent',
-      content: content,
-      time: new Date().toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      author: 'Bạn',
-      reactions: [],
+  if (!content && !file) {
+    return;
+  }
+
+  if (!socket || !currentConversationId) {
+    showToast({ message: 'Không thể gửi tin nhắn lúc này.', type: 'error' });
+    return;
+  }
+
+  try {
+    let messageContent = content;
+    let messageType = 'TEXT';
+    
+    // Handle file upload if there's a file
+    if (file) {
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        showToast({ message: 'Chỉ hỗ trợ tệp hình ảnh và video.', type: 'error' });
+        return;
+      }
+
+      // Show uploading state
+      showToast({ message: 'Đang tải lên tệp...', type: 'info' });
+      
+      const fileUrl = await uploadFile(file);
+      if (!fileUrl) {
+        showToast({ message: 'Lỗi khi tải lên tệp.', type: 'error' });
+        return;
+      }
+
+      messageContent = fileUrl;
+      messageType = file.type.startsWith('image/') ? 'IMAGE' : 'VIDEO';
+      
+      // Clear file input
+      fileInput.value = '';
+    }
+
+    // Generate temporary ID
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Create temporary message for immediate display
+    const tempMessage = {
+      _id: tempId,
+      content: messageContent,
+      type: messageType,
+      sender: currentUser,
+      createdAt: new Date().toISOString(),
+      isTemp: true,
+      replyTo: currentReply ? {
+        _id: currentReply.messageId,
+        content: currentReply.content,
+        sender: { name: currentReply.author }
+      } : null
+    };    // Add temporary message to display
+    tempMessages.set(tempId, tempMessage);
+    messages.push(tempMessage);
+    
+    // Add the new message element to the container instead of re-rendering all
+    const container = document.getElementById('messagesContainer');
+    const messageElement = createMessageElement(tempMessage);
+    container.appendChild(messageElement);
+
+    // Clear input and reply
+    input.value = '';
+    if (currentReply) {
+      cancelReply();
+    }// Scroll to bottom
+    const chatContainer = document.querySelector('.chat-messages');
+    setTimeout(() => {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }, 100);
+
+    // Emit message to server
+    const messageData = {
+      conversationId: currentConversationId,
+      content: messageContent,
+      type: messageType,
+      tempId: tempId
     };
 
     if (currentReply) {
-      newMessage.replyTo = {
-        author: currentReply.author,
-        content: currentReply.content,
+      messageData.replyTo = currentReply.messageId;
+    }    console.log('Sending message data:', messageData);
+    socket.emit('send-message', messageData);
+    
+    // Set timeout to mark message as failed if no response received
+    cleanupFailedMessage(tempId);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    showToast({ message: 'Lỗi khi gửi tin nhắn.', type: 'error' });
+    
+    // Mark the temporary message as failed
+    const messageIndex = messages.findIndex(m => m._id === tempId);
+    if (messageIndex !== -1) {
+      messages[messageIndex] = {
+        ...messages[messageIndex],
+        isFailed: true,
+        isTemp: false,
+        status: 'failed'
       };
-      cancelReply();
+      updateMessageStatus(tempId);
     }
+    tempMessages.delete(tempId);
+  }
+}
 
-    sampleMessages.push(newMessage);
-    renderMessages();
-    input.value = '';
-
+// Socket event handlers
+function handleMessageReceived(data) {
+  console.log('Message received:', data);
+  
+  // Check if this is a response to a temporary message
+  if (data.tempId && tempMessages.has(data.tempId)) {
+    // Find and update the temporary message
+    const tempIndex = messages.findIndex(m => m._id === data.tempId);
+    if (tempIndex !== -1) {
+      // Update the temporary message to remove "sending" status
+      messages[tempIndex] = {
+        ...messages[tempIndex],  // Keep existing message data
+        ...data.message,         // Update with server response
+        _id: data.tempId,        // Keep the temp ID for UI consistency
+        isTemp: false,           // No longer temporary
+        status: 'sent'           // Mark as successfully sent
+      };
+      tempMessages.delete(data.tempId);
+      
+      // Just update the specific message element instead of re-rendering all
+      updateMessageStatus(data.tempId);
+      return;
+    }
+  }
+    // Add new message if it's in current conversation
+  if (data.message.conversationId === currentConversationId) {
+    messages.push(data.message);
+    
+    // Add the new message element to the container instead of re-rendering all
+    const container = document.getElementById('messagesContainer');
+    const messageElement = createMessageElement(data.message);
+    container.appendChild(messageElement);
+    
     // Scroll to bottom
     const chatContainer = document.querySelector('.chat-messages');
     setTimeout(() => {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }, 100);
+  }
+  
+  // Update conversation list last message
+  updateConversationLastMessage(data.message);
+}
+
+function handleReactionReceived(data) {
+  console.log('Reaction received:', data);
+  
+  // Find and update message with new reaction
+  const messageIndex = messages.findIndex(m => m._id === data.messageId);
+  if (messageIndex !== -1) {
+    if (!messages[messageIndex].reactions) {
+      messages[messageIndex].reactions = [];
+    }
+    
+    // Check if user already reacted with this emoji
+    const existingReaction = messages[messageIndex].reactions.find(
+      r => r.user === data.userId && r.reaction === data.reaction
+    );
+    
+    if (existingReaction) {
+      // Remove existing reaction
+      messages[messageIndex].reactions = messages[messageIndex].reactions.filter(
+        r => !(r.user === data.userId && r.reaction === data.reaction)
+      );
+    } else {
+      // Add new reaction
+      messages[messageIndex].reactions.push({
+        user: data.userId,
+        reaction: data.reaction
+      });
+    }
+    
+    renderMessages();
+  }
+}
+
+function handleMessageDeleted(data) {
+  console.log('Message deleted:', data);
+  
+  // Remove message from current conversation
+  if (data.conversationId === currentConversationId) {
+    messages = messages.filter(m => m._id !== data.messageId);
+    renderMessages();
+  }
+}
+
+function handleMessageHidden(data) {
+  console.log('Message hidden:', data);
+  
+  // Similar to delete but maybe with different UI indication
+  handleMessageDeleted(data);
+}
+
+function updateConversationLastMessage(message) {
+  // Find and update conversation in the list
+  const conversationIndex = conversations.findIndex(c => c._id === message.conversationId);
+  if (conversationIndex !== -1) {
+    conversations[conversationIndex].lastMessage = message.content;
+    conversations[conversationIndex].lastMessageAt = message.createdAt;
+    
+    // Move conversation to top
+    const conversation = conversations.splice(conversationIndex, 1)[0];
+    conversations.unshift(conversation);
+    
+    renderConversations();
   }
 }
 
@@ -474,5 +615,720 @@ document.addEventListener('click', function (event) {
   }
 });
 
-// Initialize
-renderMessages();
+// API Functions
+async function loadConversations(search = '') {
+  // Reset on new search or first load
+  if (search !== currentSearchQuery || conversationPage === 1) {
+    conversations = [];
+    conversationPage = 1;
+    hasMoreConversations = true;
+    currentSearchQuery = search;
+  }
+  
+  if (isLoadingConversations || !hasMoreConversations) return;
+    isLoadingConversations = true;
+  showConversationLoading();
+  
+  console.log('Loading conversations...', { page: conversationPage, search });
+  
+  try {
+    const params = new URLSearchParams({
+      page: conversationPage,
+      limit: 20,
+      ...(search && { search })
+    });
+    
+    const url = `/chat/conversation?${params}`;
+    console.log('Fetching conversations from:', url);
+      const response = await fetch(url);
+    console.log('Response status:', response.status);
+    
+    const result = await response.json();
+    console.log('Conversations result:', result);
+    
+    if (result && result.success && result.data && result.data.length > 0) {
+      const data = result.data;
+      
+      if (conversationPage === 1) {
+        conversations = data;
+      } else {
+        conversations.push(...data);
+      }
+      
+      if (data.length < 20) {
+        hasMoreConversations = false;
+      }
+      
+      conversationPage++;
+      renderConversations();
+    } else {
+      hasMoreConversations = false;
+    }
+  } catch (error) {
+    console.error('Error loading conversations:', error);
+    showToast({
+      message: 'Lỗi khi tải danh sách cuộc trò chuyện',
+      type: 'error'
+    });
+  } finally {
+    hideConversationLoading();
+    isLoadingConversations = false;
+  }
+}
+
+async function loadMessages(conversationId, loadMore = false) {
+  if (isLoadingMessages || (!loadMore && !hasMoreMessages)) return;
+  
+  if (!loadMore) {
+    messages = [];
+    messageCreatedAt = null;
+    hasMoreMessages = true;
+  }
+  
+  isLoadingMessages = true;
+  showMessageLoading();
+  
+  try {
+    const params = new URLSearchParams({
+      conversationId,
+      limit: 20,
+      ...(messageCreatedAt && { createdAt: messageCreatedAt })
+    });
+      const response = await fetch(`/chat/messages?${params}`);
+    const result = await response.json();
+    
+    console.log('Messages result:', result);
+    
+    if (result && result.success && result.data && result.data.docs && result.data.docs.length > 0) {
+      const data = result.data;
+      const newMessages = data.docs.reverse(); // API trả về theo thứ tự desc, cần reverse
+      
+      if (loadMore) {
+        // Lưu vị trí cuộn hiện tại
+        const chatContainer = document.querySelector('.chat-messages');
+        const scrollHeight = chatContainer.scrollHeight;
+        
+        messages.unshift(...newMessages);
+        messageCreatedAt = newMessages[0].createdAt;
+        
+        // Render và giữ vị trí cuộn
+        renderMessages();
+        
+        requestAnimationFrame(() => {
+          const newScrollHeight = chatContainer.scrollHeight;
+          chatContainer.scrollTop = newScrollHeight - scrollHeight;
+        });
+      } else {
+        messages = newMessages;
+        if (newMessages.length > 0) {
+          messageCreatedAt = newMessages[0].createdAt;
+        }
+        renderMessages();
+        
+        // Scroll to bottom cho lần đầu load
+        setTimeout(() => {
+          const chatContainer = document.querySelector('.chat-messages');
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 100);
+      }
+      
+      if (data.docs.length < 20) {
+        hasMoreMessages = false;
+      }
+    } else {
+      hasMoreMessages = false;
+    }
+  } catch (error) {
+    console.error('Error loading messages:', error);
+    showToast({
+      message: 'Lỗi khi tải tin nhắn',
+      type: 'error'
+    });
+  } finally {
+    hideMessageLoading();
+    isLoadingMessages = false;
+  }
+}
+
+function showConversationLoading() {
+  const loader = document.getElementById('conversationLoading');
+  if (loader) {
+    loader.classList.remove('hidden');
+  }
+}
+
+function hideConversationLoading() {
+  const loader = document.getElementById('conversationLoading');
+  if (loader) {
+    loader.classList.add('hidden');
+  }
+}
+
+function showMessageLoading() {
+  const loader = document.getElementById('messageLoading');
+  if (loader) {
+    loader.classList.remove('hidden');
+  }
+}
+
+function hideMessageLoading() {
+  const loader = document.getElementById('messageLoading');
+  if (loader) {
+    loader.classList.add('hidden');
+  }
+}
+
+function renderConversations() {
+  console.log('Rendering conversations:', conversations.length);
+  
+  const chatListContainer = document.querySelector('.chat-list .p-2');
+  if (!chatListContainer) {
+    console.error('Chat list container not found');
+    return;
+  }
+  
+  const existingItems = chatListContainer.querySelectorAll('.conversation-item');
+  
+  // Clear existing conversations if this is a fresh load
+  if (conversationPage === 2) { // conversationPage đã được tăng lên rồi
+    existingItems.forEach(item => item.remove());
+  }
+    conversations.forEach((conversation, index) => {
+    console.log('Processing conversation:', conversation._id, conversation);
+    
+    // Skip if conversation already rendered
+    if (document.querySelector(`[data-conversation-id="${conversation._id}"]`)) {
+      return;
+    }
+    
+    const conversationElement = createConversationElement(conversation);
+    chatListContainer.appendChild(conversationElement);
+  });
+}
+
+function createConversationElement(conversation) {
+  const div = document.createElement('div');
+  div.className = 'conversation-item flex items-center p-2 rounded-lg hover:bg-gray-800 cursor-pointer mt-1';
+  div.setAttribute('data-conversation-id', conversation._id);
+  div.setAttribute('role', 'button');
+  div.setAttribute('tabindex', '0');
+  // Determine display info
+  let displayName = conversation.name || 'Cuộc trò chuyện';
+  let avatar = conversation.avatar || '/images/kairo.jpg';
+  
+  if (!conversation.isGroup && conversation.populatedUsers && conversation.populatedUsers.length >= 2) {
+    // For 1-on-1 chat, find the other user (not current user)
+    const otherUser = conversation.populatedUsers.find(user => 
+      user.email !== currentUser?.email && user.username !== currentUser?.username
+    );
+    
+    if (otherUser) {
+      displayName = otherUser.name;
+      avatar = otherUser.avatar || '/images/kairo.jpg';
+    }
+  } else if (conversation.isGroup && conversation.name) {
+    displayName = conversation.name;
+    avatar = conversation.avatar || '/images/kairo.jpg';
+  }
+  
+  const lastMessage = conversation.lastMessage || 'Chưa có tin nhắn';
+  const lastMessageTime = conversation.lastMessageAt 
+    ? formatTime(conversation.lastMessageAt) 
+    : '';
+  
+  div.innerHTML = `
+    <div class="relative">
+      <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden">
+        <img
+          alt="${displayName}"
+          class="w-full h-full object-cover"
+          height="48"
+          loading="lazy"
+          src="${avatar}"
+          width="48"/>
+      </div>
+    </div>
+    <div class="ml-3 flex-1 min-w-0">
+      <div class="flex items-center">
+        <span class="font-medium truncate flex-1 select-text">
+          ${displayName}
+        </span>
+        <span class="text-xs text-gray-400">
+          ${lastMessageTime}
+        </span>
+      </div>
+      <div class="text-sm text-gray-400 truncate">
+        ${lastMessage}
+      </div>
+    </div>
+  `;
+  
+  div.addEventListener('click', () => selectConversation(conversation));
+  
+  return div;
+}
+
+function selectConversation(conversation) {
+  // Remove active class from all conversations
+  document.querySelectorAll('.conversation-item').forEach(item => {
+    item.classList.remove('bg-primary', 'bg-opacity-20');
+  });
+  
+  // Add active class to selected conversation
+  const conversationElement = document.querySelector(`[data-conversation-id="${conversation._id}"]`);
+  if (conversationElement) {
+    conversationElement.classList.add('bg-primary', 'bg-opacity-20');
+  }
+    // Update current conversation
+  currentConversationId = conversation._id;
+  
+  // Enable message input and send button
+  const messageInput = document.getElementById('messageInput');
+  const sendButton = document.querySelector('button[onclick="sendMessage()"]');
+  if (messageInput) messageInput.disabled = false;
+  if (sendButton) sendButton.disabled = false;
+  
+  // Hide no messages placeholder
+  const noMessages = document.getElementById('noMessages');
+  if (noMessages) noMessages.style.display = 'none';
+  
+  // Update chat header
+  updateChatHeader(conversation);
+  
+  // Join conversation room via socket
+  if (socket && socket.connected) {
+    socket.emit('join-room', { conversationId: conversation._id });
+  }
+  
+  // Load messages
+  loadMessages(conversation._id);
+}
+
+function updateChatHeader(conversation) {
+  const headerName = document.getElementById('headerName');
+  const headerStatus = document.getElementById('headerStatus');
+  const headerAvatar = document.getElementById('headerAvatar');
+  
+  if (!headerName || !headerStatus || !headerAvatar) return;
+  
+  let displayName = conversation.name || 'Cuộc trò chuyện';
+  let avatar = conversation.avatar || '/images/kairo.jpg';  let status = 'Đang hoạt động';
+  
+  if (!conversation.isGroup && conversation.populatedUsers && conversation.populatedUsers.length >= 2) {
+    const otherUser = conversation.populatedUsers.find(user => 
+      user.email !== currentUser?.email && user.username !== currentUser?.username
+    );
+    if (otherUser) {
+      displayName = otherUser.name;
+      avatar = otherUser.avatar || '/images/kairo.jpg';
+      status = otherUser.isOnline ? 'Đang hoạt động' : 'Không hoạt động';
+    }
+  }
+  
+  headerName.textContent = displayName;
+  headerStatus.textContent = status;
+  headerAvatar.src = avatar;
+  headerAvatar.alt = displayName;
+}
+
+function formatTime(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInMinutes < 1) {
+    return 'Vừa xong';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} phút`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours} giờ`;
+  } else if (diffInDays < 7) {
+    return `${diffInDays} ngày`;
+  } else {
+    return date.toLocaleDateString('vi-VN');
+  }
+}
+
+// Initialize scroll handlers
+function initializeScrollHandlers() {
+  // Conversation list infinite scroll
+  const chatList = document.querySelector('.chat-list');
+  if (chatList) {
+    chatList.addEventListener('scroll', () => {
+      if (chatList.scrollTop + chatList.clientHeight >= chatList.scrollHeight - 5) {
+        loadConversations();
+      }
+    });
+  }
+
+  // Message list infinite scroll
+  const chatMessages = document.querySelector('.chat-messages');
+  if (chatMessages) {
+    chatMessages.addEventListener('scroll', () => {
+      if (chatMessages.scrollTop === 0 && currentConversationId) {
+        loadMessages(currentConversationId, true);
+      }
+    });
+  }
+}
+
+// Search functionality
+function initializeSearch() {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const searchTerm = e.target.value.trim();
+        resetConversationPagination();
+        loadConversations(searchTerm);
+      }, 300);
+    });
+  }
+}
+
+function resetConversationPagination() {
+  conversationPage = 1;
+  hasMoreConversations = true;
+  conversations = [];
+}
+
+// Socket functions
+function initializeSocket() {
+  // Connect to socket server
+  socket = io(window.location.origin, {
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    transports: ['websocket'],
+  });
+
+  // Enhance error handling
+  enhanceSocketErrorHandling();
+  // Socket event handlers
+  socket.on('connected', (data) => {
+    console.log('Connected to chat server:', data);
+    showToast({ message: 'Đã kết nối thành công', type: 'success' });
+  });
+
+  socket.on('joined-room', (data) => {
+    console.log('Joined chat rooms:', data);
+  });
+  socket.on('error', (data) => {
+    console.error('Socket error:', data);
+    showToast({ message: data.message || 'Lỗi kết nối socket', type: 'error' });
+    
+    // Mark all pending temporary messages as failed
+    tempMessages.forEach((tempMessage, tempId) => {
+      const messageIndex = messages.findIndex(m => m._id === tempId);
+      if (messageIndex !== -1) {
+        messages[messageIndex] = {
+          ...messages[messageIndex],
+          isFailed: true,
+          isTemp: false,
+          status: 'failed'
+        };
+        updateMessageStatus(tempId);
+      }
+    });
+    
+    // Clear all temporary messages
+    tempMessages.clear();
+  });
+
+  socket.on('messageReceived', (data) => {
+    handleMessageReceived(data);
+  });
+
+  socket.on('reactionReceived', (data) => {
+    handleReactionReceived(data);
+  });
+
+  socket.on('messageDeleted', (data) => {
+    handleMessageDeleted(data);
+  });
+
+  socket.on('messageHidden', (data) => {
+    handleMessageHidden(data);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('Socket disconnected:', reason);
+    showToast({ message: 'Mất kết nối với server', type: 'warning' });
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('Socket connection error:', error);
+    showToast({ message: 'Lỗi kết nối socket', type: 'error' });
+  });
+}
+
+// Message retry functionality
+function retryMessage(tempId) {
+  const messageIndex = messages.findIndex(m => m._id === tempId);
+  if (messageIndex === -1) return;
+
+  const message = messages[messageIndex];
+  
+  // Reset message status to sending
+  messages[messageIndex] = {
+    ...message,
+    isTemp: true,
+    isFailed: false,
+    status: 'sending'
+  };
+
+  // Update the message display
+  updateMessageStatus(tempId);
+
+  showToast({ message: 'Đang thử gửi lại tin nhắn...', type: 'info' });
+
+  const messageData = {
+    conversationId: currentConversationId,
+    content: message.content,
+    type: message.type,
+    tempId: tempId
+  };
+
+  if (message.replyTo) {
+    messageData.replyTo = message.replyTo._id;
+  }
+
+  // Re-add to tempMessages map for tracking
+  tempMessages.set(tempId, messages[messageIndex]);
+
+  socket.emit('send-message', messageData);
+}
+
+// Clean up failed messages after timeout
+function cleanupFailedMessage(tempId) {
+  setTimeout(() => {
+    if (tempMessages.has(tempId)) {
+      const messageIndex = messages.findIndex(m => m._id === tempId);
+      if (messageIndex !== -1) {
+        // Mark as failed instead of removing
+        messages[messageIndex] = {
+          ...messages[messageIndex],
+          isFailed: true,
+          isTemp: false,
+          status: 'failed'
+        };
+        // Update the specific message display
+        updateMessageStatus(tempId);
+      }
+      tempMessages.delete(tempId);
+    }
+  }, 30000); // 30 seconds timeout
+}
+
+// Enhanced error handling for socket events
+function enhanceSocketErrorHandling() {
+  if (!socket) return;
+
+  const originalEmit = socket.emit;
+  socket.emit = function(event, data, callback) {
+    if (event === 'send-message' && data.tempId) {
+      // Set timeout for message sending
+      cleanupFailedMessage(data.tempId);
+    }
+    return originalEmit.call(this, event, data, callback);  };
+}
+
+// Get current user information
+async function getCurrentUser() {
+  try {
+    const response = await fetch('/profile/me', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.success && data.data) {
+        currentUser = data.data;
+        console.log('Current user loaded:', currentUser);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading current user:', error);
+    // Set a default user or handle error
+    currentUser = {
+      _id: 'temp-user-id',
+      name: 'Người dùng',
+      avatar: '/images/kairo.jpg'
+    };
+  }
+}
+
+// Initialize app
+async function initializeApp() {
+  console.log('Initializing chat app...');
+  
+  try {
+    await getCurrentUser();
+    await initializeSocket();
+    initializeScrollHandlers();
+    initializeSearch();
+    await loadConversations();
+    
+    console.log('Chat app initialized successfully');
+  } catch (error) {
+    console.error('Error initializing app:', error);
+    showToast({
+      message: 'Lỗi khởi tạo ứng dụng chat',
+      type: 'error'
+    });
+  }
+}
+
+// Initialize app when DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
+
+// Add CSS styles for temporary messages
+const tempMessageStyles = `
+<style>
+.temp-message {
+  opacity: 0.8;
+}
+
+.temp-message .message-bubble {
+  position: relative;
+  border: 1px dashed #6b7280;
+}
+
+.message-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.message-status i {
+  font-size: 10px;
+}
+
+.failed-message .message-bubble {
+  background-color: #fca5a5 !important;
+  border: 1px solid #ef4444;
+}
+
+.retry-message {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.conversation-item {
+  transition: background-color 0.2s ease;
+}
+
+.conversation-item:hover {
+  background-color: rgba(107, 114, 128, 0.1);
+}
+
+.conversation-item.active {
+  background-color: rgba(124, 58, 237, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-wrapper {
+  animation: fadeIn 0.3s ease-out;
+}
+</style>
+`;
+
+// Inject styles
+document.head.insertAdjacentHTML('beforeend', tempMessageStyles);
+
+// Update specific message status without re-rendering all messages
+function updateMessageStatus(messageId) {
+  const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageElement) return;
+
+  // Find the message data
+  const message = messages.find(m => m._id === messageId);
+  if (!message) return;
+
+  // Remove temp-message class and opacity
+  messageElement.classList.remove('temp-message');
+  const messageBubble = messageElement.querySelector('.message-bubble');
+  if (messageBubble) {
+    messageBubble.classList.remove('opacity-70');
+  }
+
+  // Remove or update status indicator
+  const statusElement = messageElement.querySelector('.message-status');
+  if (statusElement) {
+    if (message.isTemp) {
+      // Still sending
+      statusElement.innerHTML = `
+        <i class="ri-time-line animate-pulse"></i> Đang gửi...
+      `;
+    } else if (message.isFailed) {
+      // Failed
+      statusElement.innerHTML = `
+        <i class="ri-error-warning-line"></i> Gửi thất bại. Nhấn để thử lại
+      `;
+      statusElement.className = 'message-status text-xs text-red-400 mt-1 cursor-pointer';
+      statusElement.onclick = () => retryMessage(messageId);
+    } else {
+      // Successfully sent - remove status indicator
+      statusElement.remove();
+    }
+  }
+
+  // Add message controls if this is current user's message and not temp
+  if (message.sender?._id === currentUser?._id && !message.isTemp) {
+    const messageContent = messageElement.querySelector('.message-content');
+    const messageBubbleContainer = messageContent.querySelector('.flex.items-end');
+    
+    // Check if controls already exist
+    if (!messageBubbleContainer.querySelector('.message-controls')) {
+      const controlsHtml = `
+        <div class="message-controls">
+          <div class="relative">
+            <button onclick="toggleReactionPicker(event, '${messageId}')" class="reaction-btn">
+              <i class="ri-emotion-line"></i>
+            </button>
+            <div class="reaction-picker" id="reactionPicker${messageId}">
+              <button onclick="addReaction('${messageId}', '❤️')">❤️</button>
+              <button onclick="addReaction('${messageId}', '😊')">😊</button>
+              <button onclick="addReaction('${messageId}', '😂')">😂</button>
+              <button onclick="addReaction('${messageId}', '👍')">👍</button>
+              <button onclick="addReaction('${messageId}', '😮')">😮</button>
+              <button onclick="addReaction('${messageId}', '😢')">😢</button>
+            </div>
+          </div>
+          <div class="relative">
+            <button onclick="toggleMenu(event, '${messageId}')" class="more-btn">
+              <i class="ri-more-line"></i>
+            </button>
+            <div class="context-menu hidden" id="menu${messageId}">
+              <button onclick="handleReply('${messageId}', '${message.content.replace(/'/g, "\\'")}', '${message.sender?.name || 'Người dùng'}')">
+                <i class="ri-reply-line"></i>Reply
+              </button>
+              <button onclick="handleDelete('${messageId}')">
+                <i class="ri-delete-bin-line"></i>Xóa tin nhắn
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      const messageBubble = messageBubbleContainer.querySelector('.message-bubble');
+      messageBubble.insertAdjacentHTML('beforebegin', controlsHtml);
+    }
+  }
+}

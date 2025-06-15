@@ -45,6 +45,11 @@ export class ProfileController {
     }
   }
 
+  @Get('me')
+  async getMyProfile(@GetUser() user: User) {
+    return user
+  }
+
   @Get('user/:username')
   @UseFilters(WebExceptionFilter)
   @Render('users/pages/users/profile.njk')
