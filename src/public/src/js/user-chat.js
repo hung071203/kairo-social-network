@@ -1,3 +1,5 @@
+
+// Yêu cầu 1:
 // Chỉ hỗ trợ gửi một trong ba loại: tin nhắn văn bản, hình ảnh hoặc video.
 // Nếu nội dung là hình ảnh hoặc video, cần gọi hàm uploadFile trước để lấy URL,
 // sau đó mới emit tin nhắn với URL đó lên server.
@@ -9,6 +11,7 @@
 // Lưu ý quan trọng:
 // - Mỗi lần gửi chỉ được một trong ba loại: text, ảnh hoặc video.
 // - Không được gửi kèm text với ảnh hoặc video trong cùng một tin nhắn.
+// - Không được sửa file css vid có thể lỗi giao diện.
 
 function handleFileSelect(event) {
   const file = event.target.files[0];
