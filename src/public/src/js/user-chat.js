@@ -1,3 +1,8 @@
+// Lưu ý sử dụng cho tất cả các yêu cầu: 
+// - Không được tạo file readme huoặc ghi chú nào khác ngoài những gì đã có.
+// - Không được sửa file css vì có thể lỗi giao diện.
+// - Cách kết nối socket trong file connection gateway
+// - Mọi hành động của tính năng chat đều phải thông qua socket, không được gọi trực tiếp API.
 
 // Yêu cầu 1:
 // Chỉ hỗ trợ gửi một trong ba loại: tin nhắn văn bản, hình ảnh hoặc video.
@@ -11,7 +16,6 @@
 // Lưu ý quan trọng:
 // - Mỗi lần gửi chỉ được một trong ba loại: text, ảnh hoặc video.
 // - Không được gửi kèm text với ảnh hoặc video trong cùng một tin nhắn.
-// - Không được sửa file css vid có thể lỗi giao diện.
 
 function handleFileSelect(event) {
   const file = event.target.files[0];
