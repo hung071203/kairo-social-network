@@ -1,9 +1,8 @@
-// Lưu ý sử dụng cho tất cả các yêu cầu: 
+// Lưu ý sử dụng cho tất cả các yêu cầu:
 // - Không được tạo file readme huoặc ghi chú nào khác ngoài những gì đã có.
 // - Không được sửa file css vì có thể lỗi giao diện.
 // - Cách kết nối socket trong file connection gateway
 // - Mọi hành động của tính năng chat đều phải thông qua socket, không được gọi trực tiếp API, trừ những mục tôi đã viết api trong chat controller.
-
 
 //Yêu cầu 1:
 // Chuyển từ giao diện mẫu sang sử dụng api để gọi trong chat controller:
@@ -28,6 +27,44 @@
 // - Mỗi lần gửi chỉ được một trong ba loại: text, ảnh hoặc video.
 // - Không được gửi kèm text với ảnh hoặc video trong cùng một tin nhắn.
 
+function showToast({
+  message = 'Thông báo hệ thống.',
+  delay = 4000,
+  link = null,
+  type = 'info', // 'success', 'error', 'warning', 'info'
+} = {}) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const messageEl = document.createElement(link ? 'a' : 'div');
+  messageEl.className = 'message';
+  messageEl.textContent = message;
+  if (link) {
+    messageEl.href = link;
+    messageEl.classList.add('hover:underline');
+  }
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'close-btn';
+  closeBtn.innerHTML = '&times;';
+  closeBtn.onclick = () => {
+    toast.classList.add('closing');
+    setTimeout(() => toast.remove(), 500);
+  };
+  toast.appendChild(messageEl);
+  toast.appendChild(closeBtn);
+  // Click vào message cũng đóng toast nếu có link
+  if (link) {
+    toast.onclick = (e) => {
+      if (e.target !== closeBtn) window.location.href = link;
+    };
+  }
+  container.appendChild(toast);
+  // Auto remove
+  setTimeout(() => {
+    toast.classList.add('closing');
+    setTimeout(() => toast.remove(), 500);
+  }, delay);
+}
 function handleFileSelect(event) {
   const file = event.target.files[0];
   if (file) {
