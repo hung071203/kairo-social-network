@@ -4,7 +4,18 @@
 // - Cách kết nối socket trong file connection gateway
 // - Mọi hành động của tính năng chat đều phải thông qua socket, không được gọi trực tiếp API, trừ những mục tôi đã viết api trong chat controller.
 
-// Yêu cầu 1:
+
+//Yêu cầu 1:
+// Chuyển từ giao diện mẫu sang sử dụng api để gọi trong chat controller:
+// @Get('conversation') để leeys danh sách cuộc trò chuyện
+//  @Get('messages') để lấy danh sách tin nhắn của cuộc trò chuyện.
+// Lưu ý:
+// đọc kĩ dto để hiểu cách truyền tham số.
+// Tôi muốn dữ liệu load theo kiểu cuộn vô hạn với mỗi lần load là 20 bản ghi
+// có cả hiệu ứng loading khi đang load dữ liệu.
+// Khi load xong thì cần giữ đúng vị trí cuộn trước đó(bao gồm cả load danh sách tin nhắn và lịch sử tin nhắn
+
+// Yêu cầu 2:
 // Chỉ hỗ trợ gửi một trong ba loại: tin nhắn văn bản, hình ảnh hoặc video.
 // Nếu nội dung là hình ảnh hoặc video, cần gọi hàm uploadFile trước để lấy URL,
 // sau đó mới emit tin nhắn với URL đó lên server.

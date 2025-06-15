@@ -73,5 +73,5 @@ export class GetMessagesDto extends PaginationDto{
 
   @IsOptional()
   @Type(() => Date)
-  createdAt?: Date;
+  createdAt?: Date; // Thời gian để phân trang, lấy các tin nhắn trước thời điểm này
 }
