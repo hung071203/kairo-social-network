@@ -118,6 +118,7 @@ export class MessageGateway {
     @ConnectedSocket() client: Socket,
   ) {
     const userId = client.data.user?.sub as string;
+    dto = dto[0] || dto; // Handle array or single object
     if (!dto.messageId || !dto.conversationId || !dto.reaction) {
       client.emit('error', {
         message: 'Dữ liệu yêu cầu thiếu.',

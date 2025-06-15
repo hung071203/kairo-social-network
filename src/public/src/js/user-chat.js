@@ -332,6 +332,19 @@ function addReaction(messageId, emoji) {
     return;
   }
 
+  // Find the message to check if it's temporary
+  const message = messages.find(m => m._id === messageId);
+  if (!message) {
+    showToast({ message: 'Không tìm thấy tin nhắn.', type: 'error' });
+    return;
+  }
+
+  // Don't allow reactions on temporary messages
+  if (message.isTemp || tempMessages.has(messageId)) {
+    showToast({ message: 'Không thể phản ứng với tin nhắn đang gửi.', type: 'warning' });
+    return;
+  }
+
   socket.emit('reaction-message', {
     messageId: messageId,
     conversationId: currentConversationId,
@@ -601,32 +614,14 @@ function handleMessageReceived(data) {
 function handleReactionReceived(data) {
   console.log('Reaction received:', data);
   
-  // Find and update message with new reaction
+  // Find and update message with new reactions
   const messageIndex = messages.findIndex(m => m._id === data.messageId);
   if (messageIndex !== -1) {
-    if (!messages[messageIndex].reactions) {
-      messages[messageIndex].reactions = [];
-    }
+    // Update the message reactions with the complete reactions array from server
+    messages[messageIndex].reactions = data.reactions || [];
     
-    // Check if user already reacted with this emoji
-    const existingReaction = messages[messageIndex].reactions.find(
-      r => r.user === data.userId && r.reaction === data.reaction
-    );
-    
-    if (existingReaction) {
-      // Remove existing reaction
-      messages[messageIndex].reactions = messages[messageIndex].reactions.filter(
-        r => !(r.user === data.userId && r.reaction === data.reaction)
-      );
-    } else {
-      // Add new reaction
-      messages[messageIndex].reactions.push({
-        user: data.userId,
-        reaction: data.reaction
-      });
-    }
-    
-    renderMessages();
+    // Update only the specific message element instead of re-rendering all messages
+    updateMessageReactions(data.messageId, data.reactions);
   }
 }
 
@@ -1423,13 +1418,13 @@ function updateMessageStatus(messageId) {
     } else {
       // Successfully sent - remove status indicator
       statusElement.remove();
-    }
-  }
+    }  }
 
-  // Add message controls if this is current user's message and not temp
-  if (message.sender?._id === currentUser?._id && !message.isTemp) {
+  // Add message controls if message is not temporary (for both sent and received messages)
+  if (!message.isTemp) {
     const messageContent = messageElement.querySelector('.message-content');
     const messageBubbleContainer = messageContent.querySelector('.flex.items-end');
+    const isCurrentUser = message.sender?._id === currentUser?._id;
     
     // Check if controls already exist
     if (!messageBubbleContainer.querySelector('.message-controls')) {
@@ -1456,16 +1451,20 @@ function updateMessageStatus(messageId) {
               <button onclick="handleReply('${messageId}', '${message.content.replace(/'/g, "\\'")}', '${message.sender?.name || 'Người dùng'}')">
                 <i class="ri-reply-line"></i>Reply
               </button>
-              <button onclick="handleDelete('${messageId}')">
+              ${isCurrentUser ? `<button onclick="handleDelete('${messageId}')">
                 <i class="ri-delete-bin-line"></i>Xóa tin nhắn
-              </button>
+              </button>` : ''}
             </div>
           </div>
         </div>
       `;
       
       const messageBubble = messageBubbleContainer.querySelector('.message-bubble');
-      messageBubble.insertAdjacentHTML('beforebegin', controlsHtml);
+      if (isCurrentUser) {
+        messageBubble.insertAdjacentHTML('beforebegin', controlsHtml);
+      } else {
+        messageBubble.insertAdjacentHTML('afterend', controlsHtml);
+      }
     }
   }
 }
@@ -1508,5 +1507,48 @@ function updateMessageContent(messageId, newContent) {
   const existingContent = messageBubble.querySelector('img, video, p');
   if (existingContent) {
     existingContent.outerHTML = contentHtml;
+  }
+}
+
+// Update message reactions without re-rendering all messages
+function updateMessageReactions(messageId, reactions) {
+  const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageElement) return;
+
+  // Find the message bubble
+  const messageBubble = messageElement.querySelector('.message-bubble');
+  if (!messageBubble) return;
+
+  // Remove existing reactions element
+  const existingReactions = messageBubble.querySelector('.flex.flex-wrap.mt-1');
+  if (existingReactions) {
+    existingReactions.remove();
+  }
+
+  // Add new reactions if any exist
+  if (reactions && reactions.length > 0) {
+    const reactionGroups = {};
+    reactions.forEach((reactionObj) => {
+      const emoji = reactionObj.reaction;
+      reactionGroups[emoji] = (reactionGroups[emoji] || 0) + 1;
+    });
+
+    const reactionElements = Object.entries(reactionGroups)
+      .map(
+        ([emoji, count]) =>
+          `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-600 text-white mr-1 mt-1 cursor-pointer hover:bg-gray-500 transition-colors">${emoji} ${count}</span>`,
+      )
+      .join('');
+
+    const reactionsHtml = `<div class="flex flex-wrap mt-1">${reactionElements}</div>`;
+    
+    // Insert the new reactions before the time tooltip
+    const timeTooltip = messageBubble.querySelector('.time-tooltip');
+    if (timeTooltip) {
+      timeTooltip.insertAdjacentHTML('beforebegin', reactionsHtml);
+    } else {
+      // If no time tooltip, append to the end of message bubble
+      messageBubble.insertAdjacentHTML('beforeend', reactionsHtml);
+    }
   }
 }
