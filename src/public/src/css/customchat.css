@@ -74,7 +74,9 @@ body {
 }
 .message-bubble {
   max-width: 80%;
-  word-break: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
   position: relative;
 }
 .message-bubble img {
