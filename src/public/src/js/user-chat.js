@@ -674,14 +674,34 @@ function updateConversationLastMessage(message) {
     conversations[conversationIndex].lastMessage = lastMessageText;
     conversations[conversationIndex].lastMessageAt = message.createdAt;
     
-    // Move conversation to top
-    const conversation = conversations.splice(conversationIndex, 1)[0];
-    conversations.unshift(conversation);
-    
-    console.log('Conversation moved to top, re-rendering list');
-    
-    // Use more efficient update instead of full re-render
-    updateConversationInList(conversation, 0);
+    // Only move to top if it's not already at index 0
+    if (conversationIndex !== 0) {
+      // Move conversation to top
+      const conversation = conversations.splice(conversationIndex, 1)[0];
+      conversations.unshift(conversation);
+      
+      console.log('Conversation moved to top, updating list');
+      
+      // Use more efficient update instead of full re-render
+      updateConversationInList(conversation, 0);
+    } else {
+      // If already at top, just update the existing element
+      console.log('Conversation already at top, updating in place');
+      const existingElement = document.querySelector(`[data-conversation-id="${message.conversationId}"]`);
+      if (existingElement) {
+        // Update last message text
+        const lastMessageEl = existingElement.querySelector('.text-sm.text-gray-400.truncate');
+        if (lastMessageEl) {
+          lastMessageEl.textContent = lastMessageText;
+        }
+        
+        // Update time
+        const timeEl = existingElement.querySelector('.text-xs.text-gray-400');
+        if (timeEl) {
+          timeEl.textContent = formatTime(message.createdAt);
+        }
+      }
+    }
   } else {
     console.warn('Conversation not found in list:', message.conversationId);
     // If conversation not found, try to reload conversations
@@ -693,6 +713,9 @@ function updateConversationInList(conversation, newIndex) {
   const chatListContainer = document.querySelector('.chat-list .p-2');
   if (!chatListContainer) return;
   
+  // Check if this conversation is currently active
+  const isCurrentActive = conversation._id === currentConversationId;
+  
   // Remove existing conversation element if it exists
   const existingElement = document.querySelector(`[data-conversation-id="${conversation._id}"]`);
   if (existingElement) {
@@ -701,6 +724,11 @@ function updateConversationInList(conversation, newIndex) {
   
   // Create new conversation element
   const conversationElement = createConversationElement(conversation);
+  
+  // Restore active state if this was the active conversation
+  if (isCurrentActive) {
+    conversationElement.classList.add('bg-primary', 'bg-opacity-20');
+  }
   
   // Insert at the specified position (0 for top)
   if (newIndex === 0) {
@@ -934,6 +962,12 @@ function renderConversations() {
     console.log('Processing conversation:', conversation._id, conversation);
     
     const conversationElement = createConversationElement(conversation);
+    
+    // Add active state if this is the current conversation
+    if (conversation._id === currentConversationId) {
+      conversationElement.classList.add('bg-primary', 'bg-opacity-20');
+    }
+    
     chatListContainer.appendChild(conversationElement);
   });
 }
@@ -1352,7 +1386,7 @@ if (document.readyState === 'loading') {
   initializeApp();
 }
 
-// Add CSS styles for temporary messages
+// Add CSS styles for temporary messages and conversation effects
 const tempMessageStyles = `
 <style>
 .temp-message {
@@ -1392,16 +1426,11 @@ const tempMessageStyles = `
 }
 
 .message-status {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
 }
 
-.message-status i {
-  font-size: 10px;
-}
-
-.failed-message .message-bubble {
+.message-status.failed {
   background-color: #fca5a5 !important;
   border: 1px solid #ef4444;
 }
@@ -1412,15 +1441,23 @@ const tempMessageStyles = `
 }
 
 .conversation-item {
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  border-radius: 0.5rem;
 }
 
 .conversation-item:hover {
   background-color: rgba(107, 114, 128, 0.1);
+  transform: translateX(2px);
 }
 
-.conversation-item.active {
-  background-color: rgba(124, 58, 237, 0.2);
+.conversation-item.bg-primary.bg-opacity-20 {
+  background-color: rgba(124, 58, 237, 0.2) !important;
+  border-left: 3px solid #7c3aed;
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.1);
+}
+
+.conversation-item.bg-primary.bg-opacity-20:hover {
+  background-color: rgba(124, 58, 237, 0.3) !important;
 }
 
 @keyframes fadeIn {
@@ -1431,8 +1468,20 @@ const tempMessageStyles = `
 .message-wrapper {
   animation: fadeIn 0.3s ease-out;
 }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.conversation-item {
+  animation: slideIn 0.2s ease-out;
+}
 </style>
 `;
+
+// Inject styles
+document.head.insertAdjacentHTML('beforeend', tempMessageStyles);
 
 // Inject styles
 document.head.insertAdjacentHTML('beforeend', tempMessageStyles);
