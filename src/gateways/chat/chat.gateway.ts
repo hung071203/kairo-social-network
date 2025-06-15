@@ -16,6 +16,7 @@ import {
   AddReactionDto,
   SendMessageDto,
 } from 'src/modules/users/chat/dto/chat.dto';
+import { Conversation } from 'src/schemas/conversation.schema';
 
 @WebSocketGateway({
   cors: {
@@ -35,31 +36,39 @@ export class MessageGateway {
 
   @SubscribeMessage('join-room')
   async handleJoinRoom(
-    @MessageBody() dto: { conversationId: string },
     @ConnectedSocket() client: Socket,
   ) {
     const userId = client.data.user?.sub as string;
     const conversationRepository = this.chatService.getConversationRepository();
-    const conversation = await conversationRepository.findOne({
-      _id: new Types.ObjectId(dto.conversationId),
+
+    const validConversations = await conversationRepository.findAll({
       participants: { $elemMatch: { user: new Types.ObjectId(userId) } },
-    });
-    if (!conversation) {
+    }) as Conversation[];
+
+    if (validConversations.length === 0) {
       client.emit('error', {
-        message:
-          'Nhóm trò chuyện không tồn tại hoặc bạn không có quyền truy cập.',
+        message: 'Bạn không có nhóm trò chuyện nào để tham gia.',
       });
       return;
     }
-    client.join(dto.conversationId);
-    await this.redisService.sAdd(
-      `${process.env.APP_ID}:socket:users-inroom:${userId}`,
-      dto.conversationId,
-    );
-    this.logger.log(`User ${userId} joined conversation ${dto.conversationId}`);
+
+    const newPromise = validConversations.map(async (item) => {
+      const id = item._id.toString();
+      client.join(id);
+      await this.redisService.sAdd(
+        `${process.env.APP_ID}:socket:users-inroom:${userId}`,
+        id,
+      );
+    })
+
+    await Promise.allSettled(newPromise);
+
+    const ids = validConversations.map((item) => item._id.toString()).join(', ');
+
+    this.logger.log(`User ${userId} joined conversation: ` + ids);
     client.emit('joined-room', {
-      message: `Bạn đã tham gia nhóm trò chuyện ${conversation.name}`,
-      conversationId: dto.conversationId,
+      message: `Bạn đã tham gia nhóm trò chuyện `,
+      conversationIds: validConversations.map((item) => item._id.toString()),
     });
   }
 
@@ -69,18 +78,6 @@ export class MessageGateway {
     dto: SendMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
-    // Chỉ hỗ trợ gửi một trong ba loại: tin nhắn văn bản, hình ảnh hoặc video.
-    // Nếu nội dung là hình ảnh hoặc video, cần gọi hàm uploadFile trước để lấy URL,
-    // sau đó mới emit tin nhắn với URL đó lên server.
-    //
-    // Khi gửi tin nhắn, cần hiển thị tạm thời tin nhắn với trạng thái "đang gửi".
-    // Nếu nhận được sự kiện 'messageReceived' từ server với cùng tempId,
-    // cần xoá tin nhắn tạm thời đó để thay thế bằng bản chính thức.
-    //
-    // Lưu ý quan trọng:
-    // - Mỗi lần gửi chỉ được một trong ba loại: text, ảnh hoặc video.
-    // - Không được gửi kèm text với ảnh hoặc video trong cùng một tin nhắn.
-    
     const userId = client.data.user?.sub as string;
     if (!dto.conversationId || !dto.content || !dto.type) {
       client.emit('error', {
