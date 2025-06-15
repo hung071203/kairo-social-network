@@ -449,20 +449,15 @@ async function sendMessage() {
     // Add the new message element to the container
     const container = document.getElementById('messagesContainer');
     const messageElement = createMessageElement(tempMessage);
-    container.appendChild(messageElement);
-
-    // Update conversation list immediately for better UX
+    container.appendChild(messageElement);    // Update conversation list immediately for better UX
     const tempMessageForConversation = {
       ...tempMessage,
       conversationId: currentConversationId
     };
     updateConversationLastMessage(tempMessageForConversation);
 
-    // Clear input and reply
+    // Clear input FIRST but keep currentReply for socket emit
     input.value = '';
-    if (currentReply) {
-      cancelReply();
-    }
 
     // Scroll to bottom
     const chatContainer = document.querySelector('.chat-messages');
@@ -541,6 +536,11 @@ async function sendMessage() {
 
     console.log('Sending message data:', messageData);
     socket.emit('send-message', messageData);
+    
+    // NOW clear the reply after emitting
+    if (currentReply) {
+      cancelReply();
+    }
     
     // Set timeout to mark message as failed if no response received
     cleanupFailedMessage(tempId);
