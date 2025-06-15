@@ -252,13 +252,15 @@ function createMessageElement(message) {
       <div class="relative">
         <button onclick="toggleMenu(event, '${message._id}')" class="more-btn">
           <i class="ri-more-line"></i>
-        </button>
-        <div class="context-menu hidden" id="menu${message._id}">
+        </button>        <div class="context-menu hidden" id="menu${message._id}">
           <button onclick="handleReply('${message._id}', '${message.content.replace(/'/g, "\\'")}', '${message.sender?.name || 'Người dùng'}')">
             <i class="ri-reply-line"></i>Reply
           </button>
+          ${!message.isTemp ? `<button onclick="handleHideMessage('${message._id}')">
+            <i class="ri-eye-off-line"></i>Xóa ở phía bạn
+          </button>` : ''}
           ${isCurrentUser && !message.isTemp ? `<button onclick="handleDelete('${message._id}')">
-            <i class="ri-delete-bin-line"></i>Xóa tin nhắn
+            <i class="ri-delete-bin-line"></i>Xóa vĩnh viễn
           </button>` : ''}
         </div>
       </div>
@@ -377,13 +379,27 @@ function cancelReply() {
   document.getElementById('replyPreview').classList.add('hidden');
 }
 
+function handleHideMessage(messageId) {
+  if (!socket || !currentConversationId) {
+    showToast({ message: 'Không thể ẩn tin nhắn lúc này.', type: 'error' });
+    return;
+  }
+
+  if (confirm('Bạn có chắc chắn muốn ẩn tin nhắn này ở phía bạn?')) {
+    socket.emit('hide-message', {
+      messageId: messageId,
+      conversationId: currentConversationId
+    });
+  }
+}
+
 function handleDelete(messageId) {
   if (!socket || !currentConversationId) {
     showToast({ message: 'Không thể xóa tin nhắn lúc này.', type: 'error' });
     return;
   }
 
-  if (confirm('Bạn có chắc chắn muốn xóa tin nhắn này?')) {
+  if (confirm('Bạn có chắc chắn muốn xóa vĩnh viễn tin nhắn này? Hành động này không thể hoàn tác.')) {
     socket.emit('delete-message', {
       messageId: messageId,
       conversationId: currentConversationId
@@ -707,13 +723,13 @@ function handleMessageDeleted(data) {
     console.log('Message deleted:', data);
     
     // Validate data
-    if (!data || !data.messageId || !data.conversationId) {
+    if (!data || !data.messageId) {
       console.error('Invalid message delete data received:', data);
       return;
     }
     
-    // Remove message from current conversation
-    if (data.conversationId === currentConversationId) {
+    // Remove message from current conversation (for both hide and delete)
+    if (currentConversationId) {
       messages = messages.filter(m => m._id !== data.messageId);
       renderMessages();
     }
@@ -730,8 +746,17 @@ function handleMessageHidden(data) {
   try {
     console.log('Message hidden:', data);
     
-    // Similar to delete but maybe with different UI indication
-    handleMessageDeleted(data);
+    // Validate data
+    if (!data || !data.messageId) {
+      console.error('Invalid message hide data received:', data);
+      return;
+    }
+    
+    // Remove message from current conversation (same as delete for UI purposes)
+    if (currentConversationId) {
+      messages = messages.filter(m => m._id !== data.messageId);
+      renderMessages();
+    }
   } catch (error) {
     console.error('Error in handleMessageHidden:', error);
     showToast({
@@ -1606,8 +1631,7 @@ function updateMessageStatus(messageId) {
     const isCurrentUser = message.sender?._id === currentUser?._id;
     
     // Check if controls already exist
-    if (!messageBubbleContainer.querySelector('.message-controls')) {
-      const controlsHtml = `
+    if (!messageBubbleContainer.querySelector('.message-controls')) {      const controlsHtml = `
         <div class="message-controls">
           <div class="relative">
             <button onclick="toggleReactionPicker(event, '${messageId}')" class="reaction-btn">
@@ -1630,8 +1654,11 @@ function updateMessageStatus(messageId) {
               <button onclick="handleReply('${messageId}', '${message.content.replace(/'/g, "\\'")}', '${message.sender?.name || 'Người dùng'}')">
                 <i class="ri-reply-line"></i>Reply
               </button>
+              <button onclick="handleHideMessage('${messageId}')">
+                <i class="ri-eye-off-line"></i>Xóa ở phía bạn
+              </button>
               ${isCurrentUser ? `<button onclick="handleDelete('${messageId}')">
-                <i class="ri-delete-bin-line"></i>Xóa tin nhắn
+                <i class="ri-delete-bin-line"></i>Xóa vĩnh viễn
               </button>` : ''}
             </div>
           </div>
@@ -1761,12 +1788,7 @@ function showNewMessageNotification(message) {
       default:
         notificationText = `${senderName}: ${message.content}`;
     }
-    
-    showToast({
-      message: notificationText,
-      type: 'info',
-      delay: 3000
-    });
+      // Toast notifications removed - only show browser notifications
     
     // Try to show browser notification if permission granted
     if ('Notification' in window && Notification.permission === 'granted') {

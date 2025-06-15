@@ -204,6 +204,7 @@ export class MessageGateway {
     @ConnectedSocket() client: Socket,
   ) {
     const userId = client.data.user?.sub as string;
+    dto = dto[0] || dto; // Handle array or single object
     if (!dto.messageId || !dto.conversationId) {
       client.emit('error', {
         message: 'Dữ liệu yêu cầu thiếu.',
@@ -224,9 +225,7 @@ export class MessageGateway {
 
     try {
       await this.chatService.hideMessageForUser(userId, dto.messageId);
-      this.server
-        .to(dto.conversationId)
-        .emit('messageHidden', { messageId: dto.messageId });
+      client.emit('messageHidden', { messageId: dto.messageId });
       this.logger.log(
         `User ${userId} hide message ${dto.messageId} in conversation ${dto.conversationId}`,
       );
@@ -240,6 +239,7 @@ export class MessageGateway {
     @MessageBody() dto: { messageId: string; conversationId: string },
     @ConnectedSocket() client: Socket,
   ) {
+    dto = dto[0] || dto; // Handle array or single object
     const userId = client.data.user?.sub as string;
     if (!dto.messageId || !dto.conversationId) {
       client.emit('error', {
