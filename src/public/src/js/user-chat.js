@@ -939,8 +939,7 @@ async function loadConversations(search = '') {
     
     const result = await response.json();
     console.log('Conversations result:', result);
-    
-    if (result && result.success && result.data && result.data.length > 0) {
+      if (result && result.success && result.data && result.data.length > 0) {
       const data = result.data;
       
       if (conversationPage === 1) {
@@ -957,6 +956,11 @@ async function loadConversations(search = '') {
       renderConversations();
     } else {
       hasMoreConversations = false;
+      // Clear conversations if no results and reset to empty state
+      if (conversationPage === 1) {
+        conversations = [];
+        renderConversations(); // This will clear the list
+      }
     }
   } catch (error) {
     console.error('Error loading conversations:', error);
@@ -1094,6 +1098,18 @@ function renderConversations() {
   
   // Clear existing conversations for fresh render
   chatListContainer.innerHTML = '';
+  
+  if (conversations.length === 0) {
+    // Show empty state message
+    const emptyMessage = document.createElement('div');
+    emptyMessage.className = 'text-center py-8 text-gray-400';
+    emptyMessage.innerHTML = `
+      <i class="ri-search-line text-3xl mb-3"></i>
+      <p class="text-sm">${currentSearchQuery ? `Không tìm thấy cuộc trò chuyện nào với "${currentSearchQuery}"` : 'Chưa có cuộc trò chuyện nào'}</p>
+    `;
+    chatListContainer.appendChild(emptyMessage);
+    return;
+  }
   
   conversations.forEach((conversation, index) => {
     console.log('Processing conversation:', conversation._id, conversation);
@@ -1325,10 +1341,15 @@ function initializeSearch() {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         const searchTerm = e.target.value.trim();
+        console.log('Search triggered with term:', searchTerm);
         resetConversationPagination();
         loadConversations(searchTerm);
       }, 300);
     });
+    
+    console.log('Search functionality initialized');
+  } else {
+    console.error('Search input element not found');
   }
 }
 
