@@ -429,9 +429,7 @@ async function sendMessage() {
         content: currentReply.content,
         sender: { name: currentReply.author }
       } : null
-    };
-
-    // Add temporary message to display immediately
+    };    // Add temporary message to display immediately
     tempMessages.set(tempId, tempMessage);
     messages.push(tempMessage);
     
@@ -439,6 +437,13 @@ async function sendMessage() {
     const container = document.getElementById('messagesContainer');
     const messageElement = createMessageElement(tempMessage);
     container.appendChild(messageElement);
+
+    // Update conversation list immediately for better UX
+    const tempMessageForConversation = {
+      ...tempMessage,
+      conversationId: currentConversationId
+    };
+    updateConversationLastMessage(tempMessageForConversation);
 
     // Clear input and reply
     input.value = '';
@@ -566,10 +571,14 @@ function handleMessageReceived(data) {
       
       // Just update the specific message element instead of re-rendering all
       updateMessageStatus(data.tempId);
+      
+      // Still need to update conversation list for temp messages
+      updateConversationLastMessage(data.message);
       return;
     }
   }
-    // Add new message if it's in current conversation
+  
+  // Add new message if it's in current conversation
   if (data.message.conversationId === currentConversationId) {
     messages.push(data.message);
     
@@ -639,8 +648,12 @@ function handleMessageHidden(data) {
 }
 
 function updateConversationLastMessage(message) {
+  console.log('Updating conversation last message:', message);
+  
   // Find and update conversation in the list
   const conversationIndex = conversations.findIndex(c => c._id === message.conversationId);
+  console.log('Found conversation index:', conversationIndex);
+  
   if (conversationIndex !== -1) {
     // Format last message based on type
     let lastMessageText = message.content;
@@ -655,6 +668,9 @@ function updateConversationLastMessage(message) {
         lastMessageText = message.content;
     }
     
+    console.log('Updating conversation with last message:', lastMessageText);
+    
+    // Update conversation data
     conversations[conversationIndex].lastMessage = lastMessageText;
     conversations[conversationIndex].lastMessageAt = message.createdAt;
     
@@ -662,7 +678,40 @@ function updateConversationLastMessage(message) {
     const conversation = conversations.splice(conversationIndex, 1)[0];
     conversations.unshift(conversation);
     
-    renderConversations();
+    console.log('Conversation moved to top, re-rendering list');
+    
+    // Use more efficient update instead of full re-render
+    updateConversationInList(conversation, 0);
+  } else {
+    console.warn('Conversation not found in list:', message.conversationId);
+    // If conversation not found, try to reload conversations
+    loadConversations();
+  }
+}
+
+function updateConversationInList(conversation, newIndex) {
+  const chatListContainer = document.querySelector('.chat-list .p-2');
+  if (!chatListContainer) return;
+  
+  // Remove existing conversation element if it exists
+  const existingElement = document.querySelector(`[data-conversation-id="${conversation._id}"]`);
+  if (existingElement) {
+    existingElement.remove();
+  }
+  
+  // Create new conversation element
+  const conversationElement = createConversationElement(conversation);
+  
+  // Insert at the specified position (0 for top)
+  if (newIndex === 0) {
+    chatListContainer.insertBefore(conversationElement, chatListContainer.firstChild);
+  } else {
+    const children = chatListContainer.children;
+    if (newIndex < children.length) {
+      chatListContainer.insertBefore(conversationElement, children[newIndex]);
+    } else {
+      chatListContainer.appendChild(conversationElement);
+    }
   }
 }
 
@@ -696,8 +745,8 @@ document.addEventListener('click', function (event) {
 
 // API Functions
 async function loadConversations(search = '') {
-  // Reset on new search or first load
-  if (search !== currentSearchQuery || conversationPage === 1) {
+  // Reset only when search query changes or it's the first load
+  if (search !== currentSearchQuery) {
     conversations = [];
     conversationPage = 1;
     hasMoreConversations = true;
@@ -705,7 +754,8 @@ async function loadConversations(search = '') {
   }
   
   if (isLoadingConversations || !hasMoreConversations) return;
-    isLoadingConversations = true;
+  
+  isLoadingConversations = true;
   showConversationLoading();
   
   console.log('Loading conversations...', { page: conversationPage, search });
@@ -719,7 +769,8 @@ async function loadConversations(search = '') {
     
     const url = `/chat/conversation?${params}`;
     console.log('Fetching conversations from:', url);
-      const response = await fetch(url);
+    
+    const response = await fetch(url);
     console.log('Response status:', response.status);
     
     const result = await response.json();
@@ -876,19 +927,11 @@ function renderConversations() {
     return;
   }
   
-  const existingItems = chatListContainer.querySelectorAll('.conversation-item');
+  // Clear existing conversations for fresh render
+  chatListContainer.innerHTML = '';
   
-  // Clear existing conversations if this is a fresh load
-  if (conversationPage === 2) { // conversationPage đã được tăng lên rồi
-    existingItems.forEach(item => item.remove());
-  }
-    conversations.forEach((conversation, index) => {
+  conversations.forEach((conversation, index) => {
     console.log('Processing conversation:', conversation._id, conversation);
-    
-    // Skip if conversation already rendered
-    if (document.querySelector(`[data-conversation-id="${conversation._id}"]`)) {
-      return;
-    }
     
     const conversationElement = createConversationElement(conversation);
     chatListContainer.appendChild(conversationElement);
