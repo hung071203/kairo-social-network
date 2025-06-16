@@ -1015,7 +1015,7 @@ document.addEventListener('click', function (event) {
 });
 
 // API Functions
-async function loadConversations(search = '') {
+async function loadConversations(search = '', filterOptions = {}) {
   // Reset only when search query changes or it's the first load
   if (search !== currentSearchQuery) {
     conversations = [];
@@ -1029,13 +1029,15 @@ async function loadConversations(search = '') {
   isLoadingConversations = true;
   showConversationLoading();
   
-  console.log('Loading conversations...', { page: conversationPage, search });
+  console.log('Loading conversations...', { page: conversationPage, search, filterOptions });
   
   try {
     const params = new URLSearchParams({
       page: conversationPage,
       limit: 20,
-      ...(search && { search })
+      ...(search && { search }),
+      ...(filterOptions.userId && { userId: filterOptions.userId }),
+      ...(filterOptions.conversationId && { conversationId: filterOptions.conversationId })
     });
     
     const url = `/chat/conversation?${params}`;
@@ -1298,6 +1300,7 @@ function createConversationElement(conversation) {
   return div;
 }
 
+// Update selectConversation to also update URL
 function selectConversation(conversation) {
   // Remove active class from all conversations
   document.querySelectorAll('.conversation-item').forEach(item => {
@@ -1332,7 +1335,8 @@ function selectConversation(conversation) {
   if (container) {
     container.innerHTML = '';
   }
-    // Update current conversation
+  
+  // Update current conversation
   currentConversationId = conversation._id;
   
   // Update message input state based on permissions
@@ -1344,6 +1348,11 @@ function selectConversation(conversation) {
   
   // Update chat header
   updateChatHeader(conversation);
+  
+  // Update URL with current conversation
+  if (conversation && conversation._id) {
+    updateURLParameter('conversationId', conversation._id);
+  }
   
   // Join conversation room via socket
   if (socket && socket.connected) {
@@ -1654,7 +1663,17 @@ async function initializeApp() {
     await initializeSocket();
     initializeScrollHandlers();
     initializeSearch();
-    await loadConversations();
+    
+    // Check if we have URL parameters before loading conversations
+    const { userId, conversationId } = getURLParameters();
+    
+    if (userId || conversationId) {
+      // If we have URL parameters, handle them (which will load filtered conversations)
+      await handleURLConversationSelection();
+    } else {
+      // Normal case: load all conversations
+      await loadConversations();
+    }
     
     console.log('Chat app initialized successfully');
   } catch (error) {
@@ -2130,6 +2149,192 @@ function showReplyContextMenu(event, messageId) {
       contextMenu.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
       contextMenu.style.transform = 'scale(1) translateY(0)';
       contextMenu.style.opacity = '1';
+    });
+  }
+}
+
+// URL Query Parameter Handling
+function getURLParameters() {
+  const urlParams = new URLSearchParams(window.location.search);
+ 
+  return {
+    userId: urlParams.get('userId'),
+    conversationId: urlParams.get('conversationId')
+  };
+}
+
+function updateURLParameter(paramName, paramValue) {
+  const url = new URL(window.location);
+  if (paramValue) {
+    url.searchParams.set(paramName, paramValue);
+  } else {
+    url.searchParams.delete(paramName);
+  }
+  // Update URL without page reload
+  window.history.replaceState({}, '', url);
+}
+
+function clearURLParameters() {
+  const url = new URL(window.location);
+  url.searchParams.delete('userId');
+  url.searchParams.delete('conversationId');
+  window.history.replaceState({}, '', url);
+}
+
+async function handleURLConversationSelection() {
+  const { userId, conversationId } = getURLParameters();
+  
+  if (!userId && !conversationId) {
+    return; // No parameters to handle
+  }
+  
+  console.log('Handling URL parameters:', { userId, conversationId });
+  
+  try {
+    if (conversationId) {
+      // Load conversations with conversationId filter
+      await loadConversations('', { conversationId });
+      
+      // Find and select the conversation from loaded results
+      const conversation = conversations.find(c => c._id === conversationId);
+      if (conversation) {
+        selectConversation(conversation);
+        updateURLParameter('conversationId', conversationId);
+        showToast({
+          message: 'Đã mở cuộc trò chuyện',
+          type: 'success'
+        });
+      } else {
+        throw new Error('Conversation not found');
+      }
+      
+    } else if (userId) {
+      // Load conversations with userId filter
+      await loadConversations('', { userId });
+      
+      // Find the 1-on-1 conversation with this user from loaded results
+      const conversation = conversations.find(c => {
+        if (c.isGroup) return false;
+        if (c.populatedUsers && c.populatedUsers.length >= 2) {
+          return c.populatedUsers.some(user => user._id === userId);
+        }
+        return false;
+      });
+      
+      if (conversation) {
+        selectConversation(conversation);
+        updateURLParameter('conversationId', conversation._id);
+        showToast({
+          message: 'Đã mở cuộc trò chuyện',
+          type: 'success'
+        });
+      } else {
+        // If no existing conversation found, try to create one
+        const createResponse = await fetch('/chat/conversation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            participantIds: [userId],
+            isGroup: false
+          })
+        });
+        
+        const createResult = await createResponse.json();
+        
+        if (createResult && createResult.success && createResult.data) {
+          const newConversation = createResult.data;
+          
+          // Add to conversations list
+          conversations.unshift(newConversation);
+          renderConversations();
+          
+          selectConversation(newConversation);
+          updateURLParameter('conversationId', newConversation._id);
+          
+          showToast({
+            message: 'Đã tạo cuộc trò chuyện mới',
+            type: 'success'
+          });
+        } else {
+          throw new Error('Cannot create conversation');
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error handling URL conversation selection:', error);
+    showToast({
+      message: 'Không thể mở cuộc trò chuyện từ liên kết',
+      type: 'error'
+    });
+    clearURLParameters();
+  }
+}
+
+// Listen for browser back/forward navigation
+window.addEventListener('popstate', () => {
+  // Handle URL changes from browser navigation
+  setTimeout(() => {
+    handleURLConversationSelection();
+  }, 100);
+});
+
+// Helper function to generate shareable conversation links
+function generateConversationLink(conversation) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  
+  if (conversation.isGroup) {
+    return `${baseUrl}?conversationId=${conversation._id}`;
+  } else {
+    // For 1-on-1 chat, we could use either conversationId or userId
+    // Using conversationId is more reliable
+    return `${baseUrl}?conversationId=${conversation._id}`;
+  }
+}
+
+function generateUserChatLink(userId) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  return `${baseUrl}?userId=${userId}`;
+}
+
+// Helper function to copy conversation link to clipboard
+async function copyConversationLink(conversation) {
+  try {
+    const link = generateConversationLink(conversation);
+    await navigator.clipboard.writeText(link);
+    
+    const displayName = conversation.isGroup 
+      ? (conversation.name || 'Nhóm chat')
+      : (conversation.populatedUsers?.find(u => u._id !== currentUser?._id)?.name || 'Cuộc trò chuyện');
+    
+    showToast({
+      message: `Đã sao chép liên kết cuộc trò chuyện với ${displayName}`,
+      type: 'success'
+    });
+  } catch (error) {
+    console.error('Error copying to clipboard:', error);
+    showToast({
+      message: 'Không thể sao chép liên kết',
+      type: 'error'
+    });
+  }
+}
+
+async function copyUserChatLink(userId, userName) {
+  try {
+    const link = generateUserChatLink(userId);
+    await navigator.clipboard.writeText(link);
+    
+    showToast({
+      message: `Đã sao chép liên kết chat với ${userName || 'người dùng'}`,
+      type: 'success'
+    });
+  } catch (error) {
+    console.error('Error copying to clipboard:', error);
+    showToast({
+      message: 'Không thể sao chép liên kết',
+      type: 'error'
     });
   }
 }

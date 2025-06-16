@@ -56,7 +56,7 @@ export class ChatController {
     try {
       return await this.chatService.getConversations(
         user._id as string,
-        dto.search,
+        dto,
         pagi,
       );
     } catch (error) {

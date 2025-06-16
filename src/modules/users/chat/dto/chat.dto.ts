@@ -65,6 +65,14 @@ export class GetConversationsDto extends PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string; // ID của người dùng để lọc cuộc trò chuyện
+
+  @IsOptional()
+  @IsString()
+  conversationId?: string; // ID của cuộc trò chuyện để lọc
 }
 
 export class GetMessagesDto extends PaginationDto{

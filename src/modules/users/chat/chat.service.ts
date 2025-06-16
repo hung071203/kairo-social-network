@@ -5,6 +5,7 @@ import { ConversationRepositoryInterface } from 'src/database/interface/conversa
 import { MessageRepositoryInterface } from 'src/database/interface/message.interface';
 import {
   CreateConversationDto,
+  GetConversationsDto,
   GetMessagesDto,
   SendMessageDto,
 } from './dto/chat.dto';
@@ -74,8 +75,8 @@ export class ChatService {
     return conversation;
   }
 
-  async getConversations(userId: string, search: string, pagi: PaginationDto) {
-    return this.conversationRepository.findAllCustom(userId, search, pagi);
+  async getConversations(userId: string, dto: GetConversationsDto, pagi: PaginationDto) {
+    return this.conversationRepository.findAllCustom(userId, dto, pagi);
   }
 
   async getMessages(userId: string, dto: GetMessagesDto, pagi: PaginationDto) {
