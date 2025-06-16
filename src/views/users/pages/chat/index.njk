@@ -376,10 +376,41 @@
                         onclick="closeUserSelectionModal()" 
                         class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         Hủy
+                    </button>                </div>
+            </div>
+        </div>
+
+        <!-- Block Confirmation Modal -->
+        <div id="blockConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+            <div class="bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Chặn người dùng</h3>
+                    <button onclick="closeBlockConfirmModal()" class="text-gray-400 hover:text-white">
+                        <i class="ri-close-line text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <p class="text-gray-300 mb-2">Bạn có chắc chắn muốn chặn <span id="blockTargetName" class="text-blue-400 font-medium"></span>?</p>
+                    <p class="text-sm text-gray-400">Sau khi chặn, bạn và họ sẽ không thể nhắn tin hoặc tương tác với nhau.</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button 
+                        onclick="closeBlockConfirmModal()" 
+                        class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        Hủy
+                    </button>
+                    <button 
+                        onclick="confirmBlockUser()" 
+                        class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                        Chặn
                     </button>
                 </div>
             </div>
-        </div><script src="/socket.io/socket.io.js"></script>
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
         <script>
             // Chat Options Dropdown
             function toggleChatOptions() {
@@ -488,21 +519,20 @@
                         </button>
                     `;                } else {
                     // 1-on-1 chat menu options
-                    menuContainer.innerHTML = `
-                        <button onclick="openUserSelectionModal()" class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
-                            <i class="ri-edit-line text-lg"></i>
-                            <span class="text-sm">Chỉnh sửa biệt danh</span>
-                        </button>
-                        
-                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
-                            <i class="ri-forbid-line text-lg"></i>
-                            <span class="text-sm">Chặn</span>
-                        </button>
-                        
-                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
-                            <i class="ri-delete-bin-line text-lg"></i>
-                            <span class="text-sm">Xóa hết tin nhắn</span>
-                        </button>
+                    menuContainer.innerHTML = `                                    <button onclick="openUserSelectionModal()" class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                        <i class="ri-edit-line text-lg"></i>
+                                        <span class="text-sm">Chỉnh sửa biệt danh</span>
+                                    </button>
+                                    
+                                    <button onclick="openBlockConfirmModal()" class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                        <i class="ri-forbid-line text-lg"></i>
+                                        <span class="text-sm">Chặn</span>
+                                    </button>
+                                    
+                                    <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                        <i class="ri-delete-bin-line text-lg"></i>
+                                        <span class="text-sm">Xóa hết tin nhắn</span>
+                                    </button>
                     `;}
             }              // User Selection Modal Functions
             function openUserSelectionModal() {
@@ -650,10 +680,82 @@
                     nicknameInput.addEventListener('keypress', function(event) {
                         if (event.key === 'Enter') {
                             saveNickname();
-                        }
-                    });
+                        }                    });
                 }
             });
+            
+            // Block User Functions
+            let userIdToBlock = null;
+            
+            function openBlockConfirmModal() {
+                // Only allow blocking in 1-on-1 conversations
+                if (!currentChatUser || !currentChatUser.userId) {
+                    console.warn('No user selected to block');
+                    showToast && showToast({ message: 'Không thể xác định người dùng để chặn', type: 'error' });
+                    return;
+                }
+                
+                userIdToBlock = currentChatUser.userId;
+                const blockTargetName = document.getElementById('blockTargetName');
+                if (blockTargetName) {
+                    blockTargetName.textContent = currentChatUser.name || 'người dùng này';
+                }
+                
+                const modal = document.getElementById('blockConfirmModal');
+                modal.classList.remove('hidden');
+                
+                // Close chat options dropdown
+                document.getElementById('chatOptionsDropdown').classList.add('hidden');
+            }
+            
+            function closeBlockConfirmModal() {
+                userIdToBlock = null;
+                const modal = document.getElementById('blockConfirmModal');
+                modal.classList.add('hidden');
+            }
+            
+            async function confirmBlockUser() {
+                if (!userIdToBlock) {
+                    console.warn('No user ID to block');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/follow/block/${userIdToBlock}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        showToast && showToast({
+                            message: 'Đã chặn người dùng thành công',
+                            type: 'success',
+                            delay: 3000
+                        });
+                        
+                        // Close modal
+                        closeBlockConfirmModal();
+                        
+                        // Reload page after 1 second
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        throw new Error(data.message || 'Không thể chặn người dùng');
+                    }
+                } catch (error) {
+                    console.error('Error blocking user:', error);
+                    showToast && showToast({
+                        message: `Lỗi khi chặn người dùng: ${error.message}`,
+                        type: 'error',
+                        delay: 5000
+                    });
+                }
+            }
         </script>
         <script src="/src/js/user-chat.js"></script>
     </body>
