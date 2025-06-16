@@ -928,3 +928,17 @@ body {
     left: 100%;
   }
 }
+
+/* System message styles */
+.system-message-wrapper {
+  margin: 8px 0;
+}
+
+.system-message {
+  font-size: 0.875rem;
+  font-style: italic;
+  user-select: none;
+  word-wrap: break-word;
+  max-width: 70%;
+  margin: 0 auto;
+}

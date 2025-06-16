@@ -232,9 +232,9 @@ export class ChatService {
     userId: string,
     conversationId: string,
     nickname: string,
-  ) {
-    if (!nickname || nickname.length < 1) {
-      throw new Error('Biệt danh không được để trống.');
+  ) {    // Allow empty nickname to reset to real name
+    if (nickname !== undefined && nickname !== null) {
+      nickname = nickname.trim();
     }
 
     const conversation = await this.conversationRepository

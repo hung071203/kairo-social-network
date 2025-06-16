@@ -210,9 +210,8 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Menu Options -->
-                                <div class="py-2">
-                                    <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                <!-- Menu Options -->                                <div class="py-2">
+                                    <button onclick="openNicknameModal()" class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
                                         <i class="ri-edit-line text-lg"></i>
                                         <span class="text-sm">Chỉnh sửa biệt danh</span>
                                     </button>
@@ -288,8 +287,7 @@
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div>        </div>
         <!-- Modal xem ảnh -->
         <div id="imageModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 flex items-center justify-center">
             <div class="relative">
@@ -298,7 +296,91 @@
                     <i class="ri-close-line"></i>
                 </button>
             </div>
-        </div>        <script src="/socket.io/socket.io.js"></script>
+        </div>
+          <!-- Nickname Modal -->
+        <div id="nicknameModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+            <div class="bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Chỉnh sửa biệt danh</h3>
+                    <button onclick="closeNicknameModal()" class="text-gray-400 hover:text-white">
+                        <i class="ri-close-line text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Biệt danh cho <span id="nicknameTargetName" class="text-blue-400"></span></label>
+                    <input 
+                        type="text" 
+                        id="nicknameInput" 
+                        class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                        placeholder="Nhập biệt danh mới..."
+                        maxlength="50"
+                    />
+                    <div class="text-xs text-gray-400 mt-1">Để trống để sử dụng tên thật</div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button 
+                        onclick="closeNicknameModal()" 
+                        class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        Hủy
+                    </button>
+                    <button 
+                        onclick="saveNickname()" 
+                        class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Lưu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Selection Modal for Nickname Changes -->
+        <div id="userSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+            <div class="bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Chọn người dùng</h3>
+                    <button onclick="closeUserSelectionModal()" class="text-gray-400 hover:text-white">
+                        <i class="ri-close-line text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-300 mb-4">Chọn người mà bạn muốn chỉnh sửa biệt danh:</p>
+                    
+                    <!-- Current User Option -->
+                    <button onclick="selectUserForNickname('self')" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition-colors mb-3 border border-gray-600">
+                        <div class="w-10 h-10 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
+                            <img id="selectionCurrentUserAvatar" alt="Your Avatar" class="w-full h-full object-cover" src="/images/kairo.jpg"/>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div id="selectionCurrentUserName" class="text-white font-medium">Bạn</div>
+                            <div class="text-xs text-gray-400">Đặt biệt danh cho tôi</div>
+                        </div>
+                        <i class="ri-user-settings-line text-blue-400"></i>
+                    </button>
+                    
+                    <!-- Other User Option -->
+                    <button onclick="selectUserForNickname('other')" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition-colors border border-gray-600">
+                        <div class="w-10 h-10 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
+                            <img id="selectionOtherUserAvatar" alt="Other User Avatar" class="w-full h-full object-cover" src="/images/kairo.jpg"/>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div id="selectionOtherUserName" class="text-white font-medium">Người dùng khác</div>
+                            <div class="text-xs text-gray-400">Đặt biệt danh cho họ</div>
+                        </div>
+                        <i class="ri-edit-line text-blue-400"></i>
+                    </button>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button 
+                        onclick="closeUserSelectionModal()" 
+                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </div><script src="/socket.io/socket.io.js"></script>
         <script>
             // Chat Options Dropdown
             function toggleChatOptions() {
@@ -324,6 +406,25 @@
                 
                 if (dropdownName) dropdownName.textContent = name;
                 if (dropdownAvatar) dropdownAvatar.src = avatar || '/images/kairo.jpg';
+                
+                // Store current user info for nickname modal
+                if (!isGroup && userId) {
+                    // Find user nickname from conversation participants
+                    let nickname = null;
+                    if (conversation && conversation.participants) {
+                        const userParticipant = conversation.participants.find(p => p.user === userId);
+                        nickname = userParticipant?.nickname;
+                    }
+                    
+                    currentChatUser = {
+                        userId: userId,
+                        name: name,
+                        avatar: avatar,
+                        nickname: nickname
+                    };
+                } else {
+                    currentChatUser = null;
+                }
                 
                 // Handle profile link for 1-on-1 vs group chats
                 if (profileLink) {
@@ -386,11 +487,10 @@
                             <i class="ri-logout-circle-line text-lg"></i>
                             <span class="text-sm">Rời khỏi nhóm</span>
                         </button>
-                    `;
-                } else {
+                    `;                } else {
                     // 1-on-1 chat menu options
                     menuContainer.innerHTML = `
-                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                        <button onclick="openUserSelectionModal()" class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
                             <i class="ri-edit-line text-lg"></i>
                             <span class="text-sm">Chỉnh sửa biệt danh</span>
                         </button>
@@ -404,9 +504,157 @@
                             <i class="ri-delete-bin-line text-lg"></i>
                             <span class="text-sm">Xóa hết tin nhắn</span>
                         </button>
-                    `;
+                    `;}
+            }              // User Selection Modal Functions
+            function openUserSelectionModal() {
+                // Update user information in the selection modal
+                updateUserSelectionModal();
+                
+                const modal = document.getElementById('userSelectionModal');
+                modal.classList.remove('hidden');
+                
+                // Close chat options dropdown
+                document.getElementById('chatOptionsDropdown').classList.add('hidden');
+            }
+            
+            function closeUserSelectionModal() {
+                const modal = document.getElementById('userSelectionModal');
+                modal.classList.add('hidden');
+            }
+            
+            function updateUserSelectionModal() {
+                // Update current user info
+                const currentUserAvatar = document.getElementById('selectionCurrentUserAvatar');
+                const currentUserName = document.getElementById('selectionCurrentUserName');
+                
+                if (currentUser) {
+                    if (currentUserAvatar) currentUserAvatar.src = currentUser.avatar || '/images/kairo.jpg';
+                    if (currentUserName) currentUserName.textContent = currentUser.name || 'Bạn';
+                }
+                
+                // Update other user info
+                const otherUserAvatar = document.getElementById('selectionOtherUserAvatar');
+                const otherUserName = document.getElementById('selectionOtherUserName');
+                
+                if (currentChatUser) {
+                    if (otherUserAvatar) otherUserAvatar.src = currentChatUser.avatar || '/images/kairo.jpg';
+                    if (otherUserName) otherUserName.textContent = currentChatUser.name || 'Người dùng khác';
                 }
             }
+            
+            function selectUserForNickname(mode) {
+                // Close user selection modal
+                closeUserSelectionModal();
+                
+                // Open nickname modal with selected mode
+                openNicknameModal(mode);
+            }
+            
+            // Nickname Modal Functions
+            let currentChatUser = null; // Store current chat user info
+            let currentNicknameMode = 'other'; // Track whether editing 'self' or 'other' nickname
+            
+            function openNicknameModal(mode = 'other') {
+                currentNicknameMode = mode;
+                
+                const modal = document.getElementById('nicknameModal');
+                const targetName = document.getElementById('nicknameTargetName');
+                const nicknameInput = document.getElementById('nicknameInput');
+                const modalTitle = document.querySelector('#nicknameModal h3');
+                
+                if (mode === 'self') {
+                    // Editing own nickname for others to see
+                    const currentUserName = currentUser?.name || 'Bạn';
+                    targetName.textContent = currentUserName;
+                    modalTitle.textContent = 'Đặt biệt danh cho tôi';
+                    
+                    // Get current user's nickname from conversation participants
+                    let currentUserNickname = '';
+                    if (typeof conversations !== 'undefined' && window.currentConversationId) {
+                        const conversation = conversations.find(c => c._id === window.currentConversationId);
+                        if (conversation && conversation.participants) {
+                            const currentUserParticipant = conversation.participants.find(p => p.user === currentUser?._id);
+                            currentUserNickname = currentUserParticipant?.nickname || '';
+                        }
+                    }
+                    nicknameInput.value = currentUserNickname;
+                } else {
+                    // Editing other user's nickname (existing functionality)
+                    if (!currentChatUser) {
+                        console.warn('No current chat user available');
+                        return;
+                    }
+                    
+                    targetName.textContent = currentChatUser.name;
+                    modalTitle.textContent = 'Chỉnh sửa biệt danh';
+                    nicknameInput.value = currentChatUser.nickname || '';
+                }
+                
+                modal.classList.remove('hidden');
+                nicknameInput.focus();
+                
+                // Close chat options dropdown
+                document.getElementById('chatOptionsDropdown').classList.add('hidden');
+            }
+            
+            function closeNicknameModal() {
+                const modal = document.getElementById('nicknameModal');
+                const nicknameInput = document.getElementById('nicknameInput');
+                
+                modal.classList.add('hidden');
+                nicknameInput.value = '';
+            }            function saveNickname() {
+                // Get current conversation ID from the global scope or user-chat.js
+                const conversationId = window.currentConversationId || currentConversationId;
+                if (!conversationId) {
+                    console.warn('No conversation selected for nickname change');
+                    showToast && showToast({ message: 'Vui lòng chọn cuộc trò chuyện', type: 'warning' });
+                    return;
+                }
+                
+                const nicknameInput = document.getElementById('nicknameInput');
+                const newNickname = nicknameInput.value.trim();
+                
+                let targetUserId;
+                
+                if (currentNicknameMode === 'self') {
+                    // Changing own nickname
+                    targetUserId = currentUser?._id;
+                    if (!targetUserId) {
+                        console.warn('Current user ID not available');
+                        showToast && showToast({ message: 'Không thể xác định người dùng hiện tại', type: 'error' });
+                        return;
+                    }
+                } else {
+                    // Changing other user's nickname (existing functionality)
+                    if (!currentChatUser) {
+                        console.warn('Missing current chat user data');
+                        return;
+                    }
+                    targetUserId = currentChatUser.userId;
+                }
+                
+                // Call the nickname change function from user-chat.js
+                if (typeof changeUserNickname === 'function') {
+                    changeUserNickname(targetUserId, newNickname);
+                } else {
+                    console.error('changeUserNickname function not found');
+                }
+                
+                closeNicknameModal();
+            }
+            
+            // Handle Enter key in nickname input
+            document.addEventListener('DOMContentLoaded', function() {
+                const nicknameInput = document.getElementById('nicknameInput');
+                if (nicknameInput) {
+                    nicknameInput.addEventListener('keypress', function(event) {
+                        if (event.key === 'Enter') {
+                            saveNickname();
+                        }
+                    });
+                }
+            });
         </script>
         <script src="/src/js/user-chat.js"></script>
     </body>

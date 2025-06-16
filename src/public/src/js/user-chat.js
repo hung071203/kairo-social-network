@@ -188,6 +188,21 @@ function renderMessages() {
 
 function createMessageElement(message) {
   const messageDiv = document.createElement('div');
+    // Handle system messages differently
+  if (message.senderType === 'SYSTEM') {
+    messageDiv.className = 'system-message-wrapper flex justify-center my-2';
+    messageDiv.dataset.messageId = message._id;
+    
+    messageDiv.innerHTML = `
+      <div class="system-message text-gray-400 text-sm text-center">
+        ${message.content}
+      </div>
+    `;
+    
+    return messageDiv;
+  }
+  
+  // Regular user messages
   const isCurrentUser = message.sender && message.sender._id === currentUser?._id;
   const tempClass = message.isTemp ? 'temp-message' : '';
   const uploadingClass = message.isUploading ? 'uploading' : '';
@@ -867,8 +882,7 @@ function updateConversationLastMessage(message) {
     let lastMessageText = message.content;
     const isFromCurrentUser = message.sender && message.sender._id === currentUser?._id;
     const senderName = message.sender?.name || 'Ai đó';
-    
-    switch (message.type) {
+      switch (message.type) {
       case 'IMAGE':
         lastMessageText = isFromCurrentUser ? '📷 Bạn đã gửi một hình ảnh' : `📷 ${senderName} đã gửi một hình ảnh`;
         break;
@@ -876,16 +890,21 @@ function updateConversationLastMessage(message) {
         lastMessageText = isFromCurrentUser ? '🎥 Bạn đã gửi một video' : `🎥 ${senderName} đã gửi một video`;
         break;
       default:
-        // For text messages, show sender name if not from current user
-        if (!isFromCurrentUser && conversations[conversationIndex]?.isGroup) {
-          // In group chats, show sender name for others' messages
-          lastMessageText = `${senderName}: ${message.content}`;
-        } else if (!isFromCurrentUser && !conversations[conversationIndex]?.isGroup) {
-          // In 1-on-1 chats, just show the message content
+        // Handle system messages
+        if (message.senderType === 'SYSTEM') {
           lastMessageText = message.content;
         } else {
-          // For current user's messages
-          lastMessageText = `Bạn: ${message.content}`;
+          // For text messages, show sender name if not from current user
+          if (!isFromCurrentUser && conversations[conversationIndex]?.isGroup) {
+            // In group chats, show sender name for others' messages
+            lastMessageText = `${senderName}: ${message.content}`;
+          } else if (!isFromCurrentUser && !conversations[conversationIndex]?.isGroup) {
+            // In 1-on-1 chats, just show the message content
+            lastMessageText = message.content;
+          } else {
+            // For current user's messages
+            lastMessageText = `Bạn: ${message.content}`;
+          }
         }
     }
     
@@ -1250,13 +1269,16 @@ function createConversationElement(conversation) {
     avatar = conversation.avatar || '/images/kairo.jpg';
     displayName = conversation.name || 'Nhóm chat';  } else {
     // For 1-on-1 chat, find the other user (not current user)
-    if (conversation.populatedUsers && conversation.populatedUsers.length >= 2) {
+    if (conversation.populatedUsers && conversation.populatedUsers.length >= 2 && conversation.participants) {
       const otherUser = conversation.populatedUsers.find(user => 
         user.email !== currentUser?.email && user.username !== currentUser?.username
       );
       
       if (otherUser) {
-        displayName = otherUser.name;
+        // Find the other participant to get nickname
+        const otherParticipant = conversation.participants.find(p => p.user !== currentUser?._id);
+        // Use nickname if available, otherwise use real name
+        displayName = otherParticipant?.nickname || otherUser.name;
         avatar = otherUser.avatar || '/images/kairo.jpg';
       }
     }
@@ -1334,9 +1356,11 @@ function selectConversation(conversation) {
   if (container) {
     container.innerHTML = '';
   }
-  
-  // Update current conversation
+    // Update current conversation
   currentConversationId = conversation._id;
+  
+  // Make currentConversationId globally accessible
+  window.currentConversationId = currentConversationId;
   
   // Update message input state based on permissions
   updateMessageInputState();
@@ -1406,12 +1430,7 @@ function updateChatHeader(conversation) {
       });
       
       console.log('Found other user:', otherUser);
-      
-      if (otherUser) {
-        displayName = otherUser.name;
-        avatar = otherUser.avatar || '/images/kairo.jpg';
-        status = otherUser.isOnline ? 'Đang hoạt động' : 'Không hoạt động';
-        
+        if (otherUser) {
         // Get userId from participants array since populatedUsers doesn't have _id
         const otherParticipant = conversation.participants.find(p => {
           // Find the participant that's not the current user
@@ -1420,10 +1439,16 @@ function updateChatHeader(conversation) {
         
         if (otherParticipant) {
           userId = otherParticipant.user; // Set userId from participants
-          console.log('Set userId from participants:', userId);
+          // Use nickname if available, otherwise use real name
+          displayName = otherParticipant.nickname || otherUser.name;
+          console.log('Set userId from participants:', userId, 'displayName:', displayName);
         } else {
+          displayName = otherUser.name;
           console.warn('Could not find other participant');
         }
+        
+        avatar = otherUser.avatar || '/images/kairo.jpg';
+        status = otherUser.isOnline ? 'Đang hoạt động' : 'Không hoạt động';
       } else {
         console.warn('Could not find other user in populated users');
       }
@@ -1586,10 +1611,14 @@ function initializeSocket() {
     console.log('Socket received messageDeleted event:', data);
     handleMessageDeleted(data);
   });
-
   socket.on('messageHidden', (data) => {
     console.log('Socket received messageHidden event:', data);
     handleMessageHidden(data);
+  });
+
+  socket.on('nicknameChanged', (data) => {
+    console.log('Socket received nicknameChanged event:', data);
+    handleNicknameChanged(data);
   });
 
   socket.on('disconnect', (reason) => {
@@ -1702,6 +1731,130 @@ async function getCurrentUser() {
   }
 }
 
+// Request notification permission on app init
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      console.log('Notification permission:', permission);
+    });
+  }
+}
+
+// Helper function to show new message notification
+function showNewMessageNotification(message) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const senderName = message.sender?.name || 'Ai đó';
+    let notificationText = message.content;
+    
+    // Format notification text based on message type
+    switch (message.type) {
+      case 'IMAGE':
+        notificationText = 'đã gửi một hình ảnh';
+        break;
+      case 'VIDEO':
+        notificationText = 'đã gửi một video';
+        break;
+      default:
+        notificationText = message.content;
+    }
+    
+    const notification = new Notification(`${senderName}`, {
+      body: notificationText,
+      icon: message.sender?.avatar || '/images/kairo.jpg',
+      tag: `message-${message._id}`,
+      requireInteraction: false
+    });
+    
+    // Auto close notification after 5 seconds
+    setTimeout(() => {
+      notification.close();
+    }, 5000);
+    
+    // Click notification to focus window (optional)
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+  }
+}
+
+// Helper function to insert message in correct chronological order
+function insertMessageInOrder(newMessage) {
+  const newMessageTime = new Date(newMessage.createdAt).getTime();
+  
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const messageTime = new Date(messages[i].createdAt).getTime();
+    if (messageTime <= newMessageTime) {
+      messages.splice(i + 1, 0, newMessage);
+      return i + 1;
+    }
+  }
+  
+  // If no suitable position found, insert at beginning
+  messages.unshift(newMessage);
+  return 0;
+}
+
+// Helper function to render new message at correct position
+function renderNewMessageAtPosition(message, position) {
+  const container = document.getElementById('messagesContainer');
+  if (!container) return;
+  
+  const messageElement = createMessageElement(message);
+  const children = container.children;
+  
+  if (position >= children.length) {
+    container.appendChild(messageElement);
+  } else {
+    container.insertBefore(messageElement, children[position]);
+  }
+}
+
+// URL Query Parameter Handling
+function getURLParameters() {
+  const urlParams = new URLSearchParams(window.location.search);
+ 
+  return {
+    userId: urlParams.get('userId'),
+    conversationId: urlParams.get('conversationId')
+  };
+}
+
+function updateURLParameter(paramName, paramValue) {
+  const url = new URL(window.location);
+  if (paramValue) {
+    url.searchParams.set(paramName, paramValue);
+  } else {
+    url.searchParams.delete(paramName);
+  }
+  // Update URL without page reload
+  window.history.replaceState({}, '', url);
+}
+
+function clearURLParameters() {
+  const url = new URL(window.location);
+  url.searchParams.delete('userId');
+  url.searchParams.delete('conversationId');
+  window.history.replaceState({}, '', url);
+}
+
+async function handleURLConversationSelection() {
+  const { userId, conversationId } = getURLParameters();
+  
+  if (conversationId) {
+    // Load conversations filtered by specific conversation ID
+    await loadConversations('', { conversationId });
+  } else if (userId) {
+    // Load conversations filtered by specific user ID
+    await loadConversations('', { userId });
+  }
+  
+  // After conversations are loaded, auto-select the first one if available
+  if (conversations.length > 0) {
+    selectConversation(conversations[0]);
+  }
+}
+
 // Initialize app
 async function initializeApp() {
   console.log('Initializing chat app...');
@@ -1741,8 +1894,6 @@ if (document.readyState === 'loading') {
   initializeApp();
 }
 
-
-
 // Update specific message status without re-rendering all messages
 function updateMessageStatus(messageId) {
   const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
@@ -1758,6 +1909,7 @@ function updateMessageStatus(messageId) {
   if (messageBubble) {
     messageBubble.classList.remove('opacity-70');
   }
+  
   // Remove or update status indicator
   const statusElement = messageElement.querySelector('.message-status');
   if (statusElement) {
@@ -1778,7 +1930,9 @@ function updateMessageStatus(messageId) {
     } else {
       // Successfully sent - remove status indicator
       statusElement.remove();
-    }  }
+    }
+  }
+  
   // Add message controls if message is not temporary (for both sent and received messages)
   if (!message.isTemp && canSendMessage(currentConversationId)) {
     const messageContent = messageElement.querySelector('.message-content');
@@ -1786,7 +1940,8 @@ function updateMessageStatus(messageId) {
     const isCurrentUser = message.sender?._id === currentUser?._id;
     
     // Check if controls already exist
-    if (!messageBubbleContainer.querySelector('.message-controls')) {      const controlsHtml = `
+    if (!messageBubbleContainer.querySelector('.message-controls')) {
+      const controlsHtml = `
         <div class="message-controls">
           <div class="relative">
             <button onclick="toggleReactionPicker(event, '${messageId}')" class="reaction-btn">
@@ -1820,11 +1975,10 @@ function updateMessageStatus(messageId) {
         </div>
       `;
       
-      const messageBubble = messageBubbleContainer.querySelector('.message-bubble');
       if (isCurrentUser) {
-        messageBubble.insertAdjacentHTML('beforebegin', controlsHtml);
+        messageBubbleContainer.insertAdjacentHTML('afterbegin', controlsHtml);
       } else {
-        messageBubble.insertAdjacentHTML('afterend', controlsHtml);
+        messageBubbleContainer.insertAdjacentHTML('beforeend', controlsHtml);
       }
     }
   }
@@ -1835,39 +1989,34 @@ function updateMessageContent(messageId, newContent) {
   const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
   if (!messageElement) return;
 
-  const message = messages.find(m => m._id === messageId);
-  if (!message) return;
-
-  // Update the content in the message bubble
-  const messageBubble = messageElement.querySelector('.message-bubble');
-  if (!messageBubble) return;
-
-  let contentHtml = '';
-  switch (message.type) {
-    case 'IMAGE':
-      contentHtml = `
-        <img
-          class="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition"
-          src="${newContent}"
-          alt="Image"
-          onclick="openImageModal('${newContent}')"
-        />`;
-      break;
-    case 'VIDEO':
-      contentHtml = `
-        <video controls class="rounded-lg w-full h-auto" preload="metadata">
-          <source src="${newContent}" type="video/mp4"/>
-        </video>
-      `;
-      break;
-    default:
-      contentHtml = `<p>${newContent}</p>`;
-  }
-
-  // Find existing content and replace it
-  const existingContent = messageBubble.querySelector('img, video, p');
-  if (existingContent) {
-    existingContent.outerHTML = contentHtml;
+  const contentElement = messageElement.querySelector('.message-bubble');
+  if (contentElement) {
+    // Find and update the message in the array
+    const messageIndex = messages.findIndex(m => m._id === messageId);
+    if (messageIndex !== -1) {
+      messages[messageIndex].content = newContent;
+      
+      // Re-create the content HTML based on message type
+      const message = messages[messageIndex];
+      let contentHtml = '';
+      
+      switch (message.type) {
+        case 'IMAGE':
+          contentHtml = `<img src="${newContent}" alt="Image" class="max-w-full h-auto rounded cursor-pointer" onclick="openImageModal('${newContent}')"/>`;
+          break;
+        case 'VIDEO':
+          contentHtml = `<video controls class="max-w-full h-auto rounded"><source src="${newContent}" type="video/mp4"/>Trình duyệt không hỗ trợ video.</video>`;
+          break;
+        default:
+          contentHtml = `<p class="break-words">${newContent}</p>`;
+      }
+      
+      // Update only the content part, preserve other elements like time tooltip
+      const existingContent = contentElement.querySelector('p, img, video');
+      if (existingContent) {
+        existingContent.outerHTML = contentHtml;
+      }
+    }
   }
 }
 
@@ -1876,514 +2025,197 @@ function updateMessageReactions(messageId, reactions) {
   const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
   if (!messageElement) return;
 
-  // Find the message bubble
-  const messageBubble = messageElement.querySelector('.message-bubble');
-  if (!messageBubble) return;
-
-  // Remove existing reactions element
-  const existingReactions = messageBubble.querySelector('.flex.flex-wrap.mt-1');
-  if (existingReactions) {
-    existingReactions.remove();
-  }
-
-  // Add new reactions if any exist
+  const reactionContainer = messageElement.querySelector('.message-bubble .flex.flex-wrap');
+  
   if (reactions && reactions.length > 0) {
+    // Group reactions by emoji
     const reactionGroups = {};
-    reactions.forEach((reactionObj) => {
-      const emoji = reactionObj.reaction;
-      reactionGroups[emoji] = (reactionGroups[emoji] || 0) + 1;
+    reactions.forEach(reaction => {
+      if (reactionGroups[reaction.emoji]) {
+        reactionGroups[reaction.emoji]++;
+      } else {
+        reactionGroups[reaction.emoji] = 1;
+      }
     });
 
     const reactionElements = Object.entries(reactionGroups)
-      .map(
-        ([emoji, count]) =>
-          `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-600 text-white mr-1 mt-1 cursor-pointer hover:bg-gray-500 transition-colors">${emoji} ${count}</span>`,
+      .map(([emoji, count]) =>
+        `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-600 text-white mr-1 mt-1 cursor-pointer hover:bg-gray-500 transition-colors">${emoji} ${count}</span>`
       )
       .join('');
 
-    const reactionsHtml = `<div class="flex flex-wrap mt-1">${reactionElements}</div>`;
-    
-    // Insert the new reactions before the time tooltip
-    const timeTooltip = messageBubble.querySelector('.time-tooltip');
-    if (timeTooltip) {
-      timeTooltip.insertAdjacentHTML('beforebegin', reactionsHtml);
+    if (reactionContainer) {
+      reactionContainer.innerHTML = reactionElements;
     } else {
-      // If no time tooltip, append to the end of message bubble
-      messageBubble.insertAdjacentHTML('beforeend', reactionsHtml);
-    }
-  }
-}
-
-// Helper function to show new message notification
-function showNewMessageNotification(message) {
-  if (!message.sender) return;
-  
-  const isFromCurrentUser = message.sender._id === currentUser?._id;
-  if (isFromCurrentUser) return; // Don't show notification for own messages
-  
-  // Only show notification if:
-  // 1. The message is not from current conversation, OR
-  // 2. The page is not in focus/visible
-  const shouldShowNotification = 
-    message.conversationId !== currentConversationId || 
-    !document.hasFocus() || 
-    document.hidden;
-    
-  if (shouldShowNotification) {
-    let notificationText = '';
-    const senderName = message.sender.name || 'Ai đó';
-    
-    switch (message.type) {
-      case 'IMAGE':
-        notificationText = `${senderName} đã gửi một hình ảnh`;
-        break;
-      case 'VIDEO':
-        notificationText = `${senderName} đã gửi một video`;
-        break;
-      default:
-        notificationText = `${senderName}: ${message.content}`;
-    }
-      // Toast notifications removed - only show browser notifications
-    
-    // Try to show browser notification if permission granted
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Tin nhắn mới', {
-        body: notificationText,
-        icon: message.sender.avatar || '/images/kairo.jpg'
-      });
-    }
-  }
-}
-
-// Request notification permission on app init
-function requestNotificationPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
-
-// Helper function to insert message in correct chronological order
-function insertMessageInOrder(newMessage) {
-  if (!newMessage || !newMessage.createdAt) {
-    console.error('Invalid message for insertion:', newMessage);
-    return messages.length; // Return end position as fallback
-  }
-  
-  const messageTime = new Date(newMessage.createdAt).getTime();
-  
-  // Find the correct position to insert the message
-  let insertIndex = messages.length;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const existingMessageTime = new Date(messages[i].createdAt).getTime();
-    if (messageTime > existingMessageTime) {
-      insertIndex = i + 1;
-      break;
-    }
-    if (messageTime <= existingMessageTime) {
-      insertIndex = i;
-    }
-  }
-  
-  // Insert the message at the correct position
-  messages.splice(insertIndex, 0, newMessage);
-  
-  return insertIndex;
-}
-
-// Helper function to render new message at correct position
-function renderNewMessageAtPosition(message, position) {
-  const container = document.getElementById('messagesContainer');
-  if (!container) {
-    console.error('Messages container not found');
-    return null;
-  }
-  
-  if (!message) {
-    console.error('Invalid message for rendering:', message);
-    return null;
-  }
-  
-  const messageElement = createMessageElement(message);
-  
-  // Add special animation for reply messages
-  if (message.replyTo) {
-    messageElement.style.transform = 'translateX(-20px) scale(0.95)';
-    messageElement.style.opacity = '0';
-    
-    // Add loading state to reply element
-    const replyElement = messageElement.querySelector('.reply-message');
-    if (replyElement) {
-      addReplyLoadingState(replyElement);
+      // Create reaction container if it doesn't exist
+      const messageBubble = messageElement.querySelector('.message-bubble');
+      const newReactionContainer = document.createElement('div');
+      newReactionContainer.className = 'flex flex-wrap mt-1';
+      newReactionContainer.innerHTML = reactionElements;
+      messageBubble.appendChild(newReactionContainer);
     }
   } else {
-    // Regular animation for non-reply messages
-    messageElement.style.transform = 'translateY(10px)';
-    messageElement.style.opacity = '0';
+    // Remove reaction container if no reactions
+    if (reactionContainer) {
+      reactionContainer.remove();
+    }
   }
-  
-  // Insert at correct position
-  if (position >= container.children.length) {
-    container.appendChild(messageElement);
-  } else {
-    const nextElement = container.children[position];
-    container.insertBefore(messageElement, nextElement);
-  }
-  
-  // Trigger animation
-  requestAnimationFrame(() => {
-    messageElement.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-    messageElement.style.transform = 'translateX(0) translateY(0) scale(1)';
-    messageElement.style.opacity = '1';
-  });
-  
-  return messageElement;
-}
-
-// Debug function to check message received
-function debugMessageReceived(data) {
-  console.group('🔔 Message Received Debug');
-  console.log('Raw data:', data);
-  
-  // Handle both data structures
-  const message = data.message || data;
-  
-  console.log('Data has message property:', !!data?.message);
-  console.log('Message object:', message);
-  console.log('Message has _id:', !!message?._id);
-  console.log('Message has sender:', !!message?.sender);
-  console.log('Current user:', currentUser);
-  console.log('Current conversation:', currentConversationId);
-  console.log('Message conversation (conversationId):', message?.conversationId);
-  console.log('Message conversation (conversation):', message?.conversation);
-  console.log('Message sender:', message?.sender);
-  console.log('Is from current user:', message?.sender?._id === currentUser?._id);
-  console.log('Has tempId:', !!data.tempId);
-  console.log('TempMessages map:', tempMessages);
-  console.groupEnd();
-}
-
-// Enhanced reply message interactions
-function highlightReplyMessage(replyElement) {
-  // Add ripple effect
-  replyElement.classList.add('ripple');
-  
-  // Remove ripple class after animation
-  setTimeout(() => {
-    replyElement.classList.remove('ripple');
-  }, 600);
-  
-  // Add focused state
-  replyElement.classList.add('focused');
-  setTimeout(() => {
-    replyElement.classList.remove('focused');
-  }, 2000);
-  
-  // Scroll to original message if possible (future enhancement)
-  // scrollToOriginalMessage(messageId);
 }
 
 // Enhanced reply preview with better animations
 function showReplyPreview(message) {
   const replyPreview = document.getElementById('replyPreview');
-  const authorElement = replyPreview.querySelector('.text-purple-400');
-  const contentElement = replyPreview.querySelector('.text-gray-300');
+  const replyAuthor = document.getElementById('replyAuthor');
+  const replyContent = document.getElementById('replyContent');
   
-  // Set content with enhanced animations
-  if (authorElement) {
-    authorElement.textContent = `Đang trả lời ${message.sender.name}`;
-    authorElement.style.transform = 'translateX(-10px)';
-    authorElement.style.opacity = '0';
+  if (replyPreview && replyAuthor && replyContent) {
+    replyAuthor.textContent = message.sender?.name || 'Người dùng';
+    replyContent.textContent = message.content || '';
     
-    setTimeout(() => {
-      authorElement.style.transform = 'translateX(0)';
-      authorElement.style.opacity = '1';
-    }, 100);
-  }
-  
-  if (contentElement) {
-    contentElement.textContent = message.content;
-    contentElement.style.transform = 'translateY(10px)';
-    contentElement.style.opacity = '0';
+    // Enhanced animation
+    replyPreview.style.transform = 'translateY(20px)';
+    replyPreview.style.opacity = '0';
+    replyPreview.classList.remove('hidden');
     
-    setTimeout(() => {
-      contentElement.style.transform = 'translateY(0)';
-      contentElement.style.opacity = '1';
-    }, 200);
+    // Trigger animation
+    requestAnimationFrame(() => {
+      replyPreview.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      replyPreview.style.transform = 'translateY(0)';
+      replyPreview.style.opacity = '1';
+    });
   }
-  
-  // Show with enhanced animation
-  replyPreview.classList.remove('hidden');
-  replyPreview.style.transform = 'translateY(-20px) scale(0.9)';
-  replyPreview.style.opacity = '0';
-  
-  requestAnimationFrame(() => {
-    replyPreview.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-    replyPreview.style.transform = 'translateY(0) scale(1)';
-    replyPreview.style.opacity = '1';
-  });
 }
 
 // Enhanced hide reply preview
 function hideReplyPreview() {
   const replyPreview = document.getElementById('replyPreview');
   
-  // Add closing animation
-  replyPreview.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-  replyPreview.style.transform = 'translateY(-20px) scale(0.95)';
-  replyPreview.style.opacity = '0';
-  
-  setTimeout(() => {
-    replyPreview.classList.add('hidden');
-    replyPreview.style.transform = '';
-    replyPreview.style.opacity = '';
-    replyPreview.style.transition = '';
-  }, 300);
-}
-
-// Enhanced message sending with reply animation
-function sendMessageWithReplyAnimation(content, replyTo = null) {
-  const messageElement = createMessageElement({
-    _id: Date.now().toString(),
-    content: content,
-    sender: currentUser,
-    timestamp: new Date(),
-    type: 'TEXT',
-    replyTo: replyTo,
-    isTemp: true
-  });
-  
-  // Add special animation for reply messages
-  if (replyTo) {
-    messageElement.style.transform = 'translateX(-30px) scale(0.9)';
-    messageElement.style.opacity = '0';
+  if (replyPreview && !replyPreview.classList.contains('hidden')) {
+    replyPreview.style.transition = 'all 0.2s ease-out';
+    replyPreview.style.transform = 'translateY(-10px)';
+    replyPreview.style.opacity = '0';
     
     setTimeout(() => {
-      messageElement.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      messageElement.style.transform = 'translateX(0) scale(1)';
-      messageElement.style.opacity = '1';
-    }, 100);
+      replyPreview.classList.add('hidden');
+      replyPreview.style.transform = '';
+      replyPreview.style.opacity = '';
+      replyPreview.style.transition = '';
+    }, 200);
+  }
+}
+
+// Nickname change functions
+function changeUserNickname(targetUserId, nickname) {
+  if (!currentConversationId) {
+    console.warn('No conversation selected for nickname change');
+    showToast({ message: 'Vui lòng chọn cuộc trò chuyện', type: 'warning' });
+    return;
   }
   
-  return messageElement;
+  if (!targetUserId) {
+    console.warn('No target user ID provided for nickname change');
+    showToast({ message: 'Không thể xác định người dùng mục tiêu', type: 'error' });
+    return;
+  }
+  
+  console.log('Changing nickname:', { targetUserId, nickname, conversationId: currentConversationId });
+  
+  // Emit socket event to change nickname
+  if (socket && socket.connected) {
+    socket.emit('change-nickname', {
+      conversationId: currentConversationId,
+      userId: targetUserId,
+      nickname: nickname
+    });
+    
+    console.log('Nickname change request sent via socket');
+  } else {
+    console.error('Socket not connected');
+    showToast({ message: 'Không thể kết nối đến server', type: 'error' });
+  }
 }
 
-// Add loading state to reply messages
-function addReplyLoadingState(replyElement) {
-  replyElement.classList.add('loading');
+function handleNicknameChanged(data) {
+  console.log('Nickname changed event received:', data);
   
-  setTimeout(() => {
-    replyElement.classList.remove('loading');
-  }, 1500);
-}
-
-// Enhanced context menu for reply messages
-function showReplyContextMenu(event, messageId) {
-  event.preventDefault();
-  event.stopPropagation();
-  
-  const contextMenu = document.getElementById(`menu${messageId}`);
-  if (contextMenu) {
-    // Add special styling for reply context menu
-    contextMenu.style.background = 'linear-gradient(135deg, rgba(55, 65, 81, 0.95), rgba(75, 85, 99, 0.9))';
-    contextMenu.style.backdropFilter = 'blur(12px)';
-    contextMenu.style.border = '1px solid rgba(124, 58, 237, 0.2)';
-    contextMenu.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(124, 58, 237, 0.1)';
+  try {
+    const { conversationId, nickname, userId, message } = data;
     
-    // Show with animation
-    contextMenu.style.transform = 'scale(0.9) translateY(-10px)';
-    contextMenu.style.opacity = '0';
-    contextMenu.classList.remove('hidden');
+    if (!conversationId || !userId) {
+      console.warn('Invalid nickname change data:', data);
+      return;
+    }
     
-    requestAnimationFrame(() => {
-      contextMenu.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-      contextMenu.style.transform = 'scale(1) translateY(0)';
-      contextMenu.style.opacity = '1';
+    // Update the conversation in memory
+    const conversationIndex = conversations.findIndex(c => c._id === conversationId);
+    if (conversationIndex !== -1) {
+      const conversation = conversations[conversationIndex];
+      
+      // Update participant nickname in conversation data
+      if (conversation.participants) {
+        const participantIndex = conversation.participants.findIndex(p => p.user === userId);
+        if (participantIndex !== -1) {
+          conversation.participants[participantIndex].nickname = nickname;
+          console.log('Updated nickname in conversation data:', conversation.participants[participantIndex]);
+        }
+      }
+      
+      // Update conversations array
+      conversations[conversationIndex] = conversation;
+    }
+    
+    // If this is the current conversation, update the header display
+    if (conversationId === currentConversationId) {
+      const conversation = conversations.find(c => c._id === conversationId);
+      if (conversation) {
+        updateChatHeader(conversation);
+        console.log('Updated chat header for current conversation');
+      }
+    }
+    
+    // Update conversation list display names
+    updateConversationDisplayNames();
+    
+    // Show success message
+    showToast({ 
+      message: message || 'Đã thay đổi biệt danh thành công', 
+      type: 'success' 
+    });
+    
+    console.log('Nickname change handled successfully');
+  } catch (error) {
+    console.error('Error handling nickname change:', error);
+    showToast({ 
+      message: 'Lỗi khi xử lý thay đổi biệt danh', 
+      type: 'error' 
     });
   }
 }
 
-// URL Query Parameter Handling
-function getURLParameters() {
-  const urlParams = new URLSearchParams(window.location.search);
- 
-  return {
-    userId: urlParams.get('userId'),
-    conversationId: urlParams.get('conversationId')
-  };
-}
-
-function updateURLParameter(paramName, paramValue) {
-  const url = new URL(window.location);
-  if (paramValue) {
-    url.searchParams.set(paramName, paramValue);
-  } else {
-    url.searchParams.delete(paramName);
-  }
-  // Update URL without page reload
-  window.history.replaceState({}, '', url);
-}
-
-function clearURLParameters() {
-  const url = new URL(window.location);
-  url.searchParams.delete('userId');
-  url.searchParams.delete('conversationId');
-  window.history.replaceState({}, '', url);
-}
-
-async function handleURLConversationSelection() {
-  const { userId, conversationId } = getURLParameters();
+function updateConversationDisplayNames() {
+  console.log('Updating conversation display names...');
   
-  if (!userId && !conversationId) {
-    return; // No parameters to handle
-  }
-  
-  console.log('Handling URL parameters:', { userId, conversationId });
-  
-  try {
-    if (conversationId) {
-      // Load conversations with conversationId filter
-      await loadConversations('', { conversationId });
+  // Update all conversation elements in the list
+  conversations.forEach(conversation => {
+    const conversationElement = document.querySelector(`[data-conversation-id="${conversation._id}"]`);
+    if (conversationElement && !conversation.isGroup) {
+      // For 1-on-1 conversations, update display name with nickname
+      const otherUser = conversation.populatedUsers?.find(user => 
+        user.email !== currentUser?.email && user.username !== currentUser?.username
+      );
       
-      // Find and select the conversation from loaded results
-      const conversation = conversations.find(c => c._id === conversationId);
-      if (conversation) {
-        selectConversation(conversation);
-        updateURLParameter('conversationId', conversationId);
-        showToast({
-          message: 'Đã mở cuộc trò chuyện',
-          type: 'success'
-        });
-      } else {
-        throw new Error('Conversation not found');
-      }
-      
-    } else if (userId) {
-      // Load conversations with userId filter
-      await loadConversations('', { userId });
-      
-      // Find the 1-on-1 conversation with this user from loaded results
-      const conversation = conversations.find(c => {
-        if (c.isGroup) return false;
-        if (c.populatedUsers && c.populatedUsers.length >= 2) {
-          return c.populatedUsers.some(user => user._id === userId);
-        }
-        return false;
-      });
-      
-      if (conversation) {
-        selectConversation(conversation);
-        updateURLParameter('conversationId', conversation._id);
-        showToast({
-          message: 'Đã mở cuộc trò chuyện',
-          type: 'success'
-        });
-      } else {
-        // If no existing conversation found, try to create one
-        const createResponse = await fetch('/chat/conversation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            participantIds: [userId],
-            isGroup: false
-          })
-        });
+      if (otherUser) {
+        const otherParticipant = conversation.participants?.find(p => p.user !== currentUser?._id);
+        const displayName = otherParticipant?.nickname || otherUser.name;
         
-        const createResult = await createResponse.json();
-        
-        if (createResult && createResult.success && createResult.data) {
-          const newConversation = createResult.data;
-          
-          // Add to conversations list
-          conversations.unshift(newConversation);
-          renderConversations();
-          
-          selectConversation(newConversation);
-          updateURLParameter('conversationId', newConversation._id);
-          
-          showToast({
-            message: 'Đã tạo cuộc trò chuyện mới',
-            type: 'success'
-          });
-        } else {
-          throw new Error('Cannot create conversation');
+        // Update the name in the conversation element
+        const nameElement = conversationElement.querySelector('.font-medium.truncate');
+        if (nameElement) {
+          nameElement.textContent = displayName;
         }
       }
     }
-  } catch (error) {
-    console.error('Error handling URL conversation selection:', error);
-    showToast({
-      message: 'Không thể mở cuộc trò chuyện từ liên kết',
-      type: 'error'
-    });
-    clearURLParameters();
-  }
-}
-
-// Listen for browser back/forward navigation
-window.addEventListener('popstate', () => {
-  // Handle URL changes from browser navigation
-  setTimeout(() => {
-    handleURLConversationSelection();
-  }, 100);
-});
-
-// Helper function to generate shareable conversation links
-function generateConversationLink(conversation) {
-  const baseUrl = window.location.origin + window.location.pathname;
+  });
   
-  if (conversation.isGroup) {
-    return `${baseUrl}?conversationId=${conversation._id}`;
-  } else {
-    // For 1-on-1 chat, we could use either conversationId or userId
-    // Using conversationId is more reliable
-    return `${baseUrl}?conversationId=${conversation._id}`;
-  }
-}
-
-function generateUserChatLink(userId) {
-  const baseUrl = window.location.origin + window.location.pathname;
-  return `${baseUrl}?userId=${userId}`;
-}
-
-// Helper function to copy conversation link to clipboard
-async function copyConversationLink(conversation) {
-  try {
-    const link = generateConversationLink(conversation);
-    await navigator.clipboard.writeText(link);
-    
-    const displayName = conversation.isGroup 
-      ? (conversation.name || 'Nhóm chat')
-      : (conversation.populatedUsers?.find(u => u._id !== currentUser?._id)?.name || 'Cuộc trò chuyện');
-    
-    showToast({
-      message: `Đã sao chép liên kết cuộc trò chuyện với ${displayName}`,
-      type: 'success'
-    });
-  } catch (error) {
-    console.error('Error copying to clipboard:', error);
-    showToast({
-      message: 'Không thể sao chép liên kết',
-      type: 'error'
-    });
-  }
-}
-
-async function copyUserChatLink(userId, userName) {
-  try {
-    const link = generateUserChatLink(userId);
-    await navigator.clipboard.writeText(link);
-    
-    showToast({
-      message: `Đã sao chép liên kết chat với ${userName || 'người dùng'}`,
-      type: 'success'
-    });
-  } catch (error) {
-    console.error('Error copying to clipboard:', error);
-    showToast({
-      message: 'Không thể sao chép liên kết',
-      type: 'error'
-    });
-  }
+  console.log('Conversation display names updated');
 }
