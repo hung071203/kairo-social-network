@@ -2234,16 +2234,25 @@ function getDisplayNameForUser(userId, fallbackName = 'Người dùng') {
   
   // If no nickname, try to get username from populatedUsers
   if (conversation.populatedUsers) {
-    // Since we can't directly match by _id, we'll match by finding the other user
-    // For 1-on-1 conversations, find the user that's not current user
-    if (!conversation.isGroup) {
-      const otherUser = conversation.populatedUsers.find(user => 
-        user.email !== currentUser?.email && user.username !== currentUser?.username
-      );
-      // Check if this user matches the sender (by matching with participant)
-      const otherParticipant = conversation.participants.find(p => p.user !== currentUser?._id);
-      if (otherParticipant && otherParticipant.user === userId && otherUser) {
-        return otherUser.username;
+    // Find the user in populatedUsers that corresponds to this userId
+    // We need to match by finding the participant first, then find corresponding populated user
+    if (participant && conversation.populatedUsers.length > 0) {
+      // For current user
+      if (userId === currentUser?._id) {
+        const currentUserInPopulated = conversation.populatedUsers.find(user => 
+          user.email === currentUser?.email || user.username === currentUser?.username
+        );
+        if (currentUserInPopulated) {
+          return currentUserInPopulated.username;
+        }
+      } else {
+        // For other users, find the one that's not current user
+        const otherUser = conversation.populatedUsers.find(user => 
+          user.email !== currentUser?.email && user.username !== currentUser?.username
+        );
+        if (otherUser) {
+          return otherUser.username;
+        }
       }
     }
   }

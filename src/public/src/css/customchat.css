@@ -860,7 +860,6 @@ body {
 }
 
 .reply-message:hover .reply-content::after {
-  content: '💬';
   position: absolute;
   bottom: -2px;
   right: 4px;
