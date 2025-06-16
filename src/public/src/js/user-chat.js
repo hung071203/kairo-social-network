@@ -2068,20 +2068,26 @@ function showReplyPreview(message) {
   const replyContent = document.getElementById('replyContent');
   
   if (replyPreview && replyAuthor && replyContent) {
-    replyAuthor.textContent = message.sender?.name || 'Người dùng';
+    // Update content first
+    replyAuthor.textContent = `Trả lời ${message.sender?.name || 'Người dùng'}`;
     replyContent.textContent = message.content || '';
     
-    // Enhanced animation
-    replyPreview.style.transform = 'translateY(20px)';
-    replyPreview.style.opacity = '0';
+    // Remove hidden class first to make element visible
     replyPreview.classList.remove('hidden');
     
-    // Trigger animation
-    requestAnimationFrame(() => {
-      replyPreview.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-      replyPreview.style.transform = 'translateY(0)';
-      replyPreview.style.opacity = '1';
-    });
+    // Force a reflow to ensure the element is rendered
+    replyPreview.offsetHeight;
+    
+    // Apply CSS animation class
+    replyPreview.classList.add('reply-preview-show');
+    
+    // Focus message input after animation
+    setTimeout(() => {
+      const messageInput = document.getElementById('messageInput');
+      if (messageInput) {
+        messageInput.focus();
+      }
+    }, 300);
   }
 }
 
@@ -2090,15 +2096,13 @@ function hideReplyPreview() {
   const replyPreview = document.getElementById('replyPreview');
   
   if (replyPreview && !replyPreview.classList.contains('hidden')) {
-    replyPreview.style.transition = 'all 0.2s ease-out';
-    replyPreview.style.transform = 'translateY(-10px)';
-    replyPreview.style.opacity = '0';
+    // Add hide animation class
+    replyPreview.classList.add('reply-preview-hide');
     
+    // Hide element after animation completes
     setTimeout(() => {
       replyPreview.classList.add('hidden');
-      replyPreview.style.transform = '';
-      replyPreview.style.opacity = '';
-      replyPreview.style.transition = '';
+      replyPreview.classList.remove('reply-preview-show', 'reply-preview-hide');
     }, 200);
   }
 }
