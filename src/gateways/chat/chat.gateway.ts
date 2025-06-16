@@ -92,8 +92,13 @@ export class MessageGateway {
     }
 
     const newPromise = validConversations.map(async (item) => {
-      if (getAllBlocked.includes(item._id.toString())) {
-        return; // Skip blocked conversations
+      if (!item.isGroup) {
+        const participant = item.participants.find(
+          (p) => p.user.toString() !== userId,
+        );
+        if (!participant || getAllBlocked.includes(participant.user.toString())) {
+          return; // Skip if the participant is blocked or not found
+        }
       }
       const id = item._id.toString();
       client.join(id);
