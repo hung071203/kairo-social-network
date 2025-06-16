@@ -1,14 +1,3 @@
-//yêu cầu: 
-// Biết khi gửi sự kiện join-room sẽ trả data dạng
-// {
-//     "message": "Bạn đã tham gia nhóm trò chuyện ",
-//     "conversationIds": [
-//         "684ed9f6a748346213dd7e82",
-//     ]
-// }
-// Lọc cho tôi khi ấn vào các đoạn chat mà id không nằm trong conversationIds thì thay thế chỗ nhập tin nhắn thành bạn không thể nhắn tin
-// và xóa hết các nút action cạnh tin nhắn
-
 function showToast({
   message = 'Thông báo hệ thống.',
   delay = 4000,
