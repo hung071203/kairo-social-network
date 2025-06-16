@@ -1,4 +1,4 @@
-import { UserRole } from "./app.enum";
+import { UserRole } from './app.enum';
 
 export enum ReportType {
   USER = 'USER',
@@ -29,4 +29,9 @@ export enum MessageTypeEnum {
   IMAGE = 'IMAGE',
   VIDEO = 'VIDEO',
   FILE = 'FILE',
+}
+
+export enum SenderTypeEnum {
+  USER = 'USER',
+  SYSTEM = 'SYSTEM',
 }
