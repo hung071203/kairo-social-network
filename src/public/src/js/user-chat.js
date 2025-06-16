@@ -1248,8 +1248,7 @@ function createConversationElement(conversation) {
   if (conversation.isGroup) {
     // For group chat, use conversation avatar if exists
     avatar = conversation.avatar || '/images/kairo.jpg';
-    displayName = conversation.name || 'Nhóm chat';
-  } else {
+    displayName = conversation.name || 'Nhóm chat';  } else {
     // For 1-on-1 chat, find the other user (not current user)
     if (conversation.populatedUsers && conversation.populatedUsers.length >= 2) {
       const otherUser = conversation.populatedUsers.find(user => 
@@ -1373,6 +1372,15 @@ function updateChatHeader(conversation) {
   let displayName = conversation.name || 'Cuộc trò chuyện';
   let avatar = '/images/kairo.jpg'; // Default avatar
   let status = 'Đang hoạt động';
+  let userId = null; // For profile link
+  let isGroup = conversation.isGroup || false;
+  
+  console.log('updateChatHeader called with:', {
+    conversationId: conversation._id,
+    isGroup: conversation.isGroup,
+    populatedUsers: conversation.populatedUsers,
+    currentUser: currentUser
+  });
   
   // Check if this is a group conversation or 1-on-1
   if (conversation.isGroup) {
@@ -1380,17 +1388,50 @@ function updateChatHeader(conversation) {
     avatar = conversation.avatar || '/images/kairo.jpg';
     displayName = conversation.name || 'Nhóm chat';
     status = `${conversation.participants?.length || 0} thành viên`;
-  } else {
+    // For group chat, userId remains null (no individual profile)
+    console.log('Group chat detected, userId remains null');  } else {
     // For 1-on-1 chat, find the other user (not current user)
-    if (conversation.populatedUsers && conversation.populatedUsers.length >= 2) {
-      const otherUser = conversation.populatedUsers.find(user => 
-        user.email !== currentUser?.email && user.username !== currentUser?.username
-      );
+    if (conversation.populatedUsers && conversation.populatedUsers.length >= 2 && conversation.participants) {
+      console.log('Looking for other user in populated users:', conversation.populatedUsers);
+      console.log('Participants:', conversation.participants);
+      
+      const otherUser = conversation.populatedUsers.find(user => {
+        // Use multiple comparison methods to be more robust
+        const isNotCurrentUser = (
+          user.email !== currentUser?.email && 
+          user.username !== currentUser?.username
+        );
+        console.log('Checking user:', user, 'isNotCurrentUser:', isNotCurrentUser);
+        return isNotCurrentUser;
+      });
+      
+      console.log('Found other user:', otherUser);
+      
       if (otherUser) {
         displayName = otherUser.name;
         avatar = otherUser.avatar || '/images/kairo.jpg';
         status = otherUser.isOnline ? 'Đang hoạt động' : 'Không hoạt động';
+        
+        // Get userId from participants array since populatedUsers doesn't have _id
+        const otherParticipant = conversation.participants.find(p => {
+          // Find the participant that's not the current user
+          return p.user !== currentUser?._id;
+        });
+        
+        if (otherParticipant) {
+          userId = otherParticipant.user; // Set userId from participants
+          console.log('Set userId from participants:', userId);
+        } else {
+          console.warn('Could not find other participant');
+        }
+      } else {
+        console.warn('Could not find other user in populated users');
       }
+    } else {
+      console.warn('populatedUsers or participants not available or insufficient length:', {
+        populatedUsers: conversation.populatedUsers,
+        participants: conversation.participants
+      });
     }
   }
   
@@ -1398,6 +1439,14 @@ function updateChatHeader(conversation) {
   headerStatus.textContent = status;
   headerAvatar.src = avatar;
   headerAvatar.alt = displayName;
+  
+  // Update dropdown user info when chat header is updated
+  console.log('Calling updateDropdownUserInfo with:', { displayName, avatar, userId, isGroup });
+  if (typeof updateDropdownUserInfo === 'function') {
+    updateDropdownUserInfo(displayName, avatar, userId, isGroup, conversation);
+  } else {
+    console.warn('updateDropdownUserInfo function not found');
+  }
 }
 
 function formatTime(timestamp) {

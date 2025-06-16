@@ -315,15 +315,96 @@
                     dropdown.classList.add('hidden');
                 }
             });            // Update dropdown user info when chat is selected
-            function updateDropdownUserInfo(name, avatar, userId) {
+            function updateDropdownUserInfo(name, avatar, userId, isGroup = false, conversation = null) {
+                console.log('updateDropdownUserInfo called with:', { name, avatar, userId, isGroup, conversation });
+                
                 const dropdownName = document.getElementById('dropdownName');
                 const dropdownAvatar = document.getElementById('dropdownAvatar');
                 const profileLink = document.getElementById('profileLink');
                 
                 if (dropdownName) dropdownName.textContent = name;
                 if (dropdownAvatar) dropdownAvatar.src = avatar || '/images/kairo.jpg';
-                if (profileLink && userId) {
-                    profileLink.href = `/profile/user/${userId}`;
+                
+                // Handle profile link for 1-on-1 vs group chats
+                if (profileLink) {
+                    console.log('Processing profile link. isGroup:', isGroup, 'userId:', userId);
+                    
+                    if (isGroup) {
+                        // Group chat - show member count or group info
+                        const memberCount = conversation?.participants?.length || 0;
+                        profileLink.textContent = `${memberCount} thành viên`;
+                        profileLink.href = '#';
+                        profileLink.style.display = 'block';
+                        profileLink.style.cursor = 'default';
+                        profileLink.onclick = (e) => e.preventDefault(); // Prevent navigation
+                        console.log('Set profile link for group chat with member count:', memberCount);
+                    } else if (userId) {
+                        // 1-on-1 chat - show profile link
+                        profileLink.href = `/profile/user/${userId}`;
+                        profileLink.style.display = 'block';
+                        profileLink.textContent = 'Xem trang cá nhân';
+                        profileLink.style.cursor = 'pointer';
+                        profileLink.onclick = null; // Remove any previous preventDefault
+                        console.log('Set profile link for 1-on-1 chat with userId:', userId, 'href:', profileLink.href);
+                    } else {
+                        // No chat selected or no userId - hide profile link
+                        profileLink.style.display = 'none';
+                        console.log('Hidden profile link - no userId provided for 1-on-1 chat');
+                    }
+                } else {
+                    console.warn('profileLink element not found');
+                }
+                
+                // Update menu options based on chat type
+                updateDropdownMenuOptions(isGroup);
+            }
+            
+            // Update dropdown menu options based on chat type
+            function updateDropdownMenuOptions(isGroup) {
+                const menuContainer = document.querySelector('#chatOptionsDropdown .py-2');
+                if (!menuContainer) return;
+                
+                if (isGroup) {
+                    // Group chat menu options
+                    menuContainer.innerHTML = `
+                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                            <i class="ri-edit-line text-lg"></i>
+                            <span class="text-sm">Chỉnh sửa tên nhóm</span>
+                        </button>
+                        
+                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                            <i class="ri-user-add-line text-lg"></i>
+                            <span class="text-sm">Thêm thành viên</span>
+                        </button>
+                        
+                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                            <i class="ri-delete-bin-line text-lg"></i>
+                            <span class="text-sm">Xóa hết tin nhắn</span>
+                        </button>
+                        
+                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-red-400 hover:text-red-300 hover:bg-gray-700">
+                            <i class="ri-logout-circle-line text-lg"></i>
+                            <span class="text-sm">Rời khỏi nhóm</span>
+                        </button>
+                    `;
+                } else {
+                    // 1-on-1 chat menu options
+                    menuContainer.innerHTML = `
+                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                            <i class="ri-edit-line text-lg"></i>
+                            <span class="text-sm">Chỉnh sửa biệt danh</span>
+                        </button>
+                        
+                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                            <i class="ri-forbid-line text-lg"></i>
+                            <span class="text-sm">Chặn</span>
+                        </button>
+                        
+                        <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                            <i class="ri-delete-bin-line text-lg"></i>
+                            <span class="text-sm">Xóa hết tin nhắn</span>
+                        </button>
+                    `;
                 }
             }
         </script>
