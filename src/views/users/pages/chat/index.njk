@@ -96,9 +96,31 @@
                 font-size: 1.2rem;
                 margin-left: 1rem;
                 cursor: pointer;
-            }
-            .toast.closing {
+            }            .toast.closing {
                 animation: fadeOutRight 0.5s ease forwards;
+            }
+            
+            /* Chat Options Dropdown Styles */
+            #chatOptionsDropdown {
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: opacity 0.2s ease, transform 0.2s ease;
+                pointer-events: none;
+            }
+            
+            #chatOptionsDropdown:not(.hidden) {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+              #chatOptionsDropdown button:hover {
+                background-color: rgba(75, 85, 99, 0.5);
+                border-radius: 6px;
+            }
+            
+            /* Smooth transitions for dropdown items */
+            #chatOptionsDropdown .py-2 button {
+                transition: all 0.2s ease;
             }
         </style>
     </head>
@@ -161,11 +183,52 @@
                             <div id="headerStatus" class="text-xs text-gray-400 truncate select-none">
                                 Bắt đầu cuộc trò chuyện
                             </div>
-                        </div>                    </div>
-                    <div class="ml-auto flex space-x-3">
-                        <button aria-label="Information" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-800">
-                            <i class="ri-information-line ri-lg text-gray-300"></i>
-                        </button>
+                        </div>                    </div>                    <div class="ml-auto flex space-x-3">
+                        <div class="relative">
+                            <button 
+                                id="chatOptionsBtn"
+                                aria-label="Information" 
+                                class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-800"
+                                onclick="toggleChatOptions()">
+                                <i class="ri-information-line ri-lg text-gray-300"></i>
+                            </button>
+                            <!-- Dropdown Menu -->
+                            <div 
+                                id="chatOptionsDropdown" 
+                                class="absolute right-0 top-10 w-72 bg-gray-800 rounded-lg shadow-xl border border-gray-600 z-50 hidden overflow-hidden">
+                                <!-- User Info Section -->
+                                <div class="p-4 border-b border-gray-600">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                                            <img id="dropdownAvatar" alt="Avatar" class="w-full h-full object-cover" src="/images/kairo.jpg"/>
+                                        </div>                                        <div class="flex-1 min-w-0">
+                                            <div id="dropdownName" class="font-medium text-white truncate">Trần Ngọc Quang</div>
+                                            <a href="#" id="profileLink" class="text-sm text-blue-400 hover:text-blue-300 hover:underline">
+                                                Xem trang cá nhân
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Menu Options -->
+                                <div class="py-2">
+                                    <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                        <i class="ri-edit-line text-lg"></i>
+                                        <span class="text-sm">Chỉnh sửa biệt danh</span>
+                                    </button>
+                                    
+                                    <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                        <i class="ri-forbid-line text-lg"></i>
+                                        <span class="text-sm">Chặn</span>
+                                    </button>
+                                    
+                                    <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                        <i class="ri-delete-bin-line text-lg"></i>
+                                        <span class="text-sm">Xóa hết tin nhắn</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <!-- Chat messages -->
@@ -235,8 +298,35 @@
                     <i class="ri-close-line"></i>
                 </button>
             </div>
-        </div>
-        <script src="/socket.io/socket.io.js"></script>
+        </div>        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            // Chat Options Dropdown
+            function toggleChatOptions() {
+                const dropdown = document.getElementById('chatOptionsDropdown');
+                dropdown.classList.toggle('hidden');
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('chatOptionsDropdown');
+                const button = document.getElementById('chatOptionsBtn');
+                
+                if (!dropdown.contains(event.target) && !button.contains(event.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });            // Update dropdown user info when chat is selected
+            function updateDropdownUserInfo(name, avatar, userId) {
+                const dropdownName = document.getElementById('dropdownName');
+                const dropdownAvatar = document.getElementById('dropdownAvatar');
+                const profileLink = document.getElementById('profileLink');
+                
+                if (dropdownName) dropdownName.textContent = name;
+                if (dropdownAvatar) dropdownAvatar.src = avatar || '/images/kairo.jpg';
+                if (profileLink && userId) {
+                    profileLink.href = `/profile/user/${userId}`;
+                }
+            }
+        </script>
         <script src="/src/js/user-chat.js"></script>
     </body>
 </html>
