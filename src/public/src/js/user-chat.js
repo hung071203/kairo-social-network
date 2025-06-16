@@ -680,7 +680,6 @@ async function sendMessage() {
 function handleMessageReceived(data) {
   try {
     console.log('Message received:', data);
-    debugMessageReceived(data); // Add debug info
     
     // Handle two possible data structures:
     // 1. data.message exists (old format)
@@ -2031,10 +2030,10 @@ function updateMessageReactions(messageId, reactions) {
     // Group reactions by emoji
     const reactionGroups = {};
     reactions.forEach(reaction => {
-      if (reactionGroups[reaction.emoji]) {
-        reactionGroups[reaction.emoji]++;
+      if (reactionGroups[reaction.reaction]) {
+        reactionGroups[reaction.reaction]++;
       } else {
-        reactionGroups[reaction.emoji] = 1;
+        reactionGroups[reaction.reaction] = 1;
       }
     });
 
