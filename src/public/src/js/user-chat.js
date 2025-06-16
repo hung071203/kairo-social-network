@@ -2170,6 +2170,39 @@ function handleNicknameChanged(data) {
         updateChatHeader(conversation);
         console.log('Updated chat header for current conversation');
       }
+      
+      // Add system message to current conversation if there's a message
+      if (message && conversationId === currentConversationId) {
+        const systemMessage = {
+          _id: `system_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          content: message,
+          type: 'TEXT',
+          senderType: 'SYSTEM',
+          createdAt: new Date().toISOString(),
+          conversationId: conversationId
+        };
+        
+        // Add system message to messages array
+        messages.push(systemMessage);
+        
+        // Render the new system message
+        const container = document.getElementById('messagesContainer');
+        if (container) {
+          const messageElement = createMessageElement(systemMessage);
+          container.appendChild(messageElement);
+          
+          // Scroll to bottom to show the new system message
+          const chatContainer = document.querySelector('.chat-messages');
+          if (chatContainer) {
+            setTimeout(() => {
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+          }
+        }
+        
+        // Update conversation last message
+        updateConversationLastMessage(systemMessage);
+      }
     }
     
     // Update conversation list display names
@@ -2177,7 +2210,7 @@ function handleNicknameChanged(data) {
     
     // Show success message
     showToast({ 
-      message: message || 'Đã thay đổi biệt danh thành công', 
+      message: 'Đã thay đổi biệt danh thành công', 
       type: 'success' 
     });
     
