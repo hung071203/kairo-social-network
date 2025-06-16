@@ -232,7 +232,8 @@ export class ChatService {
     userId: string,
     conversationId: string,
     nickname: string,
-  ) {    // Allow empty nickname to reset to real name
+  ) {
+    // Allow empty nickname to reset to real name
     if (nickname !== undefined && nickname !== null) {
       nickname = nickname.trim();
     }
@@ -265,9 +266,7 @@ export class ChatService {
     );
 
     if (!currentUser) {
-      throw new Error(
-        'Bạn không phải là thành viên của nhóm trò chuyện này.',
-      );
+      throw new Error('Bạn không phải là thành viên của nhóm trò chuyện này.');
     }
 
     if (!participant) {
@@ -299,5 +298,29 @@ export class ChatService {
     });
 
     return `${currentUser.user.name} đã đổi biệt danh của ${participant.user.name} thành "${nickname}"`;
+  }
+
+  async hiddenAllMessages(userId: string, conversationId: string) {
+    const conversation = await this.conversationRepository.findOne({
+      _id: new Types.ObjectId(conversationId),
+      participants: { $elemMatch: { user: new Types.ObjectId(userId) } },
+    });
+
+    if (!conversation) {
+      throw new Error(
+        'Nhóm trò chuyện không tồn tại hoặc bạn không có quyền truy cập.',
+      );
+    }
+
+    await this.messageRepository.getModel().updateMany(
+      {
+        conversation: new Types.ObjectId(conversationId),
+      },
+      {
+        $push: { deletedBy: new Types.ObjectId(userId) },
+      },
+    );
+
+    return true;
   }
 }

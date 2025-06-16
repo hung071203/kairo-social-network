@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Render,
@@ -72,6 +73,15 @@ export class ChatController {
   ) {
     try {
       return await this.chatService.getMessages(user._id.toString(), dto, pagi);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Patch('hidden-all-mesages/:conversationId')
+  async hiddenAllMessages(@GetUser() user: User, @Param('conversationId') conversationId: string) {
+    try {
+      return await this.chatService.hiddenAllMessages(user._id.toString(), conversationId);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
