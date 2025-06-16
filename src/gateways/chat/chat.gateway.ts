@@ -299,10 +299,10 @@ export class MessageGateway {
     }
 
     try {
-      await this.chatService.changeNickname(userId, dto.userId, dto.conversationId, dto.nickname);
+      const message = await this.chatService.changeNickname(userId, dto.userId, dto.conversationId, dto.nickname);
       this.server
         .to(dto.conversationId)
-        .emit('nicknameChanged', { conversationId: dto.conversationId, nickname: dto.nickname, userId: dto.userId });
+        .emit('nicknameChanged', { conversationId: dto.conversationId, nickname: dto.nickname, userId: dto.userId, message });
       this.logger.log(
         `User ${userId} changed nickname in conversation ${dto.conversationId} to ${dto.nickname}`,
       );

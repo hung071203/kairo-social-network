@@ -236,7 +236,7 @@ export class ChatService {
     if (!nickname || nickname.length < 1) {
       throw new Error('Biệt danh không được để trống.');
     }
-    
+
     const conversation = await this.conversationRepository
       .getModel()
       .findOne({
@@ -298,6 +298,6 @@ export class ChatService {
       type: MessageTypeEnum.TEXT,
     });
 
-    return conversation;
+    return `${currentUser.user.name} đã đổi biệt danh của ${participant.user.name} thành "${nickname}"`;
   }
 }
