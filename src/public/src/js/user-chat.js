@@ -218,10 +218,9 @@ function createMessageElement(message) {
       </div>
     `;
   }
-
   let replyHtml = '';
   if (message.replyTo) {
-  const replyAuthor = message.replyTo.sender?.name || 'Người dùng';
+  const replyAuthor = getDisplayNameForUser(message.replyTo.sender?._id, message.replyTo.sender?.name || 'Người dùng');
     const replyContent = message.replyTo.content || '';
     replyHtml = `
       <div class="reply-message" onclick="highlightReplyMessage(this)">
@@ -308,7 +307,7 @@ function createMessageElement(message) {
         <button onclick="toggleMenu(event, '${message._id}')" class="more-btn">
           <i class="ri-more-line"></i>
         </button>        <div class="context-menu hidden" id="menu${message._id}">
-          <button onclick="handleReply('${message._id}', '${message.content.replace(/'/g, "\\'")}', '${message.sender?.name || 'Người dùng'}')">
+          <button onclick="handleReply('${message._id}', '${message.content.replace(/'/g, "\\'")}', '${getDisplayNameForUser(message.sender?._id, message.sender?.name || 'Người dùng')}')">
             <i class="ri-reply-line"></i>Reply
           </button>
           ${!message.isTemp ? `<button onclick="handleHideMessage('${message._id}')">
@@ -320,9 +319,8 @@ function createMessageElement(message) {
         </div>
       </div>
     </div>` : '';
-
   const messageTime = formatTime(message.createdAt);
-  const senderName = message.sender?.name || 'Người dùng';
+  const senderName = getDisplayNameForUser(message.sender?._id, message.sender?.name || 'Người dùng');
 
   messageDiv.innerHTML = `
     ${avatarHtml}
@@ -1272,12 +1270,11 @@ function createConversationElement(conversation) {
       const otherUser = conversation.populatedUsers.find(user => 
         user.email !== currentUser?.email && user.username !== currentUser?.username
       );
-      
-      if (otherUser) {
+        if (otherUser) {
         // Find the other participant to get nickname
         const otherParticipant = conversation.participants.find(p => p.user !== currentUser?._id);
-        // Use nickname if available, otherwise use real name
-        displayName = otherParticipant?.nickname || otherUser.name;
+        // Use nickname if available, otherwise use username
+        displayName = otherParticipant?.nickname || otherUser.username;
         avatar = otherUser.avatar || '/images/kairo.jpg';
       }
     }
@@ -1435,14 +1432,13 @@ function updateChatHeader(conversation) {
           // Find the participant that's not the current user
           return p.user !== currentUser?._id;
         });
-        
-        if (otherParticipant) {
+          if (otherParticipant) {
           userId = otherParticipant.user; // Set userId from participants
-          // Use nickname if available, otherwise use real name
-          displayName = otherParticipant.nickname || otherUser.name;
+          // Use nickname if available, otherwise use username
+          displayName = otherParticipant.nickname || otherUser.username;
           console.log('Set userId from participants:', userId, 'displayName:', displayName);
         } else {
-          displayName = otherUser.name;
+          displayName = otherUser.username;
           console.warn('Could not find other participant');
         }
         
@@ -2206,10 +2202,9 @@ function updateConversationDisplayNames() {
       const otherUser = conversation.populatedUsers?.find(user => 
         user.email !== currentUser?.email && user.username !== currentUser?.username
       );
-      
-      if (otherUser) {
+        if (otherUser) {
         const otherParticipant = conversation.participants?.find(p => p.user !== currentUser?._id);
-        const displayName = otherParticipant?.nickname || otherUser.name;
+        const displayName = otherParticipant?.nickname || otherUser.username;
         
         // Update the name in the conversation element
         const nameElement = conversationElement.querySelector('.font-medium.truncate');
@@ -2221,4 +2216,37 @@ function updateConversationDisplayNames() {
   });
   
   console.log('Conversation display names updated');
+}
+
+// Helper function to get display name with nickname priority
+function getDisplayNameForUser(userId, fallbackName = 'Người dùng') {
+  if (!currentConversationId || !userId) return fallbackName;
+  
+  // Find current conversation
+  const conversation = conversations.find(c => c._id === currentConversationId);
+  if (!conversation || !conversation.participants) return fallbackName;
+  
+  // Check for nickname in participants
+  const participant = conversation.participants.find(p => p.user === userId);
+  if (participant && participant.nickname) {
+    return participant.nickname;
+  }
+  
+  // If no nickname, try to get username from populatedUsers
+  if (conversation.populatedUsers) {
+    // Since we can't directly match by _id, we'll match by finding the other user
+    // For 1-on-1 conversations, find the user that's not current user
+    if (!conversation.isGroup) {
+      const otherUser = conversation.populatedUsers.find(user => 
+        user.email !== currentUser?.email && user.username !== currentUser?.username
+      );
+      // Check if this user matches the sender (by matching with participant)
+      const otherParticipant = conversation.participants.find(p => p.user !== currentUser?._id);
+      if (otherParticipant && otherParticipant.user === userId && otherUser) {
+        return otherUser.username;
+      }
+    }
+  }
+  
+  return fallbackName;
 }
