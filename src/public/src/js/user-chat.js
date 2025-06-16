@@ -168,10 +168,10 @@ function createMessageElement(message) {
 
   let replyHtml = '';
   if (message.replyTo) {
-    const replyAuthor = message.replyTo.sender?.name || 'Người dùng';
+  const replyAuthor = message.replyTo.sender?.name || 'Người dùng';
     const replyContent = message.replyTo.content || '';
     replyHtml = `
-      <div class="reply-message">
+      <div class="reply-message" onclick="highlightReplyMessage(this)">
         <div class="reply-author">${replyAuthor}</div>
         <div class="reply-content">${replyContent}</div>
       </div>
@@ -360,14 +360,21 @@ function addReaction(messageId, emoji) {
 }
 
 function handleReply(messageId, content, author) {
+  // Create message object for preview
+  const message = {
+    sender: { name: author },
+    content: content
+  };
+  
   currentReply = {
     messageId: messageId,
     content: content,
     author: author,
   };
 
-  document.getElementById('replyContent').textContent = content;
-  document.getElementById('replyPreview').classList.remove('hidden');
+  // Use enhanced reply preview function
+  showReplyPreview(message);
+  
   document.getElementById('messageInput').focus();
 
   // Close menu
@@ -376,7 +383,8 @@ function handleReply(messageId, content, author) {
 
 function cancelReply() {
   currentReply = null;
-  document.getElementById('replyPreview').classList.add('hidden');
+  // Use enhanced hide reply preview function
+  hideReplyPreview();
 }
 
 function handleHideMessage(messageId) {
@@ -459,13 +467,30 @@ async function sendMessage() {
         sender: { name: currentReply.author }
       } : null
     };    // Add temporary message to display immediately
-    tempMessages.set(tempId, tempMessage);
-    messages.push(tempMessage);
+    tempMessages.set(tempId, tempMessage);    messages.push(tempMessage);
     
-    // Add the new message element to the container
+    // Add the new message element to the container with enhanced animation
     const container = document.getElementById('messagesContainer');
     const messageElement = createMessageElement(tempMessage);
-    container.appendChild(messageElement);    // Update conversation list immediately for better UX
+    
+    // Add special animation for reply messages
+    if (currentReply) {
+      messageElement.style.transform = 'translateX(-30px) scale(0.9)';
+      messageElement.style.opacity = '0';
+      
+      container.appendChild(messageElement);
+      
+      // Trigger animation
+      requestAnimationFrame(() => {
+        messageElement.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        messageElement.style.transform = 'translateX(0) scale(1)';
+        messageElement.style.opacity = '1';
+      });
+    } else {
+      container.appendChild(messageElement);
+    }
+    
+    // Update conversation list immediately for better UX
     const tempMessageForConversation = {
       ...tempMessage,
       conversationId: currentConversationId
@@ -1850,14 +1875,36 @@ function renderNewMessageAtPosition(message, position) {
   
   const messageElement = createMessageElement(message);
   
+  // Add special animation for reply messages
+  if (message.replyTo) {
+    messageElement.style.transform = 'translateX(-20px) scale(0.95)';
+    messageElement.style.opacity = '0';
+    
+    // Add loading state to reply element
+    const replyElement = messageElement.querySelector('.reply-message');
+    if (replyElement) {
+      addReplyLoadingState(replyElement);
+    }
+  } else {
+    // Regular animation for non-reply messages
+    messageElement.style.transform = 'translateY(10px)';
+    messageElement.style.opacity = '0';
+  }
+  
+  // Insert at correct position
   if (position >= container.children.length) {
-    // Add to end
     container.appendChild(messageElement);
   } else {
-    // Insert at specific position
     const nextElement = container.children[position];
     container.insertBefore(messageElement, nextElement);
   }
+  
+  // Trigger animation
+  requestAnimationFrame(() => {
+    messageElement.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    messageElement.style.transform = 'translateX(0) translateY(0) scale(1)';
+    messageElement.style.opacity = '1';
+  });
   
   return messageElement;
 }
@@ -1883,4 +1930,144 @@ function debugMessageReceived(data) {
   console.log('Has tempId:', !!data.tempId);
   console.log('TempMessages map:', tempMessages);
   console.groupEnd();
+}
+
+// Enhanced reply message interactions
+function highlightReplyMessage(replyElement) {
+  // Add ripple effect
+  replyElement.classList.add('ripple');
+  
+  // Remove ripple class after animation
+  setTimeout(() => {
+    replyElement.classList.remove('ripple');
+  }, 600);
+  
+  // Add focused state
+  replyElement.classList.add('focused');
+  setTimeout(() => {
+    replyElement.classList.remove('focused');
+  }, 2000);
+  
+  // Scroll to original message if possible (future enhancement)
+  // scrollToOriginalMessage(messageId);
+}
+
+// Enhanced reply preview with better animations
+function showReplyPreview(message) {
+  const replyPreview = document.getElementById('replyPreview');
+  const authorElement = replyPreview.querySelector('.text-purple-400');
+  const contentElement = replyPreview.querySelector('.text-gray-300');
+  
+  // Set content with enhanced animations
+  if (authorElement) {
+    authorElement.textContent = `Đang trả lời ${message.sender.name}`;
+    authorElement.style.transform = 'translateX(-10px)';
+    authorElement.style.opacity = '0';
+    
+    setTimeout(() => {
+      authorElement.style.transform = 'translateX(0)';
+      authorElement.style.opacity = '1';
+    }, 100);
+  }
+  
+  if (contentElement) {
+    contentElement.textContent = message.content;
+    contentElement.style.transform = 'translateY(10px)';
+    contentElement.style.opacity = '0';
+    
+    setTimeout(() => {
+      contentElement.style.transform = 'translateY(0)';
+      contentElement.style.opacity = '1';
+    }, 200);
+  }
+  
+  // Show with enhanced animation
+  replyPreview.classList.remove('hidden');
+  replyPreview.style.transform = 'translateY(-20px) scale(0.9)';
+  replyPreview.style.opacity = '0';
+  
+  requestAnimationFrame(() => {
+    replyPreview.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    replyPreview.style.transform = 'translateY(0) scale(1)';
+    replyPreview.style.opacity = '1';
+  });
+}
+
+// Enhanced hide reply preview
+function hideReplyPreview() {
+  const replyPreview = document.getElementById('replyPreview');
+  
+  // Add closing animation
+  replyPreview.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+  replyPreview.style.transform = 'translateY(-20px) scale(0.95)';
+  replyPreview.style.opacity = '0';
+  
+  setTimeout(() => {
+    replyPreview.classList.add('hidden');
+    replyPreview.style.transform = '';
+    replyPreview.style.opacity = '';
+    replyPreview.style.transition = '';
+  }, 300);
+}
+
+// Enhanced message sending with reply animation
+function sendMessageWithReplyAnimation(content, replyTo = null) {
+  const messageElement = createMessageElement({
+    _id: Date.now().toString(),
+    content: content,
+    sender: currentUser,
+    timestamp: new Date(),
+    type: 'TEXT',
+    replyTo: replyTo,
+    isTemp: true
+  });
+  
+  // Add special animation for reply messages
+  if (replyTo) {
+    messageElement.style.transform = 'translateX(-30px) scale(0.9)';
+    messageElement.style.opacity = '0';
+    
+    setTimeout(() => {
+      messageElement.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      messageElement.style.transform = 'translateX(0) scale(1)';
+      messageElement.style.opacity = '1';
+    }, 100);
+  }
+  
+  return messageElement;
+}
+
+// Add loading state to reply messages
+function addReplyLoadingState(replyElement) {
+  replyElement.classList.add('loading');
+  
+  setTimeout(() => {
+    replyElement.classList.remove('loading');
+  }, 1500);
+}
+
+// Enhanced context menu for reply messages
+function showReplyContextMenu(event, messageId) {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  const contextMenu = document.getElementById(`menu${messageId}`);
+  if (contextMenu) {
+    // Add special styling for reply context menu
+    contextMenu.style.background = 'linear-gradient(135deg, rgba(55, 65, 81, 0.95), rgba(75, 85, 99, 0.9))';
+    contextMenu.style.backdropFilter = 'blur(12px)';
+    contextMenu.style.border = '1px solid rgba(124, 58, 237, 0.2)';
+    contextMenu.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(124, 58, 237, 0.1)';
+    
+    // Show with animation
+    contextMenu.style.transform = 'scale(0.9) translateY(-10px)';
+    contextMenu.style.opacity = '0';
+    contextMenu.classList.remove('hidden');
+    
+    requestAnimationFrame(() => {
+      contextMenu.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+      contextMenu.style.transform = 'scale(1) translateY(0)';
+      contextMenu.style.opacity = '1';
+    });
+  }
 }
