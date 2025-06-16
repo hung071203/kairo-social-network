@@ -1,31 +1,13 @@
-// Lưu ý sử dụng cho tất cả các yêu cầu:
-// - Không được tạo file readme huoặc ghi chú nào khác ngoài những gì đã có.
-// - Không được sửa file css vì có thể lỗi giao diện.
-// - Cách kết nối socket trong file connection gateway
-// - Mọi hành động của tính năng chat đều phải thông qua socket, không được gọi trực tiếp API, trừ những mục tôi đã viết api trong chat controller.
-
-//Yêu cầu 1:
-// Chuyển từ giao diện mẫu sang sử dụng api để gọi trong chat controller:
-// @Get('conversation') để leeys danh sách cuộc trò chuyện
-//  @Get('messages') để lấy danh sách tin nhắn của cuộc trò chuyện.
-// Lưu ý:
-// đọc kĩ dto để hiểu cách truyền tham số.
-// Tôi muốn dữ liệu load theo kiểu cuộn vô hạn với mỗi lần load là 20 bản ghi
-// có cả hiệu ứng loading khi đang load dữ liệu.
-// Khi load xong thì cần giữ đúng vị trí cuộn trước đó(bao gồm cả load danh sách tin nhắn và lịch sử tin nhắn
-
-// Yêu cầu 2:
-// Chỉ hỗ trợ gửi một trong ba loại: tin nhắn văn bản, hình ảnh hoặc video.
-// Nếu nội dung là hình ảnh hoặc video, cần gọi hàm uploadFile trước để lấy URL,
-// sau đó mới emit tin nhắn với URL đó lên server.
-//
-// Khi gửi tin nhắn, cần hiển thị tạm thời tin nhắn với trạng thái "đang gửi".
-// Nếu nhận được sự kiện 'messageReceived' từ server với cùng tempId,
-// cần xoá tin nhắn tạm thời đó để thay thế bằng bản chính thức.
-//
-// Lưu ý quan trọng:
-// - Mỗi lần gửi chỉ được một trong ba loại: text, ảnh hoặc video.
-// - Không được gửi kèm text với ảnh hoặc video trong cùng một tin nhắn.
+//yêu cầu: 
+// Biết khi gửi sự kiện join-room sẽ trả data dạng
+// {
+//     "message": "Bạn đã tham gia nhóm trò chuyện ",
+//     "conversationIds": [
+//         "684ed9f6a748346213dd7e82",
+//     ]
+// }
+// Lọc cho tôi khi ấn vào các đoạn chat mà id không nằm trong conversationIds thì thay thế chỗ nhập tin nhắn thành bạn không thể nhắn tin
+// và xóa hết các nút action cạnh tin nhắn
 
 function showToast({
   message = 'Thông báo hệ thống.',
