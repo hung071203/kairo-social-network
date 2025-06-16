@@ -158,6 +158,7 @@ let currentSearchQuery = '';
 let socket = null;
 let tempMessages = new Map(); // Store temporary messages while sending
 let allowedConversationIds = []; // Store conversation IDs that user can send messages to
+let usersOnline = []; // Store list of online user IDs
 
 function renderMessages() {
   console.log('Rendering messages:', messages.length);
@@ -977,8 +978,7 @@ function updateConversationInList(conversation, newIndex) {
   if (isCurrentActive) {
     conversationElement.classList.add('bg-primary', 'bg-opacity-20');
   }
-  
-  // Insert at the specified position (0 for top)
+    // Insert at the specified position (0 for top)
   if (newIndex === 0) {
     chatListContainer.insertBefore(conversationElement, chatListContainer.firstChild);
   } else {
@@ -987,6 +987,21 @@ function updateConversationInList(conversation, newIndex) {
       chatListContainer.insertBefore(conversationElement, children[newIndex]);
     } else {
       chatListContainer.appendChild(conversationElement);
+    }
+  }
+  
+  // Update online status for the newly inserted conversation element
+  if (!conversation.isGroup) {
+    const otherUser = conversation.populatedUsers?.find(user => 
+      user.email !== currentUser?.email && user.username !== currentUser?.username
+    );
+    
+    if (otherUser) {
+      const otherParticipant = conversation.participants?.find(p => p.user !== currentUser?._id);
+      const otherUserId = otherParticipant?.user;
+      const isOnline = usersOnline.includes(otherUserId);
+      
+      updateConversationElementOnlineStatus(conversationElement, isOnline);
     }
   }
 }
@@ -1224,8 +1239,7 @@ function renderConversations() {
     chatListContainer.appendChild(emptyMessage);
     return;
   }
-  
-  conversations.forEach((conversation, index) => {
+    conversations.forEach((conversation, index) => {
     console.log('Processing conversation:', conversation._id, conversation);
     
     const conversationElement = createConversationElement(conversation);
@@ -1237,6 +1251,9 @@ function renderConversations() {
     
     chatListContainer.appendChild(conversationElement);
   });
+  
+  // Update online status indicators after rendering conversations
+  updateConversationsOnlineStatus();
 }
 
 function createConversationElement(conversation) {
@@ -1245,10 +1262,12 @@ function createConversationElement(conversation) {
   div.setAttribute('data-conversation-id', conversation._id);
   div.setAttribute('role', 'button');
   div.setAttribute('tabindex', '0');
-  
-  // Determine display info
+    // Determine display info
   let displayName = conversation.name || 'Cuộc trò chuyện';
   let avatar = '/images/kairo.jpg'; // Default avatar
+  let isOnline = false; // Track online status for 1-on-1 conversations
+  let otherUserId = null; // Store other user ID for 1-on-1 conversations
+  
   // Check if this is a group conversation or 1-on-1
   if (conversation.isGroup) {
     // For group chat, use conversation avatar if exists
@@ -1264,6 +1283,10 @@ function createConversationElement(conversation) {
         // Use nickname if available, otherwise use name
         displayName = otherParticipant?.nickname || otherUser.name;
         avatar = otherUser.avatar || '/images/kairo.jpg';
+        
+        // Get other user ID and check online status
+        otherUserId = otherParticipant?.user;
+        isOnline = otherUserId && usersOnline.includes(otherUserId);
       }
     }
   }
@@ -1281,9 +1304,9 @@ function createConversationElement(conversation) {
           height="48"
           loading="lazy"
           src="${avatar}"
-          width="48"/>
-      </div>
+          width="48"/>      </div>
       ${conversation.hasUnread ? '<div class="unread-dot absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900"></div>' : ''}
+      ${!conversation.isGroup && isOnline ? '<div class="online-indicator absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>' : ''}
     </div>
     <div class="ml-3 flex-1 min-w-0">
       <div class="flex items-center">
@@ -1426,10 +1449,19 @@ function updateChatHeader(conversation) {
           console.log('Set userId from participants:', userId, 'displayName:', displayName);        } else {
           displayName = otherUser.name;
           console.warn('Could not find other participant');
-        }
-        
+        }        
         avatar = otherUser.avatar || '/images/kairo.jpg';
-        status = otherUser.isOnline ? 'Đang hoạt động' : 'Không hoạt động';
+        
+        // Check real-time online status from usersOnline array
+        const isUserOnline = usersOnline.includes(userId);
+        status = isUserOnline ? 'Đang hoạt động' : 'Không hoạt động';
+        
+        console.log('User online status check:', {
+          userId,
+          usersOnline,
+          isUserOnline,
+          finalStatus: status
+        });
       } else {
         console.warn('Could not find other user in populated users');
       }
@@ -1596,10 +1628,14 @@ function initializeSocket() {
     console.log('Socket received messageHidden event:', data);
     handleMessageHidden(data);
   });
-
   socket.on('nicknameChanged', (data) => {
     console.log('Socket received nicknameChanged event:', data);
     handleNicknameChanged(data);
+  });
+
+  socket.on('user-online', (data) => {
+    console.log('Socket received user-online event:', data);
+    handleUsersOnlineUpdate(data);
   });
 
   socket.on('disconnect', (reason) => {
@@ -2202,11 +2238,84 @@ function handleNicknameChanged(data) {
     
     console.log('Nickname change handled successfully');
   } catch (error) {
-    console.error('Error handling nickname change:', error);
-    showToast({ 
+    console.error('Error handling nickname change:', error);    showToast({ 
       message: 'Lỗi khi xử lý thay đổi biệt danh', 
       type: 'error' 
     });
+  }
+}
+
+function handleUsersOnlineUpdate(data) {
+  try {
+    console.log('Users online update received:', data);
+    
+    // Validate data structure
+    if (!data || !Array.isArray(data.usersOnline)) {
+      console.warn('Invalid users online data received:', data);
+      return;
+    }
+    
+    // Update global online users list
+    usersOnline = data.usersOnline;
+    console.log('Updated online users list:', usersOnline);
+    
+    // Update all conversation elements' online status indicators
+    updateConversationsOnlineStatus();
+    
+    // Update current chat header if it's a 1-on-1 conversation
+    if (currentConversationId) {
+      const currentConversation = conversations.find(c => c._id === currentConversationId);
+      if (currentConversation && !currentConversation.isGroup) {
+        updateChatHeader(currentConversation);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling users online update:', error);
+  }
+}
+
+function updateConversationsOnlineStatus() {
+  console.log('Updating conversations online status...');
+  
+  // Update online status for all conversation elements
+  conversations.forEach(conversation => {
+    if (!conversation.isGroup) {
+      // For 1-on-1 conversations, check if the other user is online
+      const otherUser = conversation.populatedUsers?.find(user => 
+        user.email !== currentUser?.email && user.username !== currentUser?.username
+      );
+      
+      if (otherUser) {
+        const otherParticipant = conversation.participants?.find(p => p.user !== currentUser?._id);
+        const otherUserId = otherParticipant?.user;
+        const isOnline = usersOnline.includes(otherUserId);
+        
+        // Update the conversation element with online status
+        const conversationElement = document.querySelector(`[data-conversation-id="${conversation._id}"]`);
+        if (conversationElement) {
+          updateConversationElementOnlineStatus(conversationElement, isOnline);
+        }
+      }
+    }
+  });
+}
+
+function updateConversationElementOnlineStatus(conversationElement, isOnline) {
+  // Find the avatar container
+  const avatarContainer = conversationElement.querySelector('.relative');
+  if (!avatarContainer) return;
+  
+  // Remove existing online indicator
+  const existingIndicator = avatarContainer.querySelector('.online-indicator');
+  if (existingIndicator) {
+    existingIndicator.remove();
+  }
+  
+  // Add online indicator if user is online
+  if (isOnline) {
+    const onlineIndicator = document.createElement('div');
+    onlineIndicator.className = 'online-indicator absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900';
+    avatarContainer.appendChild(onlineIndicator);
   }
 }
 
