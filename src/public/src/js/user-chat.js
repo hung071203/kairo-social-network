@@ -1270,11 +1270,10 @@ function createConversationElement(conversation) {
       const otherUser = conversation.populatedUsers.find(user => 
         user.email !== currentUser?.email && user.username !== currentUser?.username
       );
-        if (otherUser) {
-        // Find the other participant to get nickname
+        if (otherUser) {        // Find the other participant to get nickname
         const otherParticipant = conversation.participants.find(p => p.user !== currentUser?._id);
-        // Use nickname if available, otherwise use username
-        displayName = otherParticipant?.nickname || otherUser.username;
+        // Use nickname if available, otherwise use name
+        displayName = otherParticipant?.nickname || otherUser.name;
         avatar = otherUser.avatar || '/images/kairo.jpg';
       }
     }
@@ -1432,13 +1431,11 @@ function updateChatHeader(conversation) {
           // Find the participant that's not the current user
           return p.user !== currentUser?._id;
         });
-          if (otherParticipant) {
-          userId = otherParticipant.user; // Set userId from participants
-          // Use nickname if available, otherwise use username
-          displayName = otherParticipant.nickname || otherUser.username;
-          console.log('Set userId from participants:', userId, 'displayName:', displayName);
-        } else {
-          displayName = otherUser.username;
+          if (otherParticipant) {          userId = otherParticipant.user; // Set userId from participants
+          // Use nickname if available, otherwise use name
+          displayName = otherParticipant.nickname || otherUser.name;
+          console.log('Set userId from participants:', userId, 'displayName:', displayName);        } else {
+          displayName = otherUser.name;
           console.warn('Could not find other participant');
         }
         
@@ -2235,9 +2232,8 @@ function updateConversationDisplayNames() {
       const otherUser = conversation.populatedUsers?.find(user => 
         user.email !== currentUser?.email && user.username !== currentUser?.username
       );
-        if (otherUser) {
-        const otherParticipant = conversation.participants?.find(p => p.user !== currentUser?._id);
-        const displayName = otherParticipant?.nickname || otherUser.username;
+        if (otherUser) {        const otherParticipant = conversation.participants?.find(p => p.user !== currentUser?._id);
+        const displayName = otherParticipant?.nickname || otherUser.name;
         
         // Update the name in the conversation element
         const nameElement = conversationElement.querySelector('.font-medium.truncate');
@@ -2264,8 +2260,7 @@ function getDisplayNameForUser(userId, fallbackName = 'Người dùng') {
   if (participant && participant.nickname) {
     return participant.nickname;
   }
-  
-  // If no nickname, try to get username from populatedUsers
+    // If no nickname, try to get name from populatedUsers
   if (conversation.populatedUsers) {
     // Find the user in populatedUsers that corresponds to this userId
     // We need to match by finding the participant first, then find corresponding populated user
@@ -2276,7 +2271,7 @@ function getDisplayNameForUser(userId, fallbackName = 'Người dùng') {
           user.email === currentUser?.email || user.username === currentUser?.username
         );
         if (currentUserInPopulated) {
-          return currentUserInPopulated.username;
+          return currentUserInPopulated.name;
         }
       } else {
         // For other users, find the one that's not current user
@@ -2284,7 +2279,7 @@ function getDisplayNameForUser(userId, fallbackName = 'Người dùng') {
           user.email !== currentUser?.email && user.username !== currentUser?.username
         );
         if (otherUser) {
-          return otherUser.username;
+          return otherUser.name;
         }
       }
     }
