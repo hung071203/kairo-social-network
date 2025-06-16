@@ -90,7 +90,7 @@ export class MessageGateway {
       });
       return;
     }
-
+    const validConversationIds = []
     const newPromise = validConversations.map(async (item) => {
       if (!item.isGroup) {
         const participant = item.participants.find(
@@ -101,6 +101,7 @@ export class MessageGateway {
         }
       }
       const id = item._id.toString();
+      validConversationIds.push(id);
       client.join(id);
       await this.redisService.sAdd(
         `${process.env.APP_ID}:socket:users-inroom:${userId}`,
@@ -109,15 +110,10 @@ export class MessageGateway {
     });
 
     await Promise.allSettled(newPromise);
-
-    const ids = validConversations
-      .map((item) => item._id.toString())
-      .join(', ');
-
-    this.logger.log(`User ${userId} joined conversation: ` + ids);
+    this.logger.log(`User ${userId} joined conversation: ` + validConversationIds.join(', '));
     client.emit('joined-room', {
       message: `Bạn đã tham gia nhóm trò chuyện `,
-      conversationIds: validConversations.map((item) => item._id.toString()),
+      conversationIds: validConversationIds,
     });
   }
 

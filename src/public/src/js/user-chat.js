@@ -96,6 +96,61 @@ function autoResize(textarea) {
   textarea.style.height = textarea.scrollHeight + 'px'; // Dãn theo nội dung
 }
 
+function canSendMessage(conversationId) {
+  return allowedConversationIds.includes(conversationId);
+}
+
+function updateMessageInputState() {
+  const messageInput = document.getElementById('messageInput');
+  const sendButton = document.querySelector('button[onclick="sendMessage()"]');
+  const fileButton = document.querySelector('label[for="fileInput"]');
+  const messageInputContainer = messageInput?.parentElement;
+  
+  if (!currentConversationId) {
+    return;
+  }
+  
+  const canSend = canSendMessage(currentConversationId);
+  
+  if (canSend) {
+    // User can send messages - restore normal state
+    if (messageInput) {
+      messageInput.disabled = false;
+      messageInput.placeholder = "Nhập tin nhắn...";
+      messageInput.style.backgroundColor = "";
+      messageInput.style.color = "";
+    }
+    if (sendButton) {
+      sendButton.disabled = false;
+      sendButton.style.display = "";
+    }
+    if (fileButton) {
+      fileButton.style.display = "";
+    }
+  } else {
+    // User cannot send messages - disable input
+    if (messageInput) {
+      messageInput.disabled = true;
+      messageInput.placeholder = "Bạn không thể nhắn tin";
+      messageInput.value = "";
+      messageInput.style.backgroundColor = "#374151";
+      messageInput.style.color = "#9CA3AF";
+    }
+    if (sendButton) {
+      sendButton.disabled = true;
+      sendButton.style.display = "none";
+    }
+    if (fileButton) {
+      fileButton.style.display = "none";
+    }
+    
+    // Hide reply preview if showing
+    if (currentReply) {
+      cancelReply();
+    }
+  }
+}
+
 let currentReply = null;
 let messageIdCounter = 0;
 let conversations = [];
@@ -113,6 +168,7 @@ let currentSearchQuery = '';
 // Socket connection
 let socket = null;
 let tempMessages = new Map(); // Store temporary messages while sending
+let allowedConversationIds = []; // Store conversation IDs that user can send messages to
 
 function renderMessages() {
   console.log('Rendering messages:', messages.length);
@@ -215,8 +271,10 @@ function createMessageElement(message) {
       </div>
     `;
   }
-
-  const action = `
+  // Check if user can send messages in this conversation
+  const canSend = canSendMessage(currentConversationId);
+  
+  const action = canSend ? `
     <div class="message-controls">
       <div class="relative">
         <button onclick="toggleReactionPicker(event, '${message._id}')" class="reaction-btn">
@@ -246,7 +304,7 @@ function createMessageElement(message) {
           </button>` : ''}
         </div>
       </div>
-    </div>`;
+    </div>` : '';
 
   const messageTime = formatTime(message.createdAt);
   const senderName = message.sender?.name || 'Người dùng';
@@ -254,9 +312,8 @@ function createMessageElement(message) {
   messageDiv.innerHTML = `
     ${avatarHtml}
     <div class="message-content">
-      ${!isCurrentUser ? `<div class="sender-name">${senderName}</div>` : ''}
-      <div class="flex items-end ${isCurrentUser ? 'justify-end' : ''}">
-        ${isCurrentUser && !message.isTemp ? action : ''}
+      ${!isCurrentUser ? `<div class="sender-name">${senderName}</div>` : ''}      <div class="flex items-end ${isCurrentUser ? 'justify-end' : ''}">
+        ${isCurrentUser && !message.isTemp && canSend ? action : ''}
         <div class="message-bubble ${isCurrentUser ? 'sent' : 'received'} p-3 rounded-lg ${message.replyTo ? 'reply-animation' : ''} p-1 max-w-[500px] group relative ${message.isTemp ? 'opacity-70' : ''}">
           ${replyHtml}
           ${contentHtml}
@@ -264,7 +321,7 @@ function createMessageElement(message) {
           ${reactionsHtml}
           ${statusHtml}
         </div>
-        ${!isCurrentUser && !message.isTemp ? action : ''}
+        ${!isCurrentUser && !message.isTemp && canSend ? action : ''}
       </div>
     </div>
   `;
@@ -316,6 +373,12 @@ function addReaction(messageId, emoji) {
     return;
   }
 
+  // Check if user has permission to react in this conversation
+  if (!canSendMessage(currentConversationId)) {
+    showToast({ message: 'Bạn không có quyền phản ứng trong cuộc trò chuyện này.', type: 'error' });
+    return;
+  }
+
   // Find the message to check if it's temporary
   const message = messages.find(m => m._id === messageId);
   if (!message) {
@@ -342,6 +405,12 @@ function addReaction(messageId, emoji) {
 }
 
 function handleReply(messageId, content, author) {
+  // Check if user can send messages in current conversation
+  if (!canSendMessage(currentConversationId)) {
+    showToast({ message: 'Bạn không có quyền trả lời tin nhắn trong cuộc trò chuyện này.', type: 'error' });
+    return;
+  }
+
   // Create message object for preview
   const message = {
     sender: { name: author },
@@ -409,6 +478,12 @@ async function sendMessage() {
 
   if (!socket || !currentConversationId) {
     showToast({ message: 'Không thể gửi tin nhắn lúc này.', type: 'error' });
+    return;
+  }
+
+  // Check if user has permission to send messages in this conversation
+  if (!canSendMessage(currentConversationId)) {
+    showToast({ message: 'Bạn không có quyền gửi tin nhắn trong cuộc trò chuyện này.', type: 'error' });
     return;
   }
 
@@ -1257,15 +1332,11 @@ function selectConversation(conversation) {
   if (container) {
     container.innerHTML = '';
   }
-  
-  // Update current conversation
+    // Update current conversation
   currentConversationId = conversation._id;
   
-  // Enable message input and send button
-  const messageInput = document.getElementById('messageInput');
-  const sendButton = document.querySelector('button[onclick="sendMessage()"]');
-  if (messageInput) messageInput.disabled = false;
-  if (sendButton) sendButton.disabled = false;
+  // Update message input state based on permissions
+  updateMessageInputState();
   
   // Hide no messages placeholder
   const noMessages = document.getElementById('noMessages');
@@ -1407,10 +1478,20 @@ function initializeSocket() {
   socket.on('connected', (data) => {
     console.log('Connected to chat server:', data);
     socket.emit('join-room', { });
-  });
-
-  socket.on('joined-room', (data) => {
+  });  socket.on('joined-room', (data) => {
     console.log('Joined chat rooms:', data);
+    // Store allowed conversation IDs from join-room response
+    if (data && data.conversationIds && Array.isArray(data.conversationIds)) {
+      allowedConversationIds = data.conversationIds;
+      console.log('Allowed conversation IDs:', allowedConversationIds);
+      
+      // Update message input state if a conversation is currently selected
+      if (currentConversationId) {
+        updateMessageInputState();
+        // Re-render messages to update action buttons
+        renderMessages();
+      }
+    }
   });
   socket.on('error', (data) => {
     console.error('Socket error:', data);
@@ -1630,9 +1711,8 @@ function updateMessageStatus(messageId) {
       // Successfully sent - remove status indicator
       statusElement.remove();
     }  }
-
   // Add message controls if message is not temporary (for both sent and received messages)
-  if (!message.isTemp) {
+  if (!message.isTemp && canSendMessage(currentConversationId)) {
     const messageContent = messageElement.querySelector('.message-content');
     const messageBubbleContainer = messageContent.querySelector('.flex.items-end');
     const isCurrentUser = message.sender?._id === currentUser?._id;
