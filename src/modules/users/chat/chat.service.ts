@@ -233,6 +233,10 @@ export class ChatService {
     conversationId: string,
     nickname: string,
   ) {
+    if (!nickname || nickname.length < 1) {
+      throw new Error('Biệt danh không được để trống.');
+    }
+    
     const conversation = await this.conversationRepository
       .getModel()
       .findOne({
