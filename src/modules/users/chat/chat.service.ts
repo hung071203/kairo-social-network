@@ -10,6 +10,7 @@ import {
   SendMessageDto,
 } from './dto/chat.dto';
 import { FollowService } from '../follow/follow.service';
+import { MessageTypeEnum, SenderTypeEnum } from 'src/common/enums';
 
 @Injectable()
 export class ChatService {
@@ -75,7 +76,11 @@ export class ChatService {
     return conversation;
   }
 
-  async getConversations(userId: string, dto: GetConversationsDto, pagi: PaginationDto) {
+  async getConversations(
+    userId: string,
+    dto: GetConversationsDto,
+    pagi: PaginationDto,
+  ) {
     return this.conversationRepository.findAllCustom(userId, dto, pagi);
   }
 
@@ -220,5 +225,75 @@ export class ChatService {
       );
     }
     await this.messageRepository.delete(messageId);
+  }
+
+  async changeNickname(
+    currentUserId: string,
+    userId: string,
+    conversationId: string,
+    nickname: string,
+  ) {
+    const conversation = await this.conversationRepository
+      .getModel()
+      .findOne({
+        _id: new Types.ObjectId(conversationId),
+        participants: {
+          $elemMatch: { user: new Types.ObjectId(currentUserId) },
+        },
+      })
+      .populate({
+        path: 'participants.user',
+        select: '_id name username', // chọn trường cần
+      });
+
+    if (!conversation) {
+      throw new Error(
+        'Nhóm trò chuyện không tồn tại hoặc bạn không có quyền truy cập.',
+      );
+    }
+
+    const participant: any = conversation.participants.find(
+      (p) => p.user._id.toString() === userId,
+    );
+
+    const currentUser: any = conversation.participants.find(
+      (p) => p.user._id.toString() === currentUserId,
+    );
+
+    if (!currentUser) {
+      throw new Error(
+        'Bạn không phải là thành viên của nhóm trò chuyện này.',
+      );
+    }
+
+    if (!participant) {
+      throw new Error(
+        'Người dùng không phải là thành viên của nhóm trò chuyện này.',
+      );
+    }
+
+    participant.nickname = nickname;
+
+    const newParticipants = conversation.participants.map((p) => {
+      return {
+        user: p.user._id,
+        nickname: p.nickname,
+      };
+    });
+
+    await this.conversationRepository.update(conversationId, {
+      participants: newParticipants,
+      lastMessage: `${currentUser.user.name} đã đổi biệt danh của ${participant.user.name} thành "${nickname}"`,
+      lastMessageAt: new Date(),
+    });
+
+    await this.messageRepository.create({
+      conversation: new Types.ObjectId(conversationId),
+      senderType: SenderTypeEnum.SYSTEM,
+      content: `${currentUser.user.name} đã đổi biệt danh của ${participant.user.name} thành "${nickname}"`,
+      type: MessageTypeEnum.TEXT,
+    });
+
+    return conversation;
   }
 }

@@ -272,4 +272,42 @@ export class MessageGateway {
       client.emit('error', { message: error.message });
     }
   }
+
+  @SubscribeMessage('change-nickname')
+  async handleChangeNickname(
+    @MessageBody() dto: { conversationId: string; nickname: string, userId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userId = client.data.user?.sub as string;
+    dto = dto[0] || dto; // Handle array or single object
+    if (!dto.conversationId || !dto.nickname) {
+      client.emit('error', {
+        message: 'Dữ liệu yêu cầu thiếu.',
+      });
+      return;
+    }
+
+    const checkConversation = await this.redisService.sIsMember(
+      `${process.env.APP_ID}:socket:users-inroom:${userId}`,
+      dto.conversationId,
+    );
+    if (!checkConversation) {
+      client.emit('error', {
+        message: 'Bạn không có quyền thay đổi biệt danh trong nhóm trò chuyện này.',
+      });
+      return;
+    }
+
+    try {
+      await this.chatService.changeNickname(userId, dto.userId, dto.conversationId, dto.nickname);
+      this.server
+        .to(dto.conversationId)
+        .emit('nicknameChanged', { conversationId: dto.conversationId, nickname: dto.nickname, userId: dto.userId });
+      this.logger.log(
+        `User ${userId} changed nickname in conversation ${dto.conversationId} to ${dto.nickname}`,
+      );
+    } catch (error) {
+      client.emit('error', { message: error.message });
+    }
+  }
 }
