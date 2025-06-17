@@ -7,33 +7,62 @@ function showToast({
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
+  
+  // Create icon element based on type
+  const iconEl = document.createElement('div');
+  iconEl.className = 'toast-icon';
+  
+  // Set icon based on type
+  const icons = {
+    success: '<i class="ri-check-circle-line"></i>',
+    error: '<i class="ri-error-warning-line"></i>',
+    warning: '<i class="ri-alert-line"></i>',
+    info: '<i class="ri-information-line"></i>'
+  };
+  iconEl.innerHTML = icons[type] || icons.info;
+  
+  // Create content wrapper
+  const contentWrapper = document.createElement('div');
+  contentWrapper.className = 'toast-content';
+  
   const messageEl = document.createElement(link ? 'a' : 'div');
-  messageEl.className = 'message';
+  messageEl.className = 'toast-message';
   messageEl.textContent = message;
   if (link) {
     messageEl.href = link;
     messageEl.classList.add('hover:underline');
   }
+  
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'close-btn';
-  closeBtn.innerHTML = '&times;';
-  closeBtn.onclick = () => {
+  closeBtn.className = 'toast-close-btn';
+  closeBtn.innerHTML = '<i class="ri-close-line"></i>';
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
     toast.classList.add('closing');
-    setTimeout(() => toast.remove(), 500);
+    setTimeout(() => toast.remove(), 300);
   };
-  toast.appendChild(messageEl);
+  
+  // Assemble toast structure
+  contentWrapper.appendChild(messageEl);
+  toast.appendChild(iconEl);
+  toast.appendChild(contentWrapper);
   toast.appendChild(closeBtn);
+  
   // Click vào message cũng đóng toast nếu có link
   if (link) {
     toast.onclick = (e) => {
-      if (e.target !== closeBtn) window.location.href = link;
+      if (e.target !== closeBtn && !e.target.closest('.toast-close-btn')) {
+        window.location.href = link;
+      }
     };
   }
+  
   container.appendChild(toast);
+  
   // Auto remove
   setTimeout(() => {
     toast.classList.add('closing');
-    setTimeout(() => toast.remove(), 500);
+    setTimeout(() => toast.remove(), 300);
   }, delay);
 }
 function handleFileSelect(event) {
