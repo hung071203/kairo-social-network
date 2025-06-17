@@ -28,68 +28,194 @@
             #commentsScrollContainer::-webkit-scrollbar-thumb:hover {
                 background-color: #888;
             }
-
             @keyframes slideInRight {
                 from {
-                opacity: 0;
-                transform: translateX(50px);
+                    opacity: 0;
+                    transform: translateX(100%) scale(0.95);
                 }
                 to {
-                opacity: 1;
-                transform: translateX(0);
+                    opacity: 1;
+                    transform: translateX(0) scale(1);
                 }
             }
-
             @keyframes fadeOutRight {
                 from {
-                opacity: 1;
-                transform: translateX(0);
+                    opacity: 1;
+                    transform: translateX(0) scale(1);
                 }
                 to {
-                opacity: 0;
-                transform: translateX(50px);
+                    opacity: 0;
+                    transform: translateX(100%) scale(0.95);
                 }
             }
-
+            @keyframes iconPulse {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.1);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+            @keyframes progressBar {
+                from {
+                    width: 100%;
+                }
+                to {
+                    width: 0;
+                }
+            }
             .toast {
                 display: flex;
-                align-items: center;
-                justify-content: space-between;
-                background-color: #3a3b3c;
-                color: #e4e6eb;
-                border-radius: 0.75rem;
-                padding: 1rem 1.25rem;
-                min-width: 320px;
-                max-width: 400px;
-                font-size: 0.95rem;
-                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-                animation: slideInRight 0.4s ease forwards;
+                align-items: flex-start;
+                background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+                color: #2c3e50;
+                border-radius: 12px;
+                padding: 18px 20px;
+                min-width: 350px;
+                max-width: 420px;
+                font-size: 14px;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.8);
+                animation: slideInRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
                 position: relative;
                 opacity: 1;
-                transition: opacity 0.5s ease, transform 0.5s ease;
+                transition: all 0.3s ease;
+                margin-bottom: 12px;
+                backdrop-filter: blur(10px);
+                overflow: hidden;
             }
-
-            .toast.success { background-color: #4e944f; }
-            .toast.error { background-color: #a94442; }
-            .toast.warning { background-color: #b58b00; }
-            .toast.info { background-color: #3a3b3c; }
-
-            .toast .message {
+            .toast::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+                animation: progressBar var(--toast-delay, 4000ms) linear forwards;
+            }
+            .toast.success {
+                border-left: 4px solid #27ae60;
+                background: linear-gradient(145deg, #f8fff9 0%, #e8f5e8 100%);
+            }
+            .toast.success::before {
+                background: linear-gradient(90deg, #27ae60, #2ecc71, #27ae60);
+            }
+            .toast.error {
+                border-left: 4px solid #e74c3c;
+                background: linear-gradient(145deg, #fff8f8 0%, #fdf2f2 100%);
+            }
+            .toast.error::before {
+                background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+            }
+            .toast.warning {
+                border-left: 4px solid #f39c12;
+                background: linear-gradient(145deg, #fffbf0 0%, #fef7e6 100%);
+            }
+            .toast.warning::before {
+                background: linear-gradient(90deg, #f39c12, #e67e22, #f39c12);
+            }
+            .toast.info {
+                border-left: 4px solid #3498db;
+                background: linear-gradient(145deg, #f0f9ff 0%, #e6f3ff 100%);
+            }
+            .toast.info::before {
+                background: linear-gradient(90deg, #3498db, #2980b9, #3498db);
+            }
+            .toast-icon {
+                width: 24px;
+                height: 24px;
+                margin-right: 16px;
+                margin-top: 1px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                flex-shrink: 0;
+                animation: iconPulse 0.6s ease-in-out;
+                position: relative;
+            }
+            .toast-icon::after {
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                background: inherit;
+                opacity: 0.2;
+                transform: scale(1.5);
+                z-index: -1;
+            }
+            .toast.success .toast-icon {
+                background: linear-gradient(135deg, #27ae60, #2ecc71);
+                color: white;
+                box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+            }
+            .toast.error .toast-icon {
+                background: linear-gradient(135deg, #e74c3c, #c0392b);
+                color: white;
+                box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+            }
+            .toast.warning .toast-icon {
+                background: linear-gradient(135deg, #f39c12, #e67e22);
+                color: white;
+                box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+            }
+            .toast.info .toast-icon {
+                background: linear-gradient(135deg, #3498db, #2980b9);
+                color: white;
+                box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+            }
+            .toast-content {
                 flex-grow: 1;
-                color: #fff;
+                line-height: 1.5;
             }
-
+            .toast .message {
+                color: #2c3e50;
+                margin: 0;
+                font-weight: 500;
+                font-size: 14px;
+                letter-spacing: 0.01em;
+            }
             .toast .close-btn {
-                background: transparent;
+                background: rgba(0, 0, 0, 0.05);
                 border: none;
-                color: #b0b3b8;
-                font-size: 1.2rem;
-                margin-left: 1rem;
+                color: #7f8c8d;
+                font-size: 16px;
+                margin-left: 16px;
                 cursor: pointer;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s ease;
+                flex-shrink: 0;
             }
-
+            .toast .close-btn:hover {
+                background: rgba(0, 0, 0, 0.1);
+                color: #2c3e50;
+                transform: scale(1.1);
+            }
             .toast.closing {
-                animation: fadeOutRight 0.5s ease forwards;
+                animation: fadeOutRight 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+            }
+            .toast:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+            }
+            @media(max-width: 480px) {
+                .toast {
+                    min-width: 280px;
+                    max-width: 320px;
+                    margin: 0 8px 12px;
+                }
             }
         </style>
         <style>
@@ -103,10 +229,14 @@
                 animation: pulse 2s infinite;
             }
             @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.7; }
+                0,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.7;
+                }
             }
-            
             /* Tab styling */
             .tab-btn {
                 transition: all 0.2s ease;
@@ -114,9 +244,8 @@
             .tab-btn:hover {
                 color: white;
             }
-            
             /* Responsive dropdown positioning */
-            @media (max-width: 640px) {
+            @media(max-width: 640px) {
                 .dropdown-container {
                     position: fixed !important;
                     right: 8px !important;
@@ -125,7 +254,6 @@
                     width: auto !important;
                 }
             }
-            
             /* Text overflow handling */
             .text-clamp-2 {
                 display: -webkit-box;
@@ -193,20 +321,28 @@
                                 hover:bg-[#4a4b4c]">
                             <i class="fab fa-facebook-messenger text-white"></i>
                         </button>
-                        <div class="relative inline-block text-left">
+                        <div
+                            class="relative inline-block text-left">
                             <!-- Notification Button -->
-                            <button id="notificationBtn" class="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center text-[#B0B3B8] hover:text-white
-                                hover:bg-[#4a4b4c]">
+                            <button
+                                id="notificationBtn"
+                                class="w-10 h-10 rounded-full bg-[#3a3b3c] flex items-center justify-center text-[#B0B3B8] hover:text-white
+                                    hover:bg-[#4a4b4c]">
                                 <i class="fas fa-bell text-white"></i>
-                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-600 text-[10px] font-semibold rounded-full w-4 h-4 flex items-center
-                    justify-center leading-none">
+                                <span
+                                    id="notificationBadge"
+                                    class="absolute -top-1 -right-1 bg-red-600 text-[10px] font-semibold rounded-full w-4 h-4 flex items-center
+                                        justify-center leading-none">
                                     0
                                 </span>
                             </button>
-
                             <!-- Dropdown -->
-                            <div id="notificationDropdown" class="hidden origin-top-right absolute right-0 mt-2 w-80 sm:w-96 max-w-[90vw] rounded-md shadow-lg bg-[#242526] ring-1 ring-black ring-opacity-5 z-50 overflow-y-auto custom-scrollbar">
-                                <div class="py-2 max-h-[80vh]">
+                            <div
+                                id="notificationDropdown"
+                                class="hidden origin-top-right absolute right-0 mt-2 w-80 sm:w-96 max-w-[90vw] rounded-md shadow-lg bg-[#242526] ring-1
+                                    ring-black ring-opacity-5 z-50 overflow-y-auto custom-scrollbar">
+                                <div
+                                    class="py-2 max-h-[80vh]">
                                     <!-- Header -->
                                     <div class="flex justify-between items-center px-4 py-2 border-b border-gray-600">
                                         <div class="text-lg font-bold text-white">Thông báo</div>
@@ -214,98 +350,88 @@
                                             Đánh dấu tất cả đã đọc
                                         </button>
                                     </div>
-
                                     <!-- Tabs -->
                                     <div class="flex border-b border-gray-600 px-4 mb-2">
-                                        <button class="tab-btn px-3 py-2 text-sm font-semibold text-white border-b-2 border-blue-500 focus:outline-none" data-tab="all">
+                                        <button
+                                            class="tab-btn px-3 py-2 text-sm font-semibold text-white border-b-2 border-blue-500 focus:outline-none"
+                                            data-tab="all">
                                             Tất cả (<span id="allCount">0</span>)
                                         </button>
-                                        <button class="tab-btn px-3 py-2 text-sm text-gray-400 hover:text-white border-b-2 border-transparent focus:outline-none" data-tab="unread">
+                                        <button
+                                            class="tab-btn px-3 py-2 text-sm text-gray-400 hover:text-white border-b-2 border-transparent focus:outline-none"
+                                            data-tab="unread">
                                             Chưa đọc (<span id="unreadCount">0</span>)
                                         </button>
                                     </div>
-
                                     <!-- Loading State -->
                                     <div id="loadingState" class="px-4 py-8 text-center text-gray-400">
                                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                                         <p>Đang tải thông báo...</p>
                                     </div>
-
                                     <!-- Empty State -->
                                     <div id="emptyState" class="hidden px-4 py-8 text-center text-gray-400">
                                         <i class="fas fa-bell-slash text-3xl mb-2"></i>
                                         <p>Không có thông báo nào</p>
                                     </div>
-
                                     <!-- Notifications List -->
                                     <div id="notificationsList" class="px-2 pb-2 hidden"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="relative" id="dropdownContainer">
+                        <div
+                            class="relative" id="dropdownContainer">
                             <!-- Nút avatar người dùng -->
-                            <button 
+                            <button
                                 id="userAvatar"
-                                class="w-10 h-10 rounded-full border border-gray-600 hover:border-gray-500 transition-colors overflow-hidden focus:outline-none"
-                                aria-label="User profile"
-                            >
-                                <img 
-                                    src="{{ user.avatar}}" 
-                                    alt="Avatar người dùng" 
-                                    class="w-full h-full object-cover"
-                                />
+                                class="w-10 h-10 rounded-full border border-gray-600 hover:border-gray-500 transition-colors overflow-hidden
+                                    focus:outline-none"
+                                aria-label="User profile">
+                                <img src="{{ user.avatar }}" alt="Avatar người dùng" class="w-full h-full object-cover"/>
                             </button>
-
                             <!-- Menu dropdown -->
-                            <div 
+                            <div
                                 id="dropdownMenu"
                                 class="absolute right-0 mt-2 w-80 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-600 z-50 hidden"
-                                style="background-color: #242526;"
-                            >
+                                style="background-color: #242526;">
                                 <!-- Thông tin người dùng -->
                                 <div class="p-4 border-b border-gray-600" style="border-color: #3a3b3c;">
                                     <div class="flex items-center space-x-3">
-                                        <img 
-                                            src="{{ user.avatar }}" 
-                                            alt="Avatar"
-                                            class="w-10 h-10 rounded-full"
-                                        />
-                                        <div class="font-medium" style="color: #e4e6ea;">{{user.name}}</div>
+                                        <img src="{{ user.avatar }}" alt="Avatar" class="w-10 h-10 rounded-full"/>
+                                        <div class="font-medium" style="color: #e4e6ea;">{{ user.name }}</div>
                                     </div>
                                 </div>
-
                                 <!-- Các mục menu -->
                                 <div class="py-2">
-                                    <button class="menu-item w-full flex items-center space-x-3 px-4 py-3 transition-colors text-left" 
-                                            style="color: #e4e6ea;" 
-                                            onclick="window.location.href='/profile/user/{{ user._id }}'"
-                                            onmouseover="this.style.backgroundColor='#3a3b3c'" 
-                                            onmouseout="this.style.backgroundColor='transparent'">
+                                    <button
+                                        class="menu-item w-full flex items-center space-x-3 px-4 py-3 transition-colors text-left"
+                                        style="color: #e4e6ea;"
+                                        onclick="window.location.href='/profile/user/{{ user._id }}'"
+                                        onmouseover="this.style.backgroundColor='#3a3b3c'"
+                                        onmouseout="this.style.backgroundColor='transparent'">
                                         <i class="fas fa-user w-5" style="color: #b0b3b8;"></i>
                                         <span class="flex-1">Trang cá nhân</span>
                                     </button>
-
-                                    <button class="menu-item w-full flex items-center justify-between px-4 py-3 transition-colors group text-left" 
-                                            style="color: #e4e6ea;" 
-                                            onclick="window.location.href='/profile/settings'"
-                                            onmouseover="this.style.backgroundColor='#3a3b3c'" 
-                                            onmouseout="this.style.backgroundColor='transparent'">
+                                    <button
+                                        class="menu-item w-full flex items-center justify-between px-4 py-3 transition-colors group text-left"
+                                        style="color: #e4e6ea;"
+                                        onclick="window.location.href='/profile/settings'"
+                                        onmouseover="this.style.backgroundColor='#3a3b3c'"
+                                        onmouseout="this.style.backgroundColor='transparent'">
                                         <div class="flex items-center space-x-3">
                                             <i class="fas fa-cog w-5" style="color: #b0b3b8;"></i>
                                             <span>Cài đặt và quyền riêng tư</span>
                                         </div>
                                     </button>
-
-                                    <button class="menu-item w-full flex items-center space-x-3 px-4 py-3 transition-colors text-left" 
-                                            style="color: #e4e6ea;" 
-                                            onclick="window.location.href='/auth/logout'"
-                                            onmouseover="this.style.backgroundColor='#3a3b3c'" 
-                                            onmouseout="this.style.backgroundColor='transparent'">
+                                    <button
+                                        class="menu-item w-full flex items-center space-x-3 px-4 py-3 transition-colors text-left"
+                                        style="color: #e4e6ea;"
+                                        onclick="window.location.href='/auth/logout'"
+                                        onmouseover="this.style.backgroundColor='#3a3b3c'"
+                                        onmouseout="this.style.backgroundColor='transparent'">
                                         <i class="fas fa-sign-out-alt w-5" style="color: #b0b3b8;"></i>
                                         <span class="flex-1">Đăng xuất</span>
                                     </button>
                                 </div>
-
                                 <!-- Footer -->
                                 <div class="px-4 py-3 border-t" style="border-color: #3a3b3c;">
                                     <div class="text-xs leading-4" style="color: #b0b3b8;">
@@ -326,41 +452,35 @@
                                 </div>
                             </div>
                         </div>
-
                         <script>
                             // Lấy các phần tử DOM
                             const userAvatar = document.getElementById('userAvatar');
                             const dropdownMenu = document.getElementById('dropdownMenu');
                             const menuItems = document.querySelectorAll('.menu-item');
                             const dropdownContainer = document.getElementById('dropdownContainer');
-
                             // Xử lý sự kiện click vào avatar
-                            userAvatar.addEventListener('click', function(e) {
+                            userAvatar.addEventListener('click', function (e) {
                                 e.stopPropagation();
                                 toggleDropdown1();
                             });
-
                             // Hàm bật/tắt dropdown
                             function toggleDropdown1() {
                                 dropdownMenu.classList.toggle('hidden');
                             }
-
                             // Đóng dropdown khi click bên ngoài
-                            document.addEventListener('click', function(e) {
-                                if (!dropdownContainer.contains(e.target)) {
+                            document.addEventListener('click', function (e) {
+                                if (! dropdownContainer.contains(e.target)) {
                                     dropdownMenu.classList.add('hidden');
                                 }
                             });
-
                             // Ngăn dropdown đóng khi click bên trong menu (trừ menu items)
-                            dropdownMenu.addEventListener('click', function(e) {
-                                if (!e.target.closest('.menu-item')) {
+                            dropdownMenu.addEventListener('click', function (e) {
+                                if (! e.target.closest('.menu-item')) {
                                     e.stopPropagation();
                                 }
                             });
-
                             // Đóng dropdown khi nhấn ESC
-                            document.addEventListener('keydown', function(e) {
+                            document.addEventListener('keydown', function (e) {
                                 if (e.key === 'Escape') {
                                     dropdownMenu.classList.add('hidden');
                                 }
@@ -420,7 +540,6 @@
                     const likeCount = likeButton.querySelector('span');
                     const shareButton = document.getElementById('shareButton');
                     const shareCount = shareButton.querySelector('span');
-
                     // Phần tử hiển thị số like Hàm xử lý sự kiện click nút Like
                     async function handleLike() {
                         const postId = likeButton.getAttribute('data-post-id'); // Lấy ID bài viết
@@ -468,15 +587,10 @@
                             // Lấy dữ liệu từ response
                             const data = await response.json();
                             // Cập nhật giao diện
-                            shareCount.textContent = data?.data?.sharesCount || parseInt(shareCount.textContent) + 1; // Tăng số share
-
+                            shareCount.textContent = data ?. data ?. sharesCount || parseInt(shareCount.textContent) + 1; // Tăng số share
                             const postUrl = window.location.origin + `/posts/detail/${postId}`;
                             await navigator.clipboard.writeText(postUrl);
-                            showToast({
-                                message: "Đã sao chép liên kết bài viết vào clipboard!",
-                                type: "success",
-                                delay: 3000
-                            });
+                            showToast({message: "Đã sao chép liên kết bài viết vào clipboard!", type: "success", delay: 3000});
                         } catch (error) {}
                     }
                     // Gắn sự kiện click cho nút Like
@@ -523,45 +637,101 @@
                 type = "info" // 'success', 'error', 'warning', 'info'
             } = {}) {
                 const container = document.getElementById("toast-container");
-
                 const toast = document.createElement("div");
                 toast.className = `toast ${type}`;
-                
-                const messageEl = document.createElement(link ? 'a' : 'div');
+                toast.style.setProperty('--toast-delay', delay + 'ms');
+                // Icon container
+                const iconEl = document.createElement("div");
+                iconEl.className = "toast-icon";
+                // Icon based on type
+                let iconHTML = "";
+                switch (type) {
+                    case 'success': iconHTML = '<i class="fas fa-check" style="font-size: 13px;"></i>';
+                        break;
+                    case 'error': iconHTML = '<i class="fas fa-times" style="font-size: 13px;"></i>';
+                        break;
+                    case 'warning': iconHTML = '<i class="fas fa-exclamation" style="font-size: 13px;"></i>';
+                        break;
+                    case 'info':
+                    default: iconHTML = '<i class="fas fa-info" style="font-size: 13px;"></i>';
+                        break;
+                }
+                iconEl.innerHTML = iconHTML;
+                // Content container
+                const contentEl = document.createElement("div");
+                contentEl.className = "toast-content";
+                const messageEl = document.createElement(
+                    link
+                    ? 'a'
+                    : 'div');
                 messageEl.className = 'message';
                 messageEl.textContent = message;
                 if (link) {
-                messageEl.href = link;
-                messageEl.classList.add('hover:underline');
+                    messageEl.href = link;
+                    messageEl.style.color = '#3498db';
+                    messageEl.style.textDecoration = 'none';
+                    messageEl.style.borderBottom = '1px solid transparent';
+                    messageEl.style.transition = 'border-color 0.2s ease';
+                    messageEl.onmouseover = () => messageEl.style.borderBottomColor = '#3498db';
+                    messageEl.onmouseout = () => messageEl.style.borderBottomColor = 'transparent';
                 }
-
+                contentEl.appendChild(messageEl);
                 const closeBtn = document.createElement("button");
                 closeBtn.className = "close-btn";
-                closeBtn.innerHTML = "&times;";
-                closeBtn.onclick = () => {
-                toast.classList.add('closing');
-                setTimeout(() => toast.remove(), 500);
+                closeBtn.innerHTML = "×";
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toast.classList.add('closing');
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.remove();
+                        }
+                    }, 400);
                 };
-
-                toast.appendChild(messageEl);
+                toast.appendChild(iconEl);
+                toast.appendChild(contentEl);
                 toast.appendChild(closeBtn);
-
                 // Click vào message cũng đóng toast nếu có link
                 if (link) {
-                toast.onclick = (e) => {
-                    if (e.target !== closeBtn) window.location.href = link;
-                };
+                    toast.onclick = (e) => {
+                        if (e.target !== closeBtn && ! closeBtn.contains(e.target)) {
+                            window.location.href = link;
+                        }
+                    };
+                    toast.style.cursor = 'pointer';
                 }
-
                 container.appendChild(toast);
-
-                // Auto remove
-                setTimeout(() => {
-                toast.classList.add('closing');
-                setTimeout(() => toast.remove(), 500);
+                // Auto remove với hiệu ứng mượt mà hơn
+                const autoRemoveTimer = setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.classList.add('closing');
+                        setTimeout(() => {
+                            if (toast.parentNode) {
+                                toast.remove();
+                            }
+                        }, 400);
+                    }
                 }, delay);
-            }
-            (() => { // Hàm định dạng thời gian từ ISO string sang DD/MM/YYYY HH:mm
+                // Pause auto-remove khi hover
+                toast.onmouseenter = () => {
+                    clearTimeout(autoRemoveTimer);
+                    toast.style.setProperty('--toast-delay', 'paused');
+                };
+                // Resume auto-remove khi không hover
+                toast.onmouseleave = () => {
+                    const remainingTime = delay * 0.3; // Còn lại 30% thời gian
+                    setTimeout(() => {
+                        if (toast.parentNode && ! toast.classList.contains('closing')) {
+                            toast.classList.add('closing');
+                            setTimeout(() => {
+                                if (toast.parentNode) {
+                                    toast.remove();
+                                }
+                            }, 400);
+                        }
+                    }, remainingTime);
+                };
+            }(() => { // Hàm định dạng thời gian từ ISO string sang DD/MM/YYYY HH:mm
                 function formatTimestamp(isoString) {
                     try {
                         const date = new Date(isoString);
@@ -602,7 +772,7 @@
                 function renderMedia() {
                     mediaContainer.innerHTML = "";
                     const item = mediaItems[currentIndex];
-                    if (item?.mimeType.includes("image")) {
+                    if (item ?. mimeType.includes("image")) {
                         const img = document.createElement("img");
                         img.src = item.url;
                         img.alt = item.alt;
@@ -614,7 +784,7 @@
                             modalImage.alt = item.alt;
                             modal.classList.remove("hidden");
                         });
-                    } else if (item?.mimeType.includes("video")) {
+                    } else if (item ?. mimeType.includes("video")) {
                         const video = document.createElement("video");
                         video.src = item.url;
                         video.controls = true;
@@ -623,17 +793,14 @@
                         mediaContainer.appendChild(video);
                     }
                 }
-                {% if mediaUrls.length > 1 %}
-                prevBtn.addEventListener("click", () => {
-                    currentIndex = (currentIndex - 1 + mediaItems.length) % mediaItems.length;
-                    renderMedia();
-                });
-                nextBtn.addEventListener("click", () => {
-                    currentIndex = (currentIndex + 1) % mediaItems.length;
-                    renderMedia();
-                });
-                {% endif %}
-                modalClose.addEventListener("click", () => {
+                {% if mediaUrls.length > 1 %}prevBtn.addEventListener("click", () => {
+                        currentIndex = (currentIndex - 1 + mediaItems.length) % mediaItems.length;
+                        renderMedia();
+                    });
+                    nextBtn.addEventListener("click", () => {
+                        currentIndex = (currentIndex + 1) % mediaItems.length;
+                        renderMedia();
+                    });{% endif %}modalClose.addEventListener("click", () => {
                     modal.classList.add("hidden");
                     modalImage.src = "";
                     modalImage.alt = "";
@@ -791,11 +958,7 @@
                             replyDiv.scrollIntoView({behavior: 'smooth', block: 'nearest'});
                         } catch (error) {
                             console.error('Lỗi khi gửi trả lời:', error);
-                            showToast({
-                                message: "Đã có lỗi xảy ra khi gửi trả lời. Vui lòng thử lại!",
-                                type: "error",
-                                delay: 5000
-                            });
+                            showToast({message: "Đã có lỗi xảy ra khi gửi trả lời. Vui lòng thử lại!", type: "error", delay: 5000});
                         }
                     });
                     box.appendChild(textarea);
@@ -899,11 +1062,7 @@
                         commentsScrollContainer.scrollTop = 0;
                     } catch (error) {
                         console.error('Lỗi khi gửi bình luận:', error);
-                        showToast({
-                            message: "Đã có lỗi xảy ra khi gửi bình luận. Vui lòng thử lại!",
-                            type: "error",
-                            delay: 5000
-                        });
+                        showToast({message: "Đã có lỗi xảy ra khi gửi bình luận. Vui lòng thử lại!", type: "error", delay: 5000});
                     }
                 }
                 sendCommentBtn.addEventListener("click", handleSendComment);
@@ -1087,11 +1246,7 @@
                         }
                     } catch (error) {
                         console.error('Lỗi khi lấy bình luận:', error);
-                        showToast({
-                            message: "Đã có lỗi xảy ra khi lấy bình luận. Vui lòng thử lại!",
-                            type: "error",
-                            delay: 5000
-                        });
+                        showToast({message: "Đã có lỗi xảy ra khi lấy bình luận. Vui lòng thử lại!", type: "error", delay: 5000});
                         isLoading = false;
                     }
                 }
