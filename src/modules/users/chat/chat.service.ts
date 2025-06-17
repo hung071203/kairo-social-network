@@ -57,7 +57,7 @@ export class ChatService {
         },
       });
       if (isExist) {
-        throw new Error('Nhóm trò chuyện đã tồn tại.');
+        return isExist;
       }
     }
 
