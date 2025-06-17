@@ -414,11 +414,41 @@
                     });                  } finally {
                     closeBlockModal();
                   }
-                }
-
-                function openMessageModal(userId) {
-                  // Redirect to chat page with the target user
-                  window.location.href = `/chat?userId=${userId}`;
+                }                function openMessageModal(userId) {
+                  // Create conversation with the target user
+                  fetch('/chat/conversation', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      participantIds: [userId],
+                      isGroup: false
+                    })
+                  })
+                  .then(async response => {
+                    if (!response.ok) {
+                      const error = await response.json();
+                      throw new Error(error.message || 'Không thể tạo cuộc trò chuyện');
+                    }
+                    return response.json();
+                  })
+                  .then(data => {
+                    // Redirect to chat page with the conversation ID
+                    if (data.success && data.data) {
+                      window.location.href = `/chat?conversationId=${data.data._id}`;
+                    } else {
+                      throw new Error('Phản hồi không hợp lệ từ server');
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error creating conversation:', error);
+                    showToast({
+                      message: `Lỗi: ${error.message}`,
+                      type: 'error',
+                      delay: 3000
+                    });
+                  });
                 }
               </script>
             </div>

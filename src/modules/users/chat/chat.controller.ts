@@ -35,11 +35,10 @@ export class ChatController {
       data: {},
     };
   }
-
   @Post('conversation')
   async createConversation(
     @GetUser() user: User,
-    @Query() dto: CreateConversationDto,
+    @Body() dto: CreateConversationDto,
   ) {
     try {
       return await this.chatService.createConversation(user._id as string, dto);
