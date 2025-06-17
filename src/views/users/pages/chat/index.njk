@@ -55,7 +55,8 @@
                     opacity: 0;
                     transform: translateX(50px);
                 }
-            }            .toast {
+            }
+            .toast {
                 display: flex;
                 align-items: center;
                 gap: 12px;
@@ -66,10 +67,7 @@
                 min-width: 350px;
                 max-width: 450px;
                 font-size: 0.95rem;
-                box-shadow: 
-                    0 10px 25px rgba(0, 0, 0, 0.4),
-                    0 4px 12px rgba(0, 0, 0, 0.3),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
                 animation: slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
                 position: relative;
                 opacity: 1;
@@ -77,43 +75,26 @@
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 backdrop-filter: blur(10px);
             }
-            
             .toast.success {
                 background: linear-gradient(135deg, #059669 0%, #10b981 100%);
                 border-color: rgba(16, 185, 129, 0.3);
-                box-shadow: 
-                    0 10px 25px rgba(5, 150, 105, 0.4),
-                    0 4px 12px rgba(16, 185, 129, 0.3),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4), 0 4px 12px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
             }
-            
             .toast.error {
                 background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
                 border-color: rgba(239, 68, 68, 0.3);
-                box-shadow: 
-                    0 10px 25px rgba(220, 38, 38, 0.4),
-                    0 4px 12px rgba(239, 68, 68, 0.3),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                box-shadow: 0 10px 25px rgba(220, 38, 38, 0.4), 0 4px 12px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
             }
-            
             .toast.warning {
                 background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
                 border-color: rgba(245, 158, 11, 0.3);
-                box-shadow: 
-                    0 10px 25px rgba(217, 119, 6, 0.4),
-                    0 4px 12px rgba(245, 158, 11, 0.3),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                box-shadow: 0 10px 25px rgba(217, 119, 6, 0.4), 0 4px 12px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
             }
-            
             .toast.info {
                 background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
                 border-color: rgba(59, 130, 246, 0.3);
-                box-shadow: 
-                    0 10px 25px rgba(37, 99, 235, 0.4),
-                    0 4px 12px rgba(59, 130, 246, 0.3),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4), 0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
             }
-            
             .toast-icon {
                 flex-shrink: 0;
                 width: 24px;
@@ -126,12 +107,10 @@
                 font-size: 16px;
                 color: #ffffff;
             }
-            
             .toast-content {
                 flex-grow: 1;
                 min-width: 0;
             }
-            
             .toast-message {
                 color: #ffffff;
                 font-weight: 500;
@@ -139,11 +118,9 @@
                 word-wrap: break-word;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
             }
-            
             .toast-message:hover {
                 text-decoration: underline;
             }
-            
             .toast-close-btn {
                 flex-shrink: 0;
                 background: rgba(255, 255, 255, 0.1);
@@ -160,18 +137,16 @@
                 transition: all 0.2s ease;
                 margin-left: 8px;
             }
-            
             .toast-close-btn:hover {
                 background: rgba(255, 255, 255, 0.2);
                 transform: scale(1.05);
             }
-            
             .toast-close-btn:active {
                 transform: scale(0.95);
-            }.toast.closing {
+            }
+            .toast.closing {
                 animation: fadeOutRight 0.5s ease forwards;
             }
-            
             /* Chat Options Dropdown Styles */
             #chatOptionsDropdown {
                 opacity: 0;
@@ -179,17 +154,15 @@
                 transition: opacity 0.2s ease, transform 0.2s ease;
                 pointer-events: none;
             }
-            
             #chatOptionsDropdown:not(.hidden) {
                 opacity: 1;
                 transform: translateY(0);
                 pointer-events: auto;
             }
-              #chatOptionsDropdown button:hover {
+            #chatOptionsDropdown button:hover {
                 background-color: rgba(75, 85, 99, 0.5);
                 border-radius: 6px;
             }
-            
             /* Smooth transitions for dropdown items */
             #chatOptionsDropdown .py-2 button {
                 transition: all 0.2s ease;
@@ -204,9 +177,12 @@
             <div
                 class="w-80 flex flex-col border-r border-gray-700 min-w-[320px]">
                 <!-- Search bar -->
-                <div class="p-4 border-b border-gray-700">                    <div class="flex items-center">
-                        <div class="text-xl font-['Pacifico'] text-primary mr-2 select-none">
-                            logo
+                <div class="p-4 border-b border-gray-700">
+                    <div class="flex items-center">
+                        <div
+                            class="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
+                            onclick="window.location.href='{{ baseUrl }}'">
+                            <img alt="Logo" class="w-full h-full object-cover" src="{{ baseUrl }}/images/favicon.png" width="36" height="36"/>
                         </div>
                         <div class="text-lg font-semibold select-none">
                             Đoạn chat
@@ -255,25 +231,28 @@
                             <div id="headerStatus" class="text-xs text-gray-400 truncate select-none">
                                 Bắt đầu cuộc trò chuyện
                             </div>
-                        </div>                    </div>                    <div class="ml-auto flex space-x-3">
+                        </div>
+                    </div>
+                    <div class="ml-auto flex space-x-3">
                         <div class="relative">
-                            <button 
+                            <button
                                 id="chatOptionsBtn"
-                                aria-label="Information" 
+                                aria-label="Information"
                                 class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-800"
                                 onclick="toggleChatOptions()">
                                 <i class="ri-information-line ri-lg text-gray-300"></i>
                             </button>
                             <!-- Dropdown Menu -->
-                            <div 
-                                id="chatOptionsDropdown" 
+                            <div
+                                id="chatOptionsDropdown"
                                 class="absolute right-0 top-10 w-72 bg-gray-800 rounded-lg shadow-xl border border-gray-600 z-50 hidden overflow-hidden">
                                 <!-- User Info Section -->
                                 <div class="p-4 border-b border-gray-600">
                                     <div class="flex items-center space-x-3">
                                         <div class="w-12 h-12 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
                                             <img id="dropdownAvatar" alt="Avatar" class="w-full h-full object-cover" src="/images/kairo.jpg"/>
-                                        </div>                                        <div class="flex-1 min-w-0">
+                                        </div>
+                                        <div class="flex-1 min-w-0">
                                             <div id="dropdownName" class="font-medium text-white truncate">Trần Ngọc Quang</div>
                                             <a href="#" id="profileLink" class="text-sm text-blue-400 hover:text-blue-300 hover:underline">
                                                 Xem trang cá nhân
@@ -281,18 +260,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <!-- Menu Options -->                                <div class="py-2">
-                                    <button onclick="openNicknameModal()" class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
+                                <!-- Menu Options -->
+                                <div class="py-2">
+                                    <button
+                                        onclick="openNicknameModal()"
+                                        class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
                                         <i class="ri-edit-line text-lg"></i>
                                         <span class="text-sm">Chỉnh sửa biệt danh</span>
                                     </button>
-                                    
                                     <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
                                         <i class="ri-forbid-line text-lg"></i>
                                         <span class="text-sm">Chặn</span>
                                     </button>
-                                    
                                     <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
                                         <i class="ri-delete-bin-line text-lg"></i>
                                         <span class="text-sm">Xóa hết tin nhắn</span>
@@ -318,7 +297,8 @@
                     </div>
                 </div>
                 <!-- Chat input -->
-                <div class="p-3 border-t border-gray-700 bg-gray-900 flex-shrink-0">                    <div id="replyPreview" class="hidden mb-3 p-3 bg-gray-700 rounded-lg">
+                <div class="p-3 border-t border-gray-700 bg-gray-900 flex-shrink-0">
+                    <div id="replyPreview" class="hidden mb-3 p-3 bg-gray-700 rounded-lg">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
                                 <div class="text-sm text-purple-400 font-medium" id="replyAuthor">Trả lời</div>
@@ -358,7 +338,8 @@
                         </button>
                     </div>
                 </div>
-            </div>        </div>
+            </div>
+        </div>
         <!-- Modal xem ảnh -->
         <div id="imageModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 flex items-center justify-center">
             <div class="relative">
@@ -368,7 +349,7 @@
                 </button>
             </div>
         </div>
-          <!-- Nickname Modal -->
+        <!-- Nickname Modal -->
         <div id="nicknameModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
             <div class="bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
                 <div class="flex items-center justify-between mb-4">
@@ -377,34 +358,33 @@
                         <i class="ri-close-line text-xl"></i>
                     </button>
                 </div>
-                
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Biệt danh cho <span id="nicknameTargetName" class="text-blue-400"></span></label>
-                    <input 
-                        type="text" 
-                        id="nicknameInput" 
-                        class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Biệt danh cho
+                        <span id="nicknameTargetName" class="text-blue-400"></span>
+                    </label>
+                    <input
+                        type="text"
+                        id="nicknameInput"
+                        class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 border border-gray-600 focus:border-blue-500
+                            focus:outline-none"
                         placeholder="Nhập biệt danh mới..."
-                        maxlength="50"
-                    />
+                        maxlength="50"/>
                     <div class="text-xs text-gray-400 mt-1">Để trống để sử dụng tên thật</div>
                 </div>
-                
                 <div class="flex space-x-3">
-                    <button 
-                        onclick="closeNicknameModal()" 
+                    <button
+                        onclick="closeNicknameModal()"
                         class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         Hủy
                     </button>
-                    <button 
-                        onclick="saveNickname()" 
+                    <button
+                        onclick="saveNickname()"
                         class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         Lưu
                     </button>
                 </div>
             </div>
         </div>
-
         <!-- User Selection Modal for Nickname Changes -->
         <div id="userSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
             <div class="bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
@@ -414,12 +394,12 @@
                         <i class="ri-close-line text-xl"></i>
                     </button>
                 </div>
-                
                 <div class="mb-4">
                     <p class="text-sm text-gray-300 mb-4">Chọn người mà bạn muốn chỉnh sửa biệt danh:</p>
-                    
                     <!-- Current User Option -->
-                    <button onclick="selectUserForNickname('self')" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition-colors mb-3 border border-gray-600">
+                    <button
+                        onclick="selectUserForNickname('self')"
+                        class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition-colors mb-3 border border-gray-600">
                         <div class="w-10 h-10 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
                             <img id="selectionCurrentUserAvatar" alt="Your Avatar" class="w-full h-full object-cover" src="/images/kairo.jpg"/>
                         </div>
@@ -429,9 +409,10 @@
                         </div>
                         <i class="ri-user-settings-line text-blue-400"></i>
                     </button>
-                    
                     <!-- Other User Option -->
-                    <button onclick="selectUserForNickname('other')" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition-colors border border-gray-600">
+                    <button
+                        onclick="selectUserForNickname('other')"
+                        class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition-colors border border-gray-600">
                         <div class="w-10 h-10 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
                             <img id="selectionOtherUserAvatar" alt="Other User Avatar" class="w-full h-full object-cover" src="/images/kairo.jpg"/>
                         </div>
@@ -442,16 +423,15 @@
                         <i class="ri-edit-line text-blue-400"></i>
                     </button>
                 </div>
-                
                 <div class="flex justify-end">
-                    <button 
-                        onclick="closeUserSelectionModal()" 
+                    <button
+                        onclick="closeUserSelectionModal()"
                         class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         Hủy
-                    </button>                </div>
+                    </button>
+                </div>
             </div>
         </div>
-
         <!-- Block Confirmation Modal -->
         <div id="blockConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
             <div class="bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
@@ -461,28 +441,29 @@
                         <i class="ri-close-line text-xl"></i>
                     </button>
                 </div>
-                
                 <div class="mb-6">
-                    <p class="text-gray-300 mb-2">Bạn có chắc chắn muốn chặn <span id="blockTargetName" class="text-blue-400 font-medium"></span>?</p>
+                    <p class="text-gray-300 mb-2">Bạn có chắc chắn muốn chặn
+                        <span id="blockTargetName" class="text-blue-400 font-medium"></span>?</p>
                     <p class="text-sm text-gray-400">Sau khi chặn, bạn và họ sẽ không thể nhắn tin hoặc tương tác với nhau.</p>
                 </div>
-                
                 <div class="flex space-x-3">
-                    <button 
-                        onclick="closeBlockConfirmModal()" 
+                    <button
+                        onclick="closeBlockConfirmModal()"
                         class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         Hủy
                     </button>
-                    <button 
-                        onclick="confirmBlockUser()" 
+                    <button
+                        onclick="confirmBlockUser()"
                         class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
                         Chặn
                     </button>
                 </div>
-            </div>        </div>
-
+            </div>
+        </div>
         <!-- Delete All Messages Confirmation Modal -->
-        <div id="deleteAllMessagesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div
+            id="deleteAllMessagesModal"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
             <div class="bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-white">Xóa hết tin nhắn</h3>
@@ -490,27 +471,24 @@
                         <i class="ri-close-line text-xl"></i>
                     </button>
                 </div>
-                
                 <div class="mb-6">
                     <p class="text-gray-300 mb-2">Bạn có chắc chắn muốn xóa hết tất cả tin nhắn trong cuộc trò chuyện này?</p>
                     <p class="text-sm text-gray-400">Hành động này sẽ ẩn tất cả tin nhắn ở phía bạn và không thể hoàn tác.</p>
                 </div>
-                
                 <div class="flex space-x-3">
-                    <button 
-                        onclick="closeDeleteAllMessagesModal()" 
+                    <button
+                        onclick="closeDeleteAllMessagesModal()"
                         class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         Hủy
                     </button>
-                    <button 
-                        onclick="confirmDeleteAllMessages()" 
+                    <button
+                        onclick="confirmDeleteAllMessages()"
                         class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
                         Xóa hết
                     </button>
                 </div>
             </div>
         </div>
-
         <script src="/socket.io/socket.io.js"></script>
         <script>
             // Chat Options Dropdown
@@ -518,35 +496,38 @@
                 const dropdown = document.getElementById('chatOptionsDropdown');
                 dropdown.classList.toggle('hidden');
             }
-
             // Close dropdown when clicking outside
-            document.addEventListener('click', function(event) {
+            document.addEventListener('click', function (event) {
                 const dropdown = document.getElementById('chatOptionsDropdown');
                 const button = document.getElementById('chatOptionsBtn');
-                
-                if (!dropdown.contains(event.target) && !button.contains(event.target)) {
+                if (! dropdown.contains(event.target) && ! button.contains(event.target)) {
                     dropdown.classList.add('hidden');
                 }
-            });            // Update dropdown user info when chat is selected
+            }); // Update dropdown user info when chat is selected
             function updateDropdownUserInfo(name, avatar, userId, isGroup = false, conversation = null) {
-                console.log('updateDropdownUserInfo called with:', { name, avatar, userId, isGroup, conversation });
-                
+                console.log('updateDropdownUserInfo called with:', {
+                    name,
+                    avatar,
+                    userId,
+                    isGroup,
+                    conversation
+                });
                 const dropdownName = document.getElementById('dropdownName');
                 const dropdownAvatar = document.getElementById('dropdownAvatar');
                 const profileLink = document.getElementById('profileLink');
+                if (dropdownName) 
+                    dropdownName.textContent = name;
                 
-                if (dropdownName) dropdownName.textContent = name;
-                if (dropdownAvatar) dropdownAvatar.src = avatar || '/images/kairo.jpg';
+                if (dropdownAvatar) 
+                    dropdownAvatar.src = avatar || '/images/kairo.jpg';
                 
                 // Store current user info for nickname modal
-                if (!isGroup && userId) {
-                    // Find user nickname from conversation participants
+                if (! isGroup && userId) { // Find user nickname from conversation participants
                     let nickname = null;
                     if (conversation && conversation.participants) {
                         const userParticipant = conversation.participants.find(p => p.user === userId);
-                        nickname = userParticipant?.nickname;
+                        nickname = userParticipant ?. nickname;
                     }
-                    
                     currentChatUser = {
                         userId: userId,
                         name: name,
@@ -556,48 +537,41 @@
                 } else {
                     currentChatUser = null;
                 }
-                
                 // Handle profile link for 1-on-1 vs group chats
                 if (profileLink) {
                     console.log('Processing profile link. isGroup:', isGroup, 'userId:', userId);
-                    
-                    if (isGroup) {
-                        // Group chat - show member count or group info
-                        const memberCount = conversation?.participants?.length || 0;
+                    if (isGroup) { // Group chat - show member count or group info
+                        const memberCount = conversation ?. participants ?. length || 0;
                         profileLink.textContent = `${memberCount} thành viên`;
                         profileLink.href = '#';
                         profileLink.style.display = 'block';
                         profileLink.style.cursor = 'default';
                         profileLink.onclick = (e) => e.preventDefault(); // Prevent navigation
                         console.log('Set profile link for group chat with member count:', memberCount);
-                    } else if (userId) {
-                        // 1-on-1 chat - show profile link
+                    } else if (userId) { // 1-on-1 chat - show profile link
                         profileLink.href = `/profile/user/${userId}`;
                         profileLink.style.display = 'block';
                         profileLink.textContent = 'Xem trang cá nhân';
                         profileLink.style.cursor = 'pointer';
                         profileLink.onclick = null; // Remove any previous preventDefault
                         console.log('Set profile link for 1-on-1 chat with userId:', userId, 'href:', profileLink.href);
-                    } else {
-                        // No chat selected or no userId - hide profile link
+                    } else { // No chat selected or no userId - hide profile link
                         profileLink.style.display = 'none';
                         console.log('Hidden profile link - no userId provided for 1-on-1 chat');
                     }
                 } else {
                     console.warn('profileLink element not found');
                 }
-                
                 // Update menu options based on chat type
                 updateDropdownMenuOptions(isGroup);
             }
-            
             // Update dropdown menu options based on chat type
             function updateDropdownMenuOptions(isGroup) {
                 const menuContainer = document.querySelector('#chatOptionsDropdown .py-2');
-                if (!menuContainer) return;
+                if (! menuContainer) 
+                    return;
                 
-                if (isGroup) {
-                    // Group chat menu options
+                if (isGroup) { // Group chat menu options
                     menuContainer.innerHTML = `
                         <button class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
                             <i class="ri-edit-line text-lg"></i>
@@ -617,8 +591,8 @@
                             <i class="ri-logout-circle-line text-lg"></i>
                             <span class="text-sm">Rời khỏi nhóm</span>
                         </button>
-                    `;                } else {
-                    // 1-on-1 chat menu options
+                    `;
+                } else { // 1-on-1 chat menu options
                     menuContainer.innerHTML = `                                    <button onclick="openUserSelectionModal()" class="flex items-center space-x-3 w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-700">
                                         <i class="ri-edit-line text-lg"></i>
                                         <span class="text-sm">Chỉnh sửa biệt danh</span>
@@ -632,193 +606,169 @@
                                         <i class="ri-delete-bin-line text-lg"></i>
                                         <span class="text-sm">Xóa hết tin nhắn</span>
                                     </button>
-                    `;}
-            }              // User Selection Modal Functions
-            function openUserSelectionModal() {
-                // Update user information in the selection modal
+                    `;
+                }
+            } // User Selection Modal Functions
+            function openUserSelectionModal() { // Update user information in the selection modal
                 updateUserSelectionModal();
-                
                 const modal = document.getElementById('userSelectionModal');
                 modal.classList.remove('hidden');
-                
                 // Close chat options dropdown
-                document.getElementById('chatOptionsDropdown').classList.add('hidden');
+                document
+                    .getElementById('chatOptionsDropdown')
+                    .classList
+                    .add('hidden');
             }
-            
             function closeUserSelectionModal() {
                 const modal = document.getElementById('userSelectionModal');
                 modal.classList.add('hidden');
             }
-            
-            function updateUserSelectionModal() {
-                // Update current user info
+            function updateUserSelectionModal() { // Update current user info
                 const currentUserAvatar = document.getElementById('selectionCurrentUserAvatar');
                 const currentUserName = document.getElementById('selectionCurrentUserName');
-                
                 if (currentUser) {
-                    if (currentUserAvatar) currentUserAvatar.src = currentUser.avatar || '/images/kairo.jpg';
-                    if (currentUserName) currentUserName.textContent = currentUser.name || 'Bạn';
+                    if (currentUserAvatar) 
+                        currentUserAvatar.src = currentUser.avatar || '/images/kairo.jpg';
+                    
+                    if (currentUserName) 
+                        currentUserName.textContent = currentUser.name || 'Bạn';
+                    
                 }
-                
                 // Update other user info
                 const otherUserAvatar = document.getElementById('selectionOtherUserAvatar');
                 const otherUserName = document.getElementById('selectionOtherUserName');
-                
                 if (currentChatUser) {
-                    if (otherUserAvatar) otherUserAvatar.src = currentChatUser.avatar || '/images/kairo.jpg';
-                    if (otherUserName) otherUserName.textContent = currentChatUser.name || 'Người dùng khác';
+                    if (otherUserAvatar) 
+                        otherUserAvatar.src = currentChatUser.avatar || '/images/kairo.jpg';
+                    
+                    if (otherUserName) 
+                        otherUserName.textContent = currentChatUser.name || 'Người dùng khác';
+                    
                 }
             }
-            
-            function selectUserForNickname(mode) {
-                // Close user selection modal
+            function selectUserForNickname(mode) { // Close user selection modal
                 closeUserSelectionModal();
-                
                 // Open nickname modal with selected mode
                 openNicknameModal(mode);
             }
-            
             // Nickname Modal Functions
             let currentChatUser = null; // Store current chat user info
             let currentNicknameMode = 'other'; // Track whether editing 'self' or 'other' nickname
-            
             function openNicknameModal(mode = 'other') {
                 currentNicknameMode = mode;
-                
                 const modal = document.getElementById('nicknameModal');
                 const targetName = document.getElementById('nicknameTargetName');
                 const nicknameInput = document.getElementById('nicknameInput');
                 const modalTitle = document.querySelector('#nicknameModal h3');
-                
-                if (mode === 'self') {
-                    // Editing own nickname for others to see
-                    const currentUserName = currentUser?.name || 'Bạn';
+                if (mode === 'self') { // Editing own nickname for others to see
+                    const currentUserName = currentUser ?. name || 'Bạn';
                     targetName.textContent = currentUserName;
                     modalTitle.textContent = 'Đặt biệt danh cho tôi';
-                    
                     // Get current user's nickname from conversation participants
                     let currentUserNickname = '';
                     if (typeof conversations !== 'undefined' && window.currentConversationId) {
                         const conversation = conversations.find(c => c._id === window.currentConversationId);
                         if (conversation && conversation.participants) {
-                            const currentUserParticipant = conversation.participants.find(p => p.user === currentUser?._id);
-                            currentUserNickname = currentUserParticipant?.nickname || '';
+                            const currentUserParticipant = conversation.participants.find(p => p.user === currentUser ?. _id);
+                            currentUserNickname = currentUserParticipant ?. nickname || '';
                         }
                     }
                     nicknameInput.value = currentUserNickname;
-                } else {
-                    // Editing other user's nickname (existing functionality)
-                    if (!currentChatUser) {
+                } else { // Editing other user's nickname (existing functionality)
+                    if (! currentChatUser) {
                         console.warn('No current chat user available');
                         return;
                     }
-                    
                     targetName.textContent = currentChatUser.name;
                     modalTitle.textContent = 'Chỉnh sửa biệt danh';
                     nicknameInput.value = currentChatUser.nickname || '';
-                }
-                
-                modal.classList.remove('hidden');
+                } modal.classList.remove('hidden');
                 nicknameInput.focus();
-                
                 // Close chat options dropdown
-                document.getElementById('chatOptionsDropdown').classList.add('hidden');
+                document
+                    .getElementById('chatOptionsDropdown')
+                    .classList
+                    .add('hidden');
             }
-            
             function closeNicknameModal() {
                 const modal = document.getElementById('nicknameModal');
                 const nicknameInput = document.getElementById('nicknameInput');
-                
                 modal.classList.add('hidden');
                 nicknameInput.value = '';
-            }            function saveNickname() {
-                // Get current conversation ID from the global scope or user-chat.js
+            }
+            function saveNickname() { // Get current conversation ID from the global scope or user-chat.js
                 const conversationId = window.currentConversationId || currentConversationId;
-                if (!conversationId) {
+                if (! conversationId) {
                     console.warn('No conversation selected for nickname change');
-                    showToast && showToast({ message: 'Vui lòng chọn cuộc trò chuyện', type: 'warning' });
+                    showToast && showToast({message: 'Vui lòng chọn cuộc trò chuyện', type: 'warning'});
                     return;
                 }
-                
                 const nicknameInput = document.getElementById('nicknameInput');
                 const newNickname = nicknameInput.value.trim();
-                
                 let targetUserId;
-                
-                if (currentNicknameMode === 'self') {
-                    // Changing own nickname
-                    targetUserId = currentUser?._id;
-                    if (!targetUserId) {
+                if (currentNicknameMode === 'self') { // Changing own nickname
+                    targetUserId = currentUser ?. _id;
+                    if (! targetUserId) {
                         console.warn('Current user ID not available');
-                        showToast && showToast({ message: 'Không thể xác định người dùng hiện tại', type: 'error' });
+                        showToast && showToast({message: 'Không thể xác định người dùng hiện tại', type: 'error'});
                         return;
                     }
-                } else {
-                    // Changing other user's nickname (existing functionality)
-                    if (!currentChatUser) {
+                } else { // Changing other user's nickname (existing functionality)
+                    if (! currentChatUser) {
                         console.warn('Missing current chat user data');
                         return;
                     }
                     targetUserId = currentChatUser.userId;
                 }
-                
                 // Call the nickname change function from user-chat.js
                 if (typeof changeUserNickname === 'function') {
                     changeUserNickname(targetUserId, newNickname);
                 } else {
                     console.error('changeUserNickname function not found');
-                }
-                
-                closeNicknameModal();
+                } closeNicknameModal();
             }
-            
             // Handle Enter key in nickname input
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const nicknameInput = document.getElementById('nicknameInput');
                 if (nicknameInput) {
-                    nicknameInput.addEventListener('keypress', function(event) {
+                    nicknameInput.addEventListener('keypress', function (event) {
                         if (event.key === 'Enter') {
                             saveNickname();
-                        }                    });
+                        }
+                    });
                 }
             });
-            
             // Block User Functions
             let userIdToBlock = null;
-            
-            function openBlockConfirmModal() {
-                // Only allow blocking in 1-on-1 conversations
-                if (!currentChatUser || !currentChatUser.userId) {
+            function openBlockConfirmModal() { // Only allow blocking in 1-on-1 conversations
+                if (! currentChatUser || ! currentChatUser.userId) {
                     console.warn('No user selected to block');
-                    showToast && showToast({ message: 'Không thể xác định người dùng để chặn', type: 'error' });
+                    showToast && showToast({message: 'Không thể xác định người dùng để chặn', type: 'error'});
                     return;
                 }
-                
                 userIdToBlock = currentChatUser.userId;
                 const blockTargetName = document.getElementById('blockTargetName');
                 if (blockTargetName) {
                     blockTargetName.textContent = currentChatUser.name || 'người dùng này';
                 }
-                
                 const modal = document.getElementById('blockConfirmModal');
                 modal.classList.remove('hidden');
-                
                 // Close chat options dropdown
-                document.getElementById('chatOptionsDropdown').classList.add('hidden');
+                document
+                    .getElementById('chatOptionsDropdown')
+                    .classList
+                    .add('hidden');
             }
-            
             function closeBlockConfirmModal() {
                 userIdToBlock = null;
                 const modal = document.getElementById('blockConfirmModal');
                 modal.classList.add('hidden');
             }
-            
             async function confirmBlockUser() {
-                if (!userIdToBlock) {
+                if (! userIdToBlock) {
                     console.warn('No user ID to block');
                     return;
                 }
-                
                 try {
                     const response = await fetch(`/follow/block/${userIdToBlock}`, {
                         method: 'POST',
@@ -826,19 +776,11 @@
                             'Content-Type': 'application/json'
                         }
                     });
-                    
                     const data = await response.json();
-                    
                     if (response.ok && data.success) {
-                        showToast && showToast({
-                            message: 'Đã chặn người dùng thành công',
-                            type: 'success',
-                            delay: 3000
-                        });
-                        
+                        showToast && showToast({message: 'Đã chặn người dùng thành công', type: 'success', delay: 3000});
                         // Close modal
                         closeBlockConfirmModal();
-                        
                         // Reload page after 1 second
                         setTimeout(() => {
                             window.location.reload();
@@ -848,36 +790,32 @@
                     }
                 } catch (error) {
                     console.error('Error blocking user:', error);
-                    showToast && showToast({
-                        message: `Lỗi khi chặn người dùng: ${error.message}`,
-                        type: 'error',
-                        delay: 5000
-                    });                }
+                    showToast && showToast({message: `Lỗi khi chặn người dùng: ${
+                            error.message
+                        }`, type: 'error', delay: 5000});
+                }
             }
-            
             // Delete All Messages Functions
             function openDeleteAllMessagesModal() {
                 const modal = document.getElementById('deleteAllMessagesModal');
                 modal.classList.remove('hidden');
-                
                 // Close chat options dropdown
-                document.getElementById('chatOptionsDropdown').classList.add('hidden');
+                document
+                    .getElementById('chatOptionsDropdown')
+                    .classList
+                    .add('hidden');
             }
-            
             function closeDeleteAllMessagesModal() {
                 const modal = document.getElementById('deleteAllMessagesModal');
                 modal.classList.add('hidden');
             }
-            
             async function confirmDeleteAllMessages() {
                 if (!window.currentConversationId && !currentConversationId) {
                     console.warn('No conversation selected for delete all messages');
-                    showToast && showToast({ message: 'Vui lòng chọn cuộc trò chuyện', type: 'warning' });
+                    showToast && showToast({message: 'Vui lòng chọn cuộc trò chuyện', type: 'warning'});
                     return;
                 }
-                
                 const conversationId = window.currentConversationId || currentConversationId;
-                
                 try {
                     const response = await fetch(`/chat/hidden-all-mesages/${conversationId}`, {
                         method: 'PATCH',
@@ -885,19 +823,11 @@
                             'Content-Type': 'application/json'
                         }
                     });
-                    
                     const data = await response.json();
-                    
                     if (response.ok && data.success) {
-                        showToast && showToast({
-                            message: 'Đã xóa hết tin nhắn thành công',
-                            type: 'success',
-                            delay: 3000
-                        });
-                        
+                        showToast && showToast({message: 'Đã xóa hết tin nhắn thành công', type: 'success', delay: 3000});
                         // Close modal
                         closeDeleteAllMessagesModal();
-                        
                         // Reload page after 1 second
                         setTimeout(() => {
                             window.location.reload();
@@ -907,11 +837,9 @@
                     }
                 } catch (error) {
                     console.error('Error deleting all messages:', error);
-                    showToast && showToast({
-                        message: `Lỗi khi xóa hết tin nhắn: ${error.message}`,
-                        type: 'error',
-                        delay: 5000
-                    });
+                    showToast && showToast({message: `Lỗi khi xóa hết tin nhắn: ${
+                            error.message
+                        }`, type: 'error', delay: 5000});
                 }
             }
         </script>
