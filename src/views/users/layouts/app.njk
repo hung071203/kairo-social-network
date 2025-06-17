@@ -20,7 +20,7 @@
     {% block js %}{% endblock %}
   </head>
   <body>
-    <div id="toast-container" class="fixed z-50 space-y-3 p-6 top-6 right-6 max-w-full w-auto"></div>
+    <div id="toast-container" class="fixed z-50 space-y-2 p-4 top-4 right-4 max-w-full w-auto"></div>
     <!-- Top Nav -->
     {% include 'users/layouts/_topnav.njk' %}
     <!-- Top Nav -->
@@ -47,74 +47,203 @@
         {% endif %}
       </div>
     </main>
-  </body>
-  <style>
+  </body>  <style>
     @keyframes slideInRight {
       from {
         opacity: 0;
-        transform: translateX(50px);
+        transform: translateX(100%) scale(0.95);
       }
       to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
       }
     }
     @keyframes fadeOutRight {
       from {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
       }
       to {
         opacity: 0;
-        transform: translateX(50px);
+        transform: translateX(100%) scale(0.95);
       }
     }
+    @keyframes iconPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes progressBar {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+    
     .toast {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background-color: #3a3b3c;
-      color: #e4e6eb;
-      border-radius: 0.75rem;
-      padding: 1rem 1.25rem;
-      min-width: 320px;
-      max-width: 400px;
-      font-size: 0.95rem;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-      animation: slideInRight 0.4s ease forwards;
+      align-items: flex-start;
+      background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+      color: #2c3e50;
+      border-radius: 12px;
+      padding: 18px 20px;
+      min-width: 350px;
+      max-width: 420px;
+      font-size: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      animation: slideInRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
       position: relative;
       opacity: 1;
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      transition: all 0.3s ease;
+      margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
     }
+    
+    .toast::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+      animation: progressBar var(--toast-delay, 4000ms) linear forwards;
+    }
+    
     .toast.success {
-      background-color: #4e944f;
+      border-left: 4px solid #27ae60;
+      background: linear-gradient(145deg, #f8fff9 0%, #e8f5e8 100%);
     }
+    .toast.success::before {
+      background: linear-gradient(90deg, #27ae60, #2ecc71, #27ae60);
+    }
+    
     .toast.error {
-      background-color: #a94442;
+      border-left: 4px solid #e74c3c;
+      background: linear-gradient(145deg, #fff8f8 0%, #fdf2f2 100%);
     }
+    .toast.error::before {
+      background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+    }
+    
     .toast.warning {
-      background-color: #b58b00;
+      border-left: 4px solid #f39c12;
+      background: linear-gradient(145deg, #fffbf0 0%, #fef7e6 100%);
     }
+    .toast.warning::before {
+      background: linear-gradient(90deg, #f39c12, #e67e22, #f39c12);
+    }
+    
     .toast.info {
-      background-color: #3a3b3c;
+      border-left: 4px solid #3498db;
+      background: linear-gradient(145deg, #f0f9ff 0%, #e6f3ff 100%);
     }
-    .toast .message {
+    .toast.info::before {
+      background: linear-gradient(90deg, #3498db, #2980b9, #3498db);
+    }
+    
+    .toast-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 16px;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: iconPulse 0.6s ease-in-out;
+      position: relative;
+    }
+    
+    .toast-icon::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: inherit;
+      opacity: 0.2;
+      transform: scale(1.5);
+      z-index: -1;
+    }
+    
+    .toast.success .toast-icon {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      color: white;
+      box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+    }
+    .toast.error .toast-icon {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white;
+      box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    }
+    .toast.warning .toast-icon {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+      box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+    }
+    .toast.info .toast-icon {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    }
+    
+    .toast-content {
       flex-grow: 1;
-      color: #fff;
+      line-height: 1.5;
     }
+    
+    .toast .message {
+      color: #2c3e50;
+      margin: 0;
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+    }
+    
     .toast .close-btn {
-      background: transparent;
+      background: rgba(0, 0, 0, 0.05);
       border: none;
-      color: #b0b3b8;
-      font-size: 1.2rem;
-      margin-left: 1rem;
+      color: #7f8c8d;
+      font-size: 16px;
+      margin-left: 16px;
       cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
     }
+    
+    .toast .close-btn:hover {
+      background: rgba(0, 0, 0, 0.1);
+      color: #2c3e50;
+      transform: scale(1.1);
+    }
+    
     .toast.closing {
-      animation: fadeOutRight 0.5s ease forwards;
+      animation: fadeOutRight 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
     }
-  </style>
-  <script>
+    
+    .toast:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (max-width: 480px) {
+      .toast {
+        min-width: 280px;
+        max-width: 320px;
+        margin: 0 8px 12px 8px;
+      }
+    }
+  </style>  <script>
     function showToast({
       message = "Thông báo hệ thống.",
       delay = 4000,
@@ -124,39 +253,111 @@
       const container = document.getElementById("toast-container");
       const toast = document.createElement("div");
       toast.className = `toast ${type}`;
-      const messageEl = document.createElement(
-        link
-        ? 'a'
-        : 'div');
+      toast.style.setProperty('--toast-delay', delay + 'ms');
+      
+      // Icon container
+      const iconEl = document.createElement("div");
+      iconEl.className = "toast-icon";
+      
+      // Icon based on type
+      let iconHTML = "";
+      switch(type) {
+        case 'success':
+          iconHTML = '<i class="fas fa-check" style="font-size: 13px;"></i>';
+          break;
+        case 'error':
+          iconHTML = '<i class="fas fa-times" style="font-size: 13px;"></i>';
+          break;
+        case 'warning':
+          iconHTML = '<i class="fas fa-exclamation" style="font-size: 13px;"></i>';
+          break;
+        case 'info':
+        default:
+          iconHTML = '<i class="fas fa-info" style="font-size: 13px;"></i>';
+          break;
+      }
+      iconEl.innerHTML = iconHTML;
+      
+      // Content container
+      const contentEl = document.createElement("div");
+      contentEl.className = "toast-content";
+      
+      const messageEl = document.createElement(link ? 'a' : 'div');
       messageEl.className = 'message';
       messageEl.textContent = message;
       if (link) {
         messageEl.href = link;
-        messageEl.classList.add('hover:underline');
+        messageEl.style.color = '#3498db';
+        messageEl.style.textDecoration = 'none';
+        messageEl.style.borderBottom = '1px solid transparent';
+        messageEl.style.transition = 'border-color 0.2s ease';
+        messageEl.onmouseover = () => messageEl.style.borderBottomColor = '#3498db';
+        messageEl.onmouseout = () => messageEl.style.borderBottomColor = 'transparent';
       }
+      
+      contentEl.appendChild(messageEl);
+      
       const closeBtn = document.createElement("button");
       closeBtn.className = "close-btn";
-      closeBtn.innerHTML = "&times;";
-      closeBtn.onclick = () => {
+      closeBtn.innerHTML = "×";
+      closeBtn.onclick = (e) => {
+        e.stopPropagation();
         toast.classList.add('closing');
-        setTimeout(() => toast.remove(), 500);
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 400);
       };
-      toast.appendChild(messageEl);
+      
+      toast.appendChild(iconEl);
+      toast.appendChild(contentEl);
       toast.appendChild(closeBtn);
+      
       // Click vào message cũng đóng toast nếu có link
       if (link) {
         toast.onclick = (e) => {
-          if (e.target !== closeBtn) 
+          if (e.target !== closeBtn && !closeBtn.contains(e.target)) {
             window.location.href = link;
-          
+          }
         };
+        toast.style.cursor = 'pointer';
       }
+      
       container.appendChild(toast);
-      // Auto remove
-      setTimeout(() => {
-        toast.classList.add('closing');
-        setTimeout(() => toast.remove(), 500);
+      
+      // Auto remove với hiệu ứng mượt mà hơn
+      const autoRemoveTimer = setTimeout(() => {
+        if (toast.parentNode) {
+          toast.classList.add('closing');
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.remove();
+            }
+          }, 400);
+        }
       }, delay);
+      
+      // Pause auto-remove khi hover
+      toast.onmouseenter = () => {
+        clearTimeout(autoRemoveTimer);
+        toast.style.setProperty('--toast-delay', 'paused');
+      };
+      
+      // Resume auto-remove khi không hover
+      toast.onmouseleave = () => {
+        const remainingTime = delay * 0.3; // Còn lại 30% thời gian
+        setTimeout(() => {
+          if (toast.parentNode && !toast.classList.contains('closing')) {
+            toast.classList.add('closing');
+            setTimeout(() => {
+              if (toast.parentNode) {
+                toast.remove();
+              }
+            }, 400);
+          }
+        }, remainingTime);
+      };
     }
     function getColor(text) {
       const colors = [
