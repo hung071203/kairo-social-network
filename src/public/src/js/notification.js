@@ -14,8 +14,11 @@ const notificationDropdown = document.querySelector('.dropdown-notifications');
 // Initialize notification system
 document.addEventListener('DOMContentLoaded', function() {
     initializeSocket();
-    loadNotifications();
     updateUnreadCount();
+    
+    // Show loading indicator first, then load notifications
+    showLoadingIndicator();
+    loadNotifications();
     
     // Setup infinite scroll
     const scrollContainer = document.querySelector('#notifications-scroll');
@@ -135,6 +138,9 @@ async function loadNotifications() {
     
     isLoading = true;
     
+    // Show loading indicator
+    showLoadingIndicator();
+    
     try {
         const response = await fetch(`/notification?page=${currentPage}&limit=10`, {
             method: 'GET',
@@ -157,10 +163,14 @@ async function loadNotifications() {
         notifications = [...notifications, ...newNotifications];
         currentPage++;
         
+        // Hide loading indicator before rendering
+        hideLoadingIndicator();
+        
         renderNotifications(newNotifications);
         
     } catch (error) {
         console.error('Error loading notifications:', error);
+        hideLoadingIndicator();
         showErrorToast('Không thể tải thông báo');
     } finally {
         isLoading = false;
@@ -174,9 +184,10 @@ async function refreshNotifications() {
     notifications = [];
     hasMore = true;
     
-    // Clear existing notifications
+    // Clear existing notifications and show loading
     if (notificationsList) {
         notificationsList.innerHTML = '';
+        showLoadingIndicator();
     }
     
     // Load fresh notifications
@@ -187,13 +198,19 @@ async function refreshNotifications() {
 function renderNotifications(newNotifications) {
     if (!notificationsList) return;
     
+    // Remove loading indicator from first load if present
+    const loadingItems = notificationsList.querySelectorAll('.list-group-item');
+    if (loadingItems.length === 1 && loadingItems[0].querySelector('.spinner-border')) {
+        notificationsList.innerHTML = '';
+    }
+    
     newNotifications.forEach(notification => {
         const notificationElement = createNotificationElement(notification);
         notificationsList.appendChild(notificationElement);
     });
     
-    // Show empty state if no notifications
-    if (notifications.length === 0) {
+    // Show empty state if no notifications after first load
+    if (notifications.length === 0 && currentPage === 2) {
         showEmptyState();
     }
 }
@@ -350,36 +367,52 @@ async function markAsRead(notificationId) {
 
 // Mark all notifications as read
 async function markAllRead() {
-    try {
-        const response = await fetch('/notification/mark-all-read', {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
+    // Add loading state to the button
+    const markAllButton = document.querySelector('.dropdown-notifications-all');
+    if (markAllButton) {
+        const originalContent = markAllButton.innerHTML;
+        markAllButton.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
+        markAllButton.disabled = true;
+        
+        // Restore button after operation
+        const restoreButton = () => {
+            markAllButton.innerHTML = originalContent;
+            markAllButton.disabled = false;
+        };
+        
+        try {
+            const response = await fetch('/notification/mark-all-read', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to mark all as read');
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to mark all as read');
+            
+            // Update UI
+            document.querySelectorAll('.mark-as-unread').forEach(element => {
+                element.classList.remove('mark-as-unread');
+                const badge = element.querySelector('.badge');
+                if (badge) badge.remove();
+            });
+            
+            // Update notifications array
+            notifications.forEach(notification => {
+                notification.isRead = true;
+            });
+            
+            updateUnreadCount();
+            showSuccessToast('Đã đánh dấu tất cả thông báo là đã đọc');
+            
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+            showErrorToast('Không thể đánh dấu tất cả thông báo đã đọc');
+        } finally {
+            restoreButton();
         }
-        
-        // Update UI
-        document.querySelectorAll('.mark-as-unread').forEach(element => {
-            element.classList.remove('mark-as-unread');
-            const badge = element.querySelector('.badge');
-            if (badge) badge.remove();
-        });
-        
-        // Update notifications array
-        notifications.forEach(notification => {
-            notification.isRead = true;
-        });
-        
-        updateUnreadCount();
-        showSuccessToast('Đã đánh dấu tất cả thông báo là đã đọc');
-        
-    } catch (error) {
-        console.error('Error marking all notifications as read:', error);
-        showErrorToast('Không thể đánh dấu tất cả thông báo đã đọc');
     }
 }
 
@@ -395,42 +428,60 @@ async function deleteNotification(notificationId, event) {
         return;
     }
     
-    try {
-        const response = await fetch(`/notification/${notificationId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
+    // Add loading state to delete button
+    const deleteButton = event ? event.currentTarget : null;
+    if (deleteButton) {
+        const originalContent = deleteButton.innerHTML;
+        deleteButton.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
+        deleteButton.disabled = true;
+        
+        const restoreButton = () => {
+            deleteButton.innerHTML = originalContent;
+            deleteButton.disabled = false;
+        };
+    
+        try {
+            const response = await fetch(`/notification/${notificationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete notification');
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to delete notification');
+            
+            // Remove from UI with fade animation
+            const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+            if (notificationElement) {
+                notificationElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                notificationElement.style.opacity = '0';
+                notificationElement.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    notificationElement.remove();
+                    
+                    // Show empty state if no notifications left
+                    if (notifications.length <= 1) {
+                        showEmptyState();
+                    }
+                }, 300);
+            }
+            
+            // Remove from array
+            const index = notifications.findIndex(n => n._id === notificationId);
+            if (index !== -1) {
+                notifications.splice(index, 1);
+            }
+            
+            updateUnreadCount();
+            showSuccessToast('Đã xóa thông báo');
+            
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+            showErrorToast('Không thể xóa thông báo');
+            restoreButton();
         }
-        
-        // Remove from UI
-        const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
-        if (notificationElement) {
-            notificationElement.remove();
-        }
-        
-        // Remove from array
-        const index = notifications.findIndex(n => n._id === notificationId);
-        if (index !== -1) {
-            notifications.splice(index, 1);
-        }
-        
-        updateUnreadCount();
-        
-        // Show empty state if no notifications left
-        if (notifications.length === 0) {
-            showEmptyState();
-        }
-        
-        showSuccessToast('Đã xóa thông báo');
-        
-    } catch (error) {
-        console.error('Error deleting notification:', error);
-        showErrorToast('Không thể xóa thông báo');
     }
 }
 
@@ -451,15 +502,21 @@ async function updateUnreadCount() {
         const data = await response.json();
         const unreadCount = data.data?.unread || 0;
         
-        // Update badge
+        // Update badge with smooth transition
         if (countUnread) {
             countUnread.textContent = unreadCount;
+            // Add a subtle animation when count changes
+            countUnread.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                countUnread.style.transform = 'scale(1)';
+            }, 150);
         }
         
-        // Show/hide notification badge
+        // Show/hide notification badge with animation
         if (notificationBadge) {
             if (unreadCount > 0) {
                 notificationBadge.style.display = 'block';
+                notificationBadge.style.animation = 'pulse 0.3s ease-in-out';
             } else {
                 notificationBadge.style.display = 'none';
             }
@@ -480,6 +537,57 @@ function showEmptyState() {
             <p class="text-muted mt-2 mb-0">Không có thông báo nào</p>
         </li>
     `;
+}
+
+// Show loading indicator
+function showLoadingIndicator() {
+    if (!notificationsList) return;
+    
+    // Only show loading if list is empty or if it's the first load
+    const currentContent = notificationsList.innerHTML.trim();
+    
+    if (currentPage === 1 || currentContent === '') {
+        // First load - replace entire content
+        notificationsList.innerHTML = `
+            <li class="list-group-item text-center py-4">
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="text-muted">Đang tải thông báo...</span>
+                </div>
+            </li>
+        `;
+    } else {
+        // Pagination load - add loading at bottom
+        const loadingElement = document.createElement('li');
+        loadingElement.className = 'list-group-item text-center py-2 loading-more';
+        loadingElement.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <small class="text-muted">Đang tải thêm...</small>
+            </div>
+        `;
+        notificationsList.appendChild(loadingElement);
+    }
+}
+
+// Hide loading indicator
+function hideLoadingIndicator() {
+    if (!notificationsList) return;
+    
+    // Remove pagination loading indicator
+    const loadingMore = notificationsList.querySelector('.loading-more');
+    if (loadingMore) {
+        loadingMore.remove();
+    }
+    
+    // If this was the first load and there are no notifications, show empty state
+    if (currentPage === 2 && notifications.length === 0) {
+        showEmptyState();
+    }
 }
 
 // Utility functions

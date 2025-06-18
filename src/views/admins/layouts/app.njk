@@ -124,8 +124,7 @@
       .dropdown-notifications-item:hover .dropdown-notifications-actions-btns {
         opacity: 1;
       }
-      
-      /* Avatar styling in notifications */
+        /* Avatar styling in notifications */
       .dropdown-notifications-item .avatar {
         width: 38px !important;
         height: 38px !important;
@@ -139,6 +138,50 @@
       
       .dropdown-notifications-item .avatar i {
         font-size: 16px !important;
+      }
+      
+      /* Loading animations */
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      
+      .badge-notifications {
+        transition: all 0.3s ease;
+      }
+      
+      .count-unread {
+        transition: transform 0.15s ease;
+      }
+      
+      /* Loading indicator styling */
+      .loading-more {
+        border: none !important;
+        background-color: transparent !important;
+      }
+      
+      .loading-more .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.15em;
+      }
+      
+      /* Notification item entrance animation */
+      .dropdown-notifications-item {
+        animation: slideInFade 0.3s ease-out;
+      }
+      
+      @keyframes slideInFade {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
         line-height: 1 !important;
       }/* Badge animations */
       .badge-notifications {
