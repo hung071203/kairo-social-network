@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { ProfileController } from './profile.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -11,6 +11,7 @@ import {
 import { FollowInteractionRepository } from 'src/database/repository/followInteraction.repository';
 import { RedisService } from 'src/common/services';
 
+@Global() // Mark the module as global
 @Module({
   imports: [
     MongooseModule.forFeature([

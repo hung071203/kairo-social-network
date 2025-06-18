@@ -201,4 +201,22 @@ export class ProfileService {
       email: dto.email,
     });
   }
+
+  async getAllAdminAndMod() {
+    const adminsAndMods = await this.userRepository.findAll({
+      role: { $in: [UserRole.ADMIN, UserRole.MOD] },
+    }) as any;
+
+    if (!adminsAndMods || adminsAndMods.length === 0) {
+      return [];
+    }
+
+    return adminsAndMods.map((user) => ({
+      _id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    }));
+  }
 }

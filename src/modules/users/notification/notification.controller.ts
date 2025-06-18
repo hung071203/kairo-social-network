@@ -9,13 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
-import { UsersAuthGuard } from 'src/common/guards/jwt/jwt.guard';
+import { AllGuard, UsersAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { GetUser, Pagination, PaginationDto } from 'src/common/decorators';
 import { User } from 'src/schemas/users.schema';
 import { FilterNotiDto } from './dto/noti.dto';
 
 @Controller('notification')
-@UseGuards(UsersAuthGuard)
+@UseGuards(AllGuard)
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 

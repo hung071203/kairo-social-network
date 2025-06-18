@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { NotificationController } from './notification.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -9,6 +9,7 @@ import {
 import { NotificationRepository } from 'src/database/repository/notification.repository';
 import { GatewaysModule } from 'src/gateways/gateways.module';
 
+@Global() // Đánh dấu module là global
 @Module({
   imports: [
     MongooseModule.forFeature([

@@ -1,404 +1,404 @@
-const iconNotification = document.getElementsByClassName(
-  'badge rounded-pill badge-notifications border',
-)[0];
+// Notification system for admin panel
+let notifications = [];
+let currentPage = 1;
+let hasMore = true;
+let isLoading = false;
 
-const notificationsScroll = document.getElementById('notifications-scroll');
-const badges = document.getElementsByClassName(
-  'badge bg-label-primary me-2 count-unread',
-);
-const badgesArray = Array.from(badges);
+// DOM elements
+const notificationsList = document.querySelector('#notifications-scroll .list-group');
+const countUnread = document.querySelector('.count-unread');
+const notificationBadge = document.querySelector('.badge-notifications');
 
-// Hàm lấy class icon
-function getIconClass(type) {
-  switch (type) {
-    case 'SUCCESS':
-      return 'bx bx-check-circle';
-    case 'INFOR':
-      return 'bx bx-info-circle';
-    case 'WARNING':
-      return 'bx bx-error-circle'; // Biểu tượng cảnh báo
-    case 'ERROR':
-      return 'bx bx-error';
-    default:
-      return '';
-  }
-}
-
-// Hàm lấy class nền
-function getBgClass(type) {
-  switch (type) {
-    case 'SUCCESS':
-      return 'bg-label-success';
-    case 'INFO':
-      return 'bg-label-info';
-    case 'WARNING':
-      return 'bg-label-warning';
-    case 'ERROR':
-      return 'bg-label-danger';
-    default:
-      return '';
-  }
-}
-
-// Hàm tạo icon thông báo
-function createNotificationIcon(type) {
-  const iconClass = getIconClass(type);
-  const bgClass = getBgClass(type);
-  return `
-    <span class="avatar-initial rounded-circle ${bgClass}">
-      <i class="icon-base ${iconClass}"></i>
-    </span>
-  `;
-}
-
-// Hàm gọi API
-async function getNotifications() {
-  try {
-    const res = await fetch(`/notifications/json?page=1`);
-    const data = await res.json();
-
-    // Kiểm tra nếu không có thông báo
-    if (data.data.docs.length === 0) {
-      showNoNotificationsMessage();
-    } else if (data.data.docs.length > 0) {
-      appendNotifications(notificationsScroll, data.data.docs);
+// Initialize notification system
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotifications();
+    updateUnreadCount();
+    
+    // Setup infinite scroll
+    const scrollContainer = document.querySelector('#notifications-scroll');
+    if (scrollContainer) {
+        scrollContainer.addEventListener('scroll', function() {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 5) {
+                loadNotifications();
+            }
+        });
     }
-  } catch (error) {
-    console.error('Failed to fetch notifications:', error);
-  } finally {
-    isLoading = false;
-  }
+});
+
+// Load notifications
+async function loadNotifications() {
+    if (isLoading || !hasMore) return;
+    
+    isLoading = true;
+    
+    try {
+        const response = await fetch(`/notification?page=${currentPage}&limit=10`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load notifications');
+        }
+        
+        const data = await response.json();
+        const newNotifications = data.data?.docs || [];
+        
+        if (newNotifications.length < 10) {
+            hasMore = false;
+        }
+        
+        notifications = [...notifications, ...newNotifications];
+        currentPage++;
+        
+        renderNotifications(newNotifications);
+        
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+        showErrorToast('Không thể tải thông báo');
+    } finally {
+        isLoading = false;
+    }
 }
 
-function timeAgo(isoDateString) {
-  const date = new Date(isoDateString);
-  const now = new Date();
-  const diff = now - date; // milliseconds
-
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30);
-  const years = Math.floor(days / 365);
-
-  if (seconds < 60) {
-    return `${seconds} giây trước`;
-  } else if (minutes < 60) {
-    return `${minutes} phút trước`;
-  } else if (hours < 24) {
-    return `${hours} giờ trước`;
-  } else if (days < 30) {
-    return `${days} ngày trước`;
-  } else if (months < 12) {
-    return `${months} tháng trước`;
-  } else {
-    return `${years} năm trước`;
-  }
+// Render notifications to DOM
+function renderNotifications(newNotifications) {
+    if (!notificationsList) return;
+    
+    newNotifications.forEach(notification => {
+        const notificationElement = createNotificationElement(notification);
+        notificationsList.appendChild(notificationElement);
+    });
+    
+    // Show empty state if no notifications
+    if (notifications.length === 0) {
+        showEmptyState();
+    }
 }
 
-function appendNotifications(htmlSelector, notifications) {
-  const list = htmlSelector.querySelector('ul');
-  notifications.forEach((notification) => {
+// Create notification element
+function createNotificationElement(notification) {
     const li = document.createElement('li');
-    li.className = `list-group-item list-group-item-action dropdown-notifications-item ${
-      notification.is_readed ? 'marked-as-read' : ''
-    }`;
-
-    // Tạo nội dung cho thông báo
+    li.className = `list-group-item list-group-item-action dropdown-notifications-item ${!notification.isRead ? 'mark-as-unread' : ''}`;
+    li.setAttribute('data-id', notification._id);
+    
     li.innerHTML = `
         <div class="d-flex">
-          <div class="flex-shrink-0 me-3">
-            <div class="avatar">
-              ${createNotificationIcon(notification.type)}
+            <div class="flex-shrink-0 me-3">
+                <div class="avatar">
+                    <i class="${getNotificationIcon(notification.type)} ${getNotificationColor(notification.type)}"></i>
+                </div>
             </div>
-          </div>
-          <div class="flex-grow-1">
-            <h6 class="small mb-0">${notification.title}</h6>
-            <small class="mb-1 d-block text-body">${notification.message}</small>
-            <small class="text-body-secondary">${timeAgo(notification.createdAt)}</small>
-          </div>
-          <div class="flex-shrink-0 dropdown-notifications-actions">
-            <a href="javascript:void(0)" class="dropdown-notifications-read">
-              <span class="badge badge-dot"></span>
-            </a>
-            <a href="javascript:void(0)" class="dropdown-notifications-archive">
-              <span class="icon-base bx bx-x"></span>
-            </a>
-          </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${notification.title}</h6>
+                        <p class="mb-1">${notification.message}</p>
+                        <small class="text-muted">${getTimeAgo(notification.createdAt)}</small>
+                    </div>
+                    <div class="flex-shrink-0 dropdown-notifications-actions">
+                        ${!notification.isRead ? '<span class="badge bg-primary rounded-pill badge-sm">Mới</span>' : ''}
+                        <div class="dropdown-notifications-actions-btns">
+                            <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill dropdown-notifications-archive" 
+                                    onclick="markAsRead('${notification._id}')" 
+                                    title="Đánh dấu đã đọc">
+                                <i class="bx bx-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill dropdown-notifications-delete" 
+                                    onclick="deleteNotification('${notification._id}')" 
+                                    title="Xóa thông báo">
+                                <i class="bx bx-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      `;
-
-    // Thêm sự kiện click để chuyển hướng và cập nhật trạng thái đã đọc
-    li.addEventListener('click', async () => {
-      // Chuyển hướng nếu có link
-      if (notification.link) {
-        window.open(notification.link, '_blank');
-      }
-
-      // Cập nhật trạng thái đã đọc
-      if (!notification.is_readed) {
-        try {
-          const response = await fetch(
-            `/notifications/${notification._id}/mark-as-read`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            },
-          );
-          const data = await response.json();
-          if (data.success) {
-            notification.is_readed = true; // Cập nhật trạng thái trong dữ liệu
-            li.classList.add('marked-as-read'); // Thêm class để hiển thị trạng thái đã đọc
-            checkCountNotification(1);
-          } else {
-            showToast({
-              message: data.message,
-              header: 'Lỗi!',
-              type: 'error',
-              delay: 5000,
-            });
-          }
-        } catch (error) {
-          showToast({
-            message: error.message,
-            header: 'Lỗi!',
-            type: 'error',
-            delay: 5000,
-          });
-        }
-      }
-    });
-
-    // Thêm sự kiện click vào nút xóa để chỉ xóa thông báo mà không thay đổi trạng thái đã đọc
-    const deleteButton = li.querySelector('.dropdown-notifications-archive');
-    deleteButton.addEventListener('click', async (event) => {
-      // Ngăn không cho sự kiện click trên thẻ li kích hoạt
-      event.stopPropagation();
-
-      try {
-        const response = await fetch(`/notifications/${notification._id}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const data = await response.json();
-        if (data.success) {
-          li.remove(); // Xóa thông báo khỏi UI
-          checkCountNotification(1);
-        } else {
-          showToast({
-            message: data.message,
-            header: 'Lỗi!',
-            type: 'error',
-            delay: 5000,
-          });
-        }
-      } catch (error) {
-        showToast({
-          message: error.message,
-          header: 'Lỗi!',
-          type: 'error',
-          delay: 5000,
-        });
-      }
-    });
-
-    // Thêm thẻ li vào danh sách
-    if (notifications.length == 1) {
-      list.insertBefore(li, list.firstChild);
-    } else {
-      list.appendChild(li);
-    }
-  });
-}
-
-// Hàm hiển thị thông báo "Không có thông báo nào"
-function showNoNotificationsMessage() {
-  const list = notificationsScroll.querySelector('ul');
-  list.innerHTML = `
-    <li class="list-group-item text-center">
-      <span class="text-body-secondary">Không có thông báo nào</span>
-    </li>
-  `;
-}
-
-async function markAllRead() {
-  try {
-    const response = await fetch(`/notifications/mark-all-as-read`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const data = await response.json();
-    if (data.success) {
-      const notifications = notificationsScroll.querySelectorAll(
-        '.dropdown-notifications-item',
-      );
-      notifications.forEach((notification) => {
-        notification.classList.add('marked-as-read');
-      });
-      if (window.location.pathname === '/notifications-manager') {
-        const pageNoti = listNoti.querySelectorAll(
-          '.dropdown-notifications-item',
-        );
-        pageNoti.forEach((notification) => {
-          notification.classList.add('marked-as-read');
-        });
-      }
-      const count = parseInt(badgesArray[0].textContent);
-      checkCountNotification(count);
-      showToast({
-        message: data.message,
-        header: 'Thông báo',
-        type: 'success',
-        delay: 3000,
-      });
-    } else {
-      showToast({
-        message: data.message,
-        header: 'Lỗi!',
-        type: 'error',
-        delay: 5000,
-      });
-    }
-  } catch (error) {
-    showToast({
-      message: error.message,
-      header: 'Lỗi!',
-      type: 'error',
-      delay: 5000,
-    });
-  }
-}
-
-async function getCountUnread() {
-  try {
-    const response = await fetch('/notifications/count-unread');
-    const data = await response.json();
-    const count = data.data.count; // Chuyển đổi HTMLCollection thành mảng
-
-    if (count > 0) {
-      iconNotification.classList.add('bg-danger', 'badge-dot');
-      badgesArray.forEach((badge) => {
-        badge.textContent = count;
-        badge.classList.remove('d-none');
-      });
-    } else {
-      iconNotification.classList.remove('bg-danger', 'badge-dot');
-      badgesArray.forEach((badge) => {
-        badge.classList.add('d-none');
-      });
-    }
-  } catch (error) {
-    showToast({
-      message: error.message,
-      header: 'Lỗi!',
-      type: 'error',
-      delay: 5000,
-    });
-  }
-}
-
-function checkCountNotification(numeric) {
-  const count = parseInt(badgesArray[0].textContent);
-  if (count - numeric === 0) {
-    iconNotification.classList.remove('bg-danger', 'badge-dot');
-    badgesArray.forEach((badge) => {
-      badge.classList.add('d-none');
-    });
-  } else {
-    iconNotification.classList.add('bg-danger', 'badge-dot');
-    badgesArray.forEach((badge) => {
-      badge.textContent = count - numeric;
-      badge.classList.remove('d-none');
-    });
-  }
-}
-
-getCountUnread();
-// Tải trang đầu tiên khi khởi động
-getNotifications();
-
-// Kết nối với socketNoti server
-const socketNoti = io(window.location.origin + '/notifications', {
-  reconnection: true, // Tự động kết nối lại nếu bị ngắt
-  reconnectionAttempts: 3,
-  reconnectionDelay: 1000,
-  transports: ['websocket'],
-});
-
-socketNoti.on('connected', () => {
-  console.log('Connected to notifications socketNoti');
-});
-
-socketNoti.on('error', (data) => {
-  showToast({
-    message: 'Lỗi: ' + data.message,
-    header: 'Lỗi!',
-    type: 'error',
-    delay: 5000,
-  });
-});
-
-socketNoti.on('usersOnline', (data) => {
-  const avatarUserElements = document.querySelectorAll(
-    '[class*="avatar-user-"]',
-  );
-  const onlineUsersList = document.getElementById('online-users-list');
-  const onlineCount = document.getElementById('online-count');
-  onlineCount.textContent = data.length;
-  onlineUsersList.innerHTML = '';
-  // Kiểm tra và xử lý các phần tử tìm thấy
-  avatarUserElements.forEach((element) => {
-    element.classList.forEach((className) => {
-      if (className.startsWith('avatar-user-')) {
-        const userId = className.substring('avatar-user-'.length);
-        if (data.includes(userId)) {
-          element.classList.add('avatar-online');
-        } else {
-          element.classList.remove('avatar-online');
-        }
-      }
-    });
-  });
-  data.forEach((user) => {
-    const listItem = document.createElement('li');
-    listItem.innerHTML = `
-      <a class="dropdown-item text-primary" href="/users?search=${user._id}">
-        ${user.name} (${user.email})
-      </a>
     `;
-    onlineUsersList.appendChild(listItem);
-  });
-});
-
-function getUsersOnline() {
-  socketNoti.emit('getUsersOnline');
+    
+    // Add click handler for notification
+    li.addEventListener('click', () => handleNotificationClick(notification));
+    
+    return li;
 }
 
-socketNoti.on('notificationReceived', (data) => {
-  appendNotifications(notificationsScroll, [data]);
-  if (window.location.pathname === '/notifications') {
-    appendNotifications(listNoti, [data]);
-  }
-  showToast({
-    message: data.message,
-    header: data.title,
-    type: data.type,
-    delay: 2000,
-  });
-  checkCountNotification(-1);
-});
+// Handle notification click
+function handleNotificationClick(notification) {
+    // Mark as read if unread
+    if (!notification.isRead) {
+        markAsRead(notification._id);
+    }
+    
+    // Redirect if URL exists
+    if (notification.redirectUrl) {
+        if (notification.redirectUrl.startsWith('http')) {
+            window.open(notification.redirectUrl, '_blank');
+        } else {
+            window.location.href = notification.redirectUrl;
+        }
+    }
+}
 
-const requestLog = document.getElementById('requestLog');
+// Mark notification as read
+async function markAsRead(notificationId) {
+    try {
+        const response = await fetch(`/notification/${notificationId}/read`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to mark as read');
+        }
+        
+        // Update UI
+        const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+        if (notificationElement) {
+            notificationElement.classList.remove('mark-as-unread');
+            const badge = notificationElement.querySelector('.badge');
+            if (badge) badge.remove();
+        }
+        
+        // Update notification in array
+        const notification = notifications.find(n => n._id === notificationId);
+        if (notification) {
+            notification.isRead = true;
+        }
+        
+        updateUnreadCount();
+        
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+        showErrorToast('Không thể đánh dấu thông báo đã đọc');
+    }
+}
 
-socketNoti.on('logRequest', (data) => {
-  if (requestLog) {
-    requestLog.innerHTML += `<span style="color: gray;"> [${data.time}]</span> - <span style="color: ${ data.type == 'info' ? 'black' : data.type == 'warn' ? 'rgb(255, 187, 0)' : 'red'};">${data.text}</span><br>`;
-    scrollToBottom();
-  }
-});
+// Mark all notifications as read
+async function markAllRead() {
+    try {
+        const response = await fetch('/notification/mark-all-read', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to mark all as read');
+        }
+        
+        // Update UI
+        document.querySelectorAll('.mark-as-unread').forEach(element => {
+            element.classList.remove('mark-as-unread');
+            const badge = element.querySelector('.badge');
+            if (badge) badge.remove();
+        });
+        
+        // Update notifications array
+        notifications.forEach(notification => {
+            notification.isRead = true;
+        });
+        
+        updateUnreadCount();
+        showSuccessToast('Đã đánh dấu tất cả thông báo là đã đọc');
+        
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        showErrorToast('Không thể đánh dấu tất cả thông báo đã đọc');
+    }
+}
 
-function scrollToBottom() {
-  var logContainer = document.getElementById('logContainer');
-  logContainer.scrollTop = logContainer.scrollHeight;
+// Delete notification
+async function deleteNotification(notificationId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/notification/${notificationId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to delete notification');
+        }
+        
+        // Remove from UI
+        const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+        if (notificationElement) {
+            notificationElement.remove();
+        }
+        
+        // Remove from array
+        const index = notifications.findIndex(n => n._id === notificationId);
+        if (index !== -1) {
+            notifications.splice(index, 1);
+        }
+        
+        updateUnreadCount();
+        
+        // Show empty state if no notifications left
+        if (notifications.length === 0) {
+            showEmptyState();
+        }
+        
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+        showErrorToast('Không thể xóa thông báo');
+    }
+}
+
+// Update unread count
+async function updateUnreadCount() {
+    try {
+        const response = await fetch('/notification/unread', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to get unread count');
+        }
+        
+        const data = await response.json();
+        const unreadCount = data.data?.unread || 0;
+        
+        // Update badge
+        if (countUnread) {
+            countUnread.textContent = unreadCount;
+        }
+        
+        // Show/hide notification badge
+        if (notificationBadge) {
+            if (unreadCount > 0) {
+                notificationBadge.style.display = 'block';
+            } else {
+                notificationBadge.style.display = 'none';
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error updating unread count:', error);
+    }
+}
+
+// Show empty state
+function showEmptyState() {
+    if (!notificationsList) return;
+    
+    notificationsList.innerHTML = `
+        <li class="list-group-item text-center py-4">
+            <i class="bx bx-bell-off text-muted" style="font-size: 2rem;"></i>
+            <p class="text-muted mt-2 mb-0">Không có thông báo nào</p>
+        </li>
+    `;
+}
+
+// Utility functions
+function getNotificationIcon(type) {
+    const icons = {
+        'system': 'bx bx-cog',
+        'message': 'bx bx-message',
+        'follow': 'bx bx-user-plus',
+        'like': 'bx bx-heart',
+        'comment': 'bx bx-comment',
+        'post': 'bx bx-file',
+        'warning': 'bx bx-error-circle',
+        'info': 'bx bx-info-circle',
+        'success': 'bx bx-check-circle'
+    };
+    
+    return icons[type] || 'bx bx-bell';
+}
+
+function getNotificationColor(type) {
+    const colors = {
+        'system': 'text-primary',
+        'message': 'text-info',
+        'follow': 'text-success',
+        'like': 'text-danger',
+        'comment': 'text-warning',
+        'post': 'text-dark',
+        'warning': 'text-warning',
+        'info': 'text-info',
+        'success': 'text-success'
+    };
+    
+    return colors[type] || 'text-secondary';
+}
+
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'Vừa xong';
+    if (minutes < 60) return `${minutes} phút trước`;
+    if (hours < 24) return `${hours} giờ trước`;
+    if (days < 7) return `${days} ngày trước`;
+    
+    return date.toLocaleDateString('vi-VN');
+}
+
+// Toast helper functions
+function showSuccessToast(message) {
+    if (typeof showToast === 'function') {
+        showToast({
+            message: message,
+            header: 'Thành công',
+            type: 'success',
+            delay: 3000
+        });
+    }
+}
+
+function showErrorToast(message) {
+    if (typeof showToast === 'function') {
+        showToast({
+            message: message,
+            header: 'Lỗi',
+            type: 'error',
+            delay: 5000
+        });
+    }
+}
+
+// Socket.IO integration (if available)
+if (typeof io !== 'undefined') {
+    const socket = io();
+    
+    socket.on('notification', (data) => {
+        // Add new notification to the beginning
+        notifications.unshift(data);
+        
+        // Update UI
+        if (notificationsList && !notificationsList.querySelector('.text-center')) {
+            const newElement = createNotificationElement(data);
+            notificationsList.insertBefore(newElement, notificationsList.firstChild);
+        }
+        
+        updateUnreadCount();
+        
+        // Show toast for new notification
+        showToast({
+            message: data.message,
+            header: data.title || 'Thông báo mới',
+            type: 'info',
+            delay: 5000,
+            url: data.redirectUrl
+        });
+    });
 }

@@ -204,50 +204,93 @@
         }`;
       }
     </script>
-    <script>
-      function showToast({
+    <script>      function showToast({
         message = "Default message", // Nội dung toast
         header = "Default header", // Tiêu đề toast
         iconClass = "bx bx-bell", // Icon mặc định
         delay = 2000, // Thời gian hiển thị
         type = "success", // Loại thông báo: 'success', 'error', 'warning', 'info'
         placement = "top-0 end-0", // Vị trí toast
-        time = "Ngay bây giờ" // Thời gian
+        time = "Ngay bây giờ", // Thời gian
+        url = null // URL để redirect khi click vào toast
       } = {}) {
         const toastElement = document.querySelector("#custom-toast");
         const toastBody = toastElement.querySelector("#toast-body");
         const toastHeader = toastElement.querySelector("#toast-header");
         const toastIcon = toastElement.querySelector("#toast-icon");
         const toastTime = toastElement.querySelector("#toast-time");
+        
         // Xác định lớp CSS và biểu tượng dựa trên loại thông báo
-        let bgClass,
-          icon;
+        let bgClass, icon;
         switch (type) {
-          case "success": bgClass = "bg-success";
+          case "success": 
+            bgClass = "bg-success";
             icon = "bx bx-check-circle";
             break;
-          case "error": bgClass = "bg-danger";
+          case "error": 
+            bgClass = "bg-danger";
             icon = "bx bx-error";
             break;
-          case "warning": bgClass = "bg-warning";
+          case "warning": 
+            bgClass = "bg-warning";
             icon = "bx bx-error-circle";
             break;
           case "info":
-          default: bgClass = "bg-primary";
+          default: 
+            bgClass = "bg-primary";
             icon = "bx bx-info-circle";
             break;
         }
+        
         // Cập nhật nội dung toast
         toastBody.textContent = message;
         toastHeader.textContent = header;
         toastIcon.className = icon;
         toastTime.textContent = time;
+        
         // Cập nhật lớp của toast
         toastElement.className = `bs-toast toast toast-placement-ex m-2 fade hide ${bgClass} ${placement}`;
-        // Khởi tạo toast với delay
-        const toastInstance = new bootstrap.Toast(toastElement, {delay: delay});
-        // Hiển thị toast
-        toastInstance.show();
+        
+        // Thêm cursor pointer nếu có URL
+        if (url) {
+          toastElement.style.cursor = 'pointer';
+          toastElement.style.userSelect = 'none';
+          
+          // Remove existing click handlers
+          const newToastElement = toastElement.cloneNode(true);
+          toastElement.parentNode.replaceChild(newToastElement, toastElement);
+          
+          // Add click handler for redirect
+          newToastElement.addEventListener('click', function(e) {
+            // Ignore click on close button
+            if (e.target.classList.contains('btn-close') || e.target.closest('.btn-close')) {
+              return;
+            }
+            
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+              window.open(url, '_blank');
+            } else {
+              window.location.href = url;
+            }
+            
+            // Hide toast after click
+            const toastInstance = bootstrap.Toast.getInstance(newToastElement);
+            if (toastInstance) {
+              toastInstance.hide();
+            }
+          });
+          
+          // Use the new element for toast instance
+          const toastInstance = new bootstrap.Toast(newToastElement, {delay: delay});
+          toastInstance.show();
+          
+        } else {
+          toastElement.style.cursor = 'default';
+          // Khởi tạo toast với delay
+          const toastInstance = new bootstrap.Toast(toastElement, {delay: delay});
+          // Hiển thị toast
+          toastInstance.show();
+        }
       }
 
       function getColor(text) {
