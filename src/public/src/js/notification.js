@@ -169,9 +169,8 @@ function createNotificationElement(notification) {
     const li = document.createElement('li');
     li.className = `list-group-item list-group-item-action dropdown-notifications-item ${!notification.isRead ? 'mark-as-unread' : ''}`;
     li.setAttribute('data-id', notification._id);
-    
-    li.innerHTML = `
-        <div class="d-flex">
+      li.innerHTML = `
+        <div class="d-flex notification-content" style="cursor: pointer;">
             <div class="flex-shrink-0 me-3">
                 <div class="avatar">
                     <i class="${getNotificationIcon(notification.type)} ${getNotificationColor(notification.type)}"></i>
@@ -187,14 +186,9 @@ function createNotificationElement(notification) {
                     <div class="flex-shrink-0 dropdown-notifications-actions">
                         ${!notification.isRead ? '<span class="badge bg-primary rounded-pill badge-sm">Mới</span>' : ''}
                         <div class="dropdown-notifications-actions-btns">
-                            <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill dropdown-notifications-archive" 
-                                    onclick="markAsRead('${notification._id}')" 
-                                    title="Đánh dấu đã đọc">
-                                <i class="bx bx-check"></i>
-                            </button>
                             <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill dropdown-notifications-delete" 
-                                    onclick="deleteNotification('${notification._id}')" 
-                                    title="Xóa thông báo">
+                                    title="Xóa thông báo"
+                                    style="z-index: 10; position: relative;">
                                 <i class="bx bx-x"></i>
                             </button>
                         </div>
@@ -204,26 +198,84 @@ function createNotificationElement(notification) {
         </div>
     `;
     
-    // Add click handler for notification
-    li.addEventListener('click', () => handleNotificationClick(notification));
+    // Add click handler for notification content
+    const notificationContent = li.querySelector('.notification-content');
+    notificationContent.addEventListener('click', (e) => {
+        // Prevent event if clicking on delete button
+        if (e.target.closest('.dropdown-notifications-delete')) {
+            e.stopPropagation();
+            return;
+        }
+        handleNotificationClick(notification);
+    });
+    
+    // Add click handler for delete button
+    const deleteButton = li.querySelector('.dropdown-notifications-delete');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            deleteNotification(notification._id, e);
+        });
+    }
     
     return li;
 }
 
 // Handle notification click
-function handleNotificationClick(notification) {
-    // Mark as read if unread
-    if (!notification.isRead) {
-        markAsRead(notification._id);
-    }
-    
-    // Redirect if URL exists
-    if (notification.redirectUrl) {
-        if (notification.redirectUrl.startsWith('http')) {
-            window.open(notification.redirectUrl, '_blank');
-        } else {
-            window.location.href = notification.redirectUrl;
+async function handleNotificationClick(notification) {
+    try {
+        // Always mark as read when clicked (if not already read)
+        if (!notification.isRead) {
+            await markAsReadSilent(notification._id);
         }
+        
+        // Redirect if URL exists
+        if (notification.redirectUrl) {
+            if (notification.redirectUrl.startsWith('http://') || notification.redirectUrl.startsWith('https://')) {
+                window.open(notification.redirectUrl, '_blank');
+            } else {
+                window.location.href = notification.redirectUrl;
+            }
+        }
+    } catch (error) {
+        console.error('Error handling notification click:', error);
+    }
+}
+
+// Mark notification as read silently (without showing toast)
+async function markAsReadSilent(notificationId) {
+    try {
+        const response = await fetch(`/notification/${notificationId}/read`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to mark as read');
+        }
+        
+        // Update UI
+        const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+        if (notificationElement) {
+            notificationElement.classList.remove('mark-as-unread');
+            const badge = notificationElement.querySelector('.badge');
+            if (badge) badge.remove();
+        }
+        
+        // Update notification in array
+        const notification = notifications.find(n => n._id === notificationId);
+        if (notification) {
+            notification.isRead = true;
+        }
+        
+        updateUnreadCount();
+        
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+        // Don't show error toast for silent operation
     }
 }
 
@@ -299,7 +351,13 @@ async function markAllRead() {
 }
 
 // Delete notification
-async function deleteNotification(notificationId) {
+async function deleteNotification(notificationId, event) {
+    // Stop event propagation to prevent notification click
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    
     if (!confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
         return;
     }
@@ -334,6 +392,8 @@ async function deleteNotification(notificationId) {
         if (notifications.length === 0) {
             showEmptyState();
         }
+        
+        showSuccessToast('Đã xóa thông báo');
         
     } catch (error) {
         console.error('Error deleting notification:', error);
