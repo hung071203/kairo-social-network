@@ -36,7 +36,7 @@ export class ReportService {
     //TODO: Add notification for admins
     const notificationPromises = admins.map((admin) =>
       this.notificationService.create(admin._id.toString(), {
-        title: 'Báo cáo ' + dto.type == ReportType.POST ? 'bài đăng' : 'người dùng' + ' mới',
+        title: `Báo cáo ${dto.type == ReportType.POST ? 'bài đăng' : 'người dùng'} mới!`,
         message: `Có báo cáo mới về ${dto.type == ReportType.POST ? 'bài đăng' : 'người dùng'}, click để xem chi tiết.`,
         type: NotificationType.SYSTEM,
       }),
