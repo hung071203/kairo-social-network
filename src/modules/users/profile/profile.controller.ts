@@ -47,7 +47,7 @@ export class ProfileController {
 
   @Get('me')
   async getMyProfile(@GetUser() user: User) {
-    return user
+    return user;
   }
 
   @Get('user/:username')
@@ -74,6 +74,7 @@ export class ProfileController {
   }
 
   @Get('settings')
+  @UseFilters(WebExceptionFilter)
   @Render('users/pages/users/settings.njk')
   async getSettings() {
     try {

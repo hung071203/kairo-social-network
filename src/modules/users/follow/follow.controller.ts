@@ -24,7 +24,8 @@ export class FollowController {
   constructor(private readonly followService: FollowService) {}
 
   @Get()
-  @Render('users/pages/users/follower.njk')
+  @UseFilters(WebExceptionFilter)
+@Render('users/pages/users/follower.njk')
   async getHome() {
     return {
       title: 'Theo dõi',

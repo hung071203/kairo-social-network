@@ -101,9 +101,13 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@GetUserGG() user: UserGG, @GetIp() ip: string, @WebContext() { req, res }: WebContext) {
+  async googleAuthRedirect(
+    @GetUserGG() user: UserGG,
+    @GetIp() ip: string,
+    @WebContext() { req, res }: WebContext,
+  ) {
     try {
-      const {token, role} = await this.authService.googleLogin(user, ip);
+      const { token, role } = await this.authService.googleLogin(user, ip);
       if (!token) throw new Error('Đăng nhập thất bại!');
       res.cookie('hungdev_token_media', token, {
         maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -121,9 +125,7 @@ export class AuthController {
   }
 
   @Post('create-user')
-  async createUser(
-    @Body() dto: SignupDto,
-  ) {
+  async createUser(@Body() dto: SignupDto) {
     try {
       const user = await this.authService.createSpam(dto);
       return { message: 'Tạo người dùng thành công', user };

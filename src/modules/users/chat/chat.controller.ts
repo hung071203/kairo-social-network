@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Render,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
@@ -20,6 +21,7 @@ import {
   GetMessagesDto,
   SendMessageDto,
 } from './dto/chat.dto';
+import { WebExceptionFilter } from 'src/common/filters';
 
 @Controller('chat')
 @UseGuards(AllGuard)
@@ -27,6 +29,7 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
+  @UseFilters(WebExceptionFilter)
   @Render('users/pages/chat/index.njk')
   async getChatHome() {
     return {

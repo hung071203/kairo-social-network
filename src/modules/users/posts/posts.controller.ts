@@ -96,7 +96,8 @@ export class PostsController {
   }
 
   @Get('detail/:id')
-  @Render('users/pages/posts/detail')
+  @UseFilters(WebExceptionFilter)
+@Render('users/pages/posts/detail')
   async getPostDetail(@GetUser() user: User, @Param('id') id: string) {
     try {
       const data = await this.postsService.getPostDetail(
