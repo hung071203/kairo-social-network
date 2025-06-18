@@ -14,8 +14,7 @@ export class WebExceptionFilter implements ExceptionFilter {
     // Kiểm tra loại lỗi và quyết định chuyển hướng
     if (exception instanceof Error) {
       let previousUrl = '';
-      const user = response.locals.user; // Lấy thông tin người dùng từ response locals
-      console.log('WebExceptionFilter:', exception.message, user);
+      const user = request.user; // Lấy thông tin người dùng từ response locals
       
       if (user) {
         // Nếu có người dùng, chuyển hướng về trang trước đó

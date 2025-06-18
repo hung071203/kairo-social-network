@@ -86,7 +86,7 @@ export class AuthController {
       if (role == UserRole.USER) {
         res.redirect('/home');
       } else {
-        res.redirect('/admin/dashboard');
+        res.redirect('/dashboard');
       }
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -117,7 +117,7 @@ export class AuthController {
       if (role == UserRole.USER) {
         res.redirect('/home');
       } else {
-        res.redirect('/admin/dashboard');
+        res.redirect('/dashboard');
       }
     } catch (error) {
       throw new BadRequestException(error.message);
