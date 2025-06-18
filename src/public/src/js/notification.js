@@ -9,6 +9,7 @@ let socket = null;
 const notificationsList = document.querySelector('#notifications-scroll .list-group');
 const countUnread = document.querySelector('.count-unread');
 const notificationBadge = document.querySelector('.badge-notifications');
+const notificationDropdown = document.querySelector('.dropdown-notifications');
 
 // Initialize notification system
 document.addEventListener('DOMContentLoaded', function() {
@@ -23,6 +24,24 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.scrollTop + this.clientHeight >= this.scrollHeight - 5) {
                 loadNotifications();
             }
+        });
+    }
+    
+    // Setup dropdown toggle
+    const notificationToggle = document.querySelector('.dropdown-notifications .nav-link');
+    if (notificationToggle) {
+        notificationToggle.addEventListener('click', function() {
+            // Load fresh notifications when dropdown is opened
+            setTimeout(() => {
+                if (!document.querySelector('.dropdown-notifications .dropdown-menu').classList.contains('show')) return;
+                // Refresh if first time opening or if it's been a while
+                const lastRefresh = localStorage.getItem('lastNotificationRefresh');
+                const now = Date.now();
+                if (!lastRefresh || (now - parseInt(lastRefresh)) > 30000) { // 30 seconds
+                    refreshNotifications();
+                    localStorage.setItem('lastNotificationRefresh', now.toString());
+                }
+            }, 100);
         });
     }
 });
@@ -67,13 +86,12 @@ function setupSocketEvents() {
         console.log('New notification received:', data);
         handleNewNotification(data);
     });
-    
-    // Reconnection handling
+      // Reconnection handling
     socket.on('reconnect', (attemptNumber) => {
         console.log('Socket reconnected after', attemptNumber, 'attempts');
         // Refresh notifications after reconnection
         setTimeout(() => {
-            loadNotifications();
+            refreshNotifications();
             updateUnreadCount();
         }, 1000);
     });
@@ -149,6 +167,22 @@ async function loadNotifications() {
     }
 }
 
+// Refresh notifications (reset and reload)
+async function refreshNotifications() {
+    // Reset pagination
+    currentPage = 1;
+    notifications = [];
+    hasMore = true;
+    
+    // Clear existing notifications
+    if (notificationsList) {
+        notificationsList.innerHTML = '';
+    }
+    
+    // Load fresh notifications
+    await loadNotifications();
+}
+
 // Render notifications to DOM
 function renderNotifications(newNotifications) {
     if (!notificationsList) return;
@@ -170,8 +204,7 @@ function createNotificationElement(notification) {
     li.className = `list-group-item list-group-item-action dropdown-notifications-item ${!notification.isRead ? 'mark-as-unread' : ''}`;
     li.setAttribute('data-id', notification._id);
       li.innerHTML = `
-        <div class="d-flex notification-content" style="cursor: pointer;">
-            <div class="flex-shrink-0 me-3">
+        <div class="d-flex notification-content" style="cursor: pointer;">            <div class="flex-shrink-0 me-3">
                 <div class="avatar">
                     <i class="${getNotificationIcon(notification.type)} ${getNotificationColor(notification.type)}"></i>
                 </div>

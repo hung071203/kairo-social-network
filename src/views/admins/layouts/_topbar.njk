@@ -16,13 +16,11 @@
                     href="javascript:void(0);"
                     data-bs-toggle="dropdown"
                     data-bs-auto-close="outside"
-                    aria-expanded="true">
-                    <span class="position-relative">
+                    aria-expanded="true">                    <span class="position-relative">
                         <i class="icon-base bx bx-bell icon-md"></i>
-                        <span class="badge rounded-pill bg-danger badge-dot badge-notifications border"></span>
+                        <span class="badge rounded-pill bg-danger badge-dot badge-notifications border" style="position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; padding: 0;"></span>
                     </span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end p-0" data-bs-popper="static">
+                </a>                <ul class="dropdown-menu dropdown-menu-end p-0" data-bs-popper="static" style="width: 380px; max-height: 500px;">
                     <li class="dropdown-menu-header border-bottom">
                         <div class="dropdown-header d-flex align-items-center py-3">
                             <h6 class="mb-0 me-auto">Thông báo</h6>
@@ -40,13 +38,11 @@
                                 </a>
                             </div>
                         </div>
-                    </li>
-                    <li class="dropdown-notifications-list scrollable-container ps ps--active-y" id="notifications-scroll">
-                        <ul
-                            class="list-group list-group-flush"><!-- Dữ liệu thông báo sẽ được đổ vào đây -->
+                    </li>                    <li class="dropdown-notifications-list" id="notifications-scroll" style="max-height: 350px; overflow-y: auto;">
+                        <ul class="list-group list-group-flush">
+                            <!-- Dữ liệu thông báo sẽ được đổ vào đây -->
                         </ul>
                     </li>
-                    <li class="border-top"></li>
                 </ul>
             </li>
             <!-- User -->
