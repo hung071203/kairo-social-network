@@ -3,6 +3,7 @@ let notifications = [];
 let currentPage = 1;
 let hasMore = true;
 let isLoading = false;
+let socket = null;
 
 // DOM elements
 const notificationsList = document.querySelector('#notifications-scroll .list-group');
@@ -11,6 +12,7 @@ const notificationBadge = document.querySelector('.badge-notifications');
 
 // Initialize notification system
 document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
     loadNotifications();
     updateUnreadCount();
     
@@ -24,6 +26,90 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Initialize Socket.IO connection
+function initializeSocket() {
+    if (typeof io !== 'undefined') {
+        socket = io({
+            transports: ['websocket'],
+            withCredentials: true, // Gửi cookie cùng với kết nối
+            autoConnect: true
+        });
+        
+        setupSocketEvents();
+    }
+}
+
+// Setup socket event listeners
+function setupSocketEvents() {
+    if (!socket) return;
+    
+    // Handle connection events
+    socket.on('connect', () => {
+        console.log('Socket connected:', socket.id);
+    });
+    
+    socket.on('connected', (data) => {
+        console.log('Authentication successful:', data);
+    });
+    
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+        showErrorToast(error.message || 'Lỗi kết nối thông báo');
+    });
+    
+    socket.on('disconnect', (reason) => {
+        console.log('Socket disconnected:', reason);
+    });
+    
+    // Listen for notification events
+    socket.on('notificationReceived', (data) => {
+        console.log('New notification received:', data);
+        handleNewNotification(data);
+    });
+    
+    // Reconnection handling
+    socket.on('reconnect', (attemptNumber) => {
+        console.log('Socket reconnected after', attemptNumber, 'attempts');
+        // Refresh notifications after reconnection
+        setTimeout(() => {
+            loadNotifications();
+            updateUnreadCount();
+        }, 1000);
+    });
+    
+    socket.on('reconnect_error', (error) => {
+        console.error('Socket reconnection failed:', error);
+    });
+}
+
+// Handle new notification from socket
+function handleNewNotification(data) {
+    // Add new notification to the beginning
+    notifications.unshift(data);
+    
+    // Update UI if notification list exists and is not showing empty state
+    if (notificationsList && !notificationsList.querySelector('.text-center')) {
+        const newElement = createNotificationElement(data);
+        notificationsList.insertBefore(newElement, notificationsList.firstChild);
+    } else if (notificationsList) {
+        // Clear empty state and add notification
+        notificationsList.innerHTML = '';
+        const newElement = createNotificationElement(data);
+        notificationsList.appendChild(newElement);
+    }
+    
+    updateUnreadCount();
+    
+    // Show toast for new notification
+    showToast({
+        message: data.message,
+        header: data.title || 'Thông báo mới',
+        type: 'info',
+        delay: 5000,
+        url: data.redirectUrl
+    });
+}
 
 // Load notifications
 async function loadNotifications() {
@@ -374,31 +460,4 @@ function showErrorToast(message) {
             delay: 5000
         });
     }
-}
-
-// Socket.IO integration (if available)
-if (typeof io !== 'undefined') {
-    const socket = io();
-    
-    socket.on('notification', (data) => {
-        // Add new notification to the beginning
-        notifications.unshift(data);
-        
-        // Update UI
-        if (notificationsList && !notificationsList.querySelector('.text-center')) {
-            const newElement = createNotificationElement(data);
-            notificationsList.insertBefore(newElement, notificationsList.firstChild);
-        }
-        
-        updateUnreadCount();
-        
-        // Show toast for new notification
-        showToast({
-            message: data.message,
-            header: data.title || 'Thông báo mới',
-            type: 'info',
-            delay: 5000,
-            url: data.redirectUrl
-        });
-    });
 }
