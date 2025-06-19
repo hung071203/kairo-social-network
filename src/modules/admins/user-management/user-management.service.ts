@@ -145,9 +145,7 @@ export class UserManagementService {
     }
 
     return this.userRepository.update(id, updateData);
-  }
-
-  async warnUser(id: string, reason: string) {
+  }  async warnUser(id: string, reason: string) {
     if (!isValidObjectId(id)) {
       throw new NotFoundException('ID người dùng không hợp lệ');
     }
@@ -157,12 +155,14 @@ export class UserManagementService {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
 
+    // Create notification for user
     await this.notificationService.create(id, {
-      title: 'Cảnh báo người dùng',
+      title: 'Cảnh báo từ quản trị viên',
       message: `Bạn đã nhận được cảnh báo: ${reason}`,
       type: NotificationType.SYSTEM,
     });
 
+    // Update user record with warning
     return this.userRepository.update(id, {
       bannedReason: reason,
       bannedUntil: null, // Warning without ban

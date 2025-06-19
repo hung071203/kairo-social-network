@@ -96,9 +96,7 @@ export class UserManagementController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
-  }
-
-  @Post('warn/:id')
+  }  @Post('warn/:id')
   @UseFilters(WebExceptionFilter)
   async warnUser(@Param('id') id: string, @Body() dto: { bannedReason: string }) {
     try {
