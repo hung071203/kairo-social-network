@@ -36,6 +36,9 @@ function getNotificationIcon(type) {
     LIKE: 'fas fa-heart',
     COMMENT: 'fas fa-comment',
     SYSTEM: 'fas fa-cog',
+    POST: 'fas fa-file-alt',
+    REPORT: 'fas fa-exclamation-triangle',
+    USER: 'fas fa-user',
   };
   return icons[type] || 'fas fa-bell';
 }
@@ -46,18 +49,11 @@ function getNotificationColor(type) {
     LIKE: 'text-red-400',
     COMMENT: 'text-blue-400',
     SYSTEM: 'text-yellow-400',
+    POST: 'text-purple-400',
+    REPORT: 'text-orange-400',
+    USER: 'text-gray-400',
   };
   return colors[type] || 'text-gray-400';
-}
-
-function getNotificationTitle(type) {
-  const titles = {
-    FOLLOW: 'Người theo dõi mới',
-    LIKE: 'Lượt thích',
-    COMMENT: 'Bình luận mới',
-    SYSTEM: 'Thông báo hệ thống',
-  };
-  return titles[type] || 'Thông báo';
 }
 
 async function updateCounts() {
