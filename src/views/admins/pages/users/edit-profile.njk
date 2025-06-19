@@ -9,163 +9,475 @@
             height: 100%;
             margin: 0;
         }
+        
+        /* Facebook-like Profile Header Styles */
+        .profile-cover {
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px 16px 0 0;
+            overflow: hidden;
+            margin: -24px -24px 0 -24px;
+        }
+        
+        .cover-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .cover-image:hover {
+            transform: scale(1.02);
+            filter: brightness(0.9);
+        }
+        
+        .cover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .cover-image:hover + .cover-overlay,
+        .cover-overlay:hover {
+            opacity: 1;
+        }
+        
+        .profile-avatar {
+            position: absolute;
+            bottom: -60px;
+            left: 40px;
+            width: 140px;
+            height: 140px;
+            border: 5px solid white;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .profile-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .profile-avatar:hover .avatar-overlay {
+            opacity: 1;
+        }
+        
+        .profile-info {
+            padding: 80px 40px 30px;
+            background: white;
+            border-radius: 0 0 16px 16px;
+            margin: 0 -24px;
+        }
+        
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .profile-username {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        
+        .profile-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+        
+        .btn {
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .upload-hint {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 8px;
+        }
+        
+        /* Animation cho upload */
+        .uploading {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .profile-cover {
+                margin: -16px -16px 0 -16px;
+            }
+            
+            .cover-image {
+                height: 180px;
+            }
+            
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+                bottom: -50px;
+                left: 20px;
+            }
+            
+            .profile-info {
+                padding: 60px 20px 20px;
+                margin: 0 -16px;
+            }
+            
+            .profile-name {
+                font-size: 1.5rem;
+            }
+            
+            .profile-stats {
+                gap: 20px;
+            }
+            
+            .form-section {
+                padding: 20px;
+                margin-top: 20px;
+            }
+        }
     </style>
 {% endblock %}
 {% block content %}
     <div class="content-wrapper">
-        <style>
-            .form-control:disabled {
-                color: #384551 !important;
-            }
-        </style>
         <div class="container-xxl flex-grow-1 container-p-y">
             <div class="row">
                 <div class="col-md-12">
-                    <div class="nav-align-top">
-                        <ul class="nav nav-pills flex-column flex-md-row mb-6">
+                    <!-- Navigation Tabs -->
+                    <div class="nav-align-top mb-4">
+                        <ul class="nav nav-pills flex-column flex-md-row">
                             <li class="nav-item">
                                 <a class="nav-link active" href="javascript:void(0);">
-                                    <i class="bx bx-sm bx-user me-1_5"></i>
+                                    <i class="bx bx-user me-2"></i>
                                     Tài khoản
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="javascript:void(0);" onclick="openFormChangeMail()">
-                                    <i class="bx bx-sm bx-envelope me-1_5"></i>
+                                    <i class="bx bx-envelope me-2"></i>
                                     Đổi email
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="javascript:void(0);" onclick="openFormChangePass()">
-                                    <i class="bx bx-sm bx-lock me-1_5"></i>
+                                    <i class="bx bx-lock me-2"></i>
                                     Đổi mật khẩu
                                 </a>
                             </li>
                         </ul>
                     </div>
-                    <div
-                        class="card mb-6">
-                        <!-- Tài khoản -->
-                        <div
-                            class="card-body"><!-- Nội dung của bạn ở đây -->
-                        </div>                        <div class="card-body pt-4">
-                            <form id="formAccountSettings" method="POST" action="{{ baseUrl }}/profile/update">
-                                <div class="row g-6">
-                                    <div class="col-md-6">
-                                        <label for="firstName" class="form-label">Họ và Tên</label>
-                                        <input class="form-control" type="text" id="firstName" name="name" value="{{ user.name }}" autofocus/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="username" class="form-label">Tên người dùng</label>
-                                        <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="email" class="form-label">E-mail</label>
-                                        <input class="form-control" type="email" id="email" disabled value="{{ user.email }}" placeholder="john.doe@example.com"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="phoneNumber">Số Điện Thoại</label>
-                                        <div class="input-group input-group-merge">
-                                            <input type="text" id="phoneNumber" name="phone" class="form-control" placeholder="202 555 0111" value="{{ user.phone }}"/>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="role">Quyền Hạn</label>
-                                        <div class="input-group input-group-merge">
-                                            <input type="text" id="role" class="form-control" placeholder="" value="{% if user.role == 'ADMIN' %}Quản trị viên{% elif user.role == 'MOD' %}Điều hành viên{% else %}Người dùng{% endif %}" disabled/>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="gender">Giới tính</label>
-                                        <select class="form-control" id="gender" name="gender">
-                                            <option value="MALE" {% if user.gender == 'MALE' %}selected{% endif %}>Nam</option>
-                                            <option value="FEMALE" {% if user.gender == 'FEMALE' %}selected{% endif %}>Nữ</option>
-                                            <option value="OTHER" {% if user.gender == 'OTHER' %}selected{% endif %}>Khác</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="birthday">Ngày sinh</label>
-                                        <input type="date" id="birthday" name="birthday" class="form-control" value="{% if user.birthday %}{{ user.birthday | formatDate('YYYY/MM/DD') }}{% endif %}"/>
-                                    </div>                                    <div class="col-md-6">
-                                        <label class="form-label" for="avatar">Ảnh đại diện</label>
-                                        <div class="input-group">
-                                            <input type="text" id="avatar" name="avatar" class="form-control" value="{{ user.avatar }}" readonly/>
-                                            <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('avatarUpload').click()">
-                                                <i class="bx bx-upload"></i> Tải lên
-                                            </button>
-                                            {% if user.avatar %}
-                                            <img id="avatarPreview" src="{{ user.avatar }}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-left: 10px;"/>
-                                            {% else %}
-                                            <img id="avatarPreview" src="/images/kairo.jpg" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-left: 10px; display: none;"/>
-                                            {% endif %}
-                                        </div>
-                                        <input type="file" id="avatarUpload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)"/>
-                                        <small class="text-muted">Hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)</small>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="background">Ảnh bìa</label>
-                                        <div class="input-group">
-                                            <input type="text" id="background" name="background" class="form-control" value="{{ user.background }}" readonly/>
-                                            <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('backgroundUpload').click()">
-                                                <i class="bx bx-upload"></i> Tải lên
-                                            </button>
-                                            {% if user.background %}
-                                            <img id="backgroundPreview" src="{{ user.background }}" alt="Background" style="width: 60px; height: 40px; object-fit: cover; border-radius: 8px; margin-left: 10px;"/>
-                                            {% else %}
-                                            <img id="backgroundPreview" src="/images/bg.jpg" alt="Background" style="width: 60px; height: 40px; object-fit: cover; border-radius: 8px; margin-left: 10px; display: none;"/>
-                                            {% endif %}
-                                        </div>
-                                        <input type="file" id="backgroundUpload" accept="image/*" style="display: none;" onchange="handleBackgroundUpload(event)"/>
-                                        <small class="text-muted">Hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)</small>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label" for="bio">Tiểu sử</label>
-                                        <textarea id="bio" name="bio" class="form-control" rows="3" placeholder="Viết gì đó về bản thân...">{{ user.bio }}</textarea>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="createdAt">Ngày tạo tài khoản</label>
-                                        <input type="text" id="createdAt" class="form-control" value="{{ user.createdAt | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="updatedAt">Cập nhật lần cuối</label>
-                                        <input type="text" id="updatedAt" class="form-control" value="{{ user.updatedAt | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
-                                    </div>
-                                    {% if user.bannedUntil %}
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="bannedUntil">Bị cấm đến</label>
-                                        <input type="text" id="bannedUntil" class="form-control" value="{{ user.bannedUntil | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="bannedReason">Lý do bị cấm</label>
-                                        <input type="text" id="bannedReason" class="form-control" value="{{ user.bannedReason }}" disabled/>
-                                    </div>
-                                    {% endif %}
-                                    <div class="mt-6">
-                                        <button type="submit" class="btn btn-primary me-3">
-                                            Lưu Thay Đổi
-                                        </button>
-                                        <button type="reset" class="btn btn-outline-secondary">
-                                            Hủy
-                                        </button>
-                                    </div>
+
+                    <!-- Profile Header Card -->
+                    <div class="card mb-4" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);">
+                        <div class="profile-cover">
+                            {% if user.background %}
+                            <img id="backgroundDisplay" src="{{ user.background }}" alt="Cover" class="cover-image" onclick="document.getElementById('backgroundUpload').click()"/>
+                            {% else %}
+                            <div class="cover-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="document.getElementById('backgroundUpload').click()"></div>
+                            {% endif %}
+                            
+                            <div class="cover-overlay" onclick="document.getElementById('backgroundUpload').click()">
+                                <div class="text-white text-center">
+                                    <i class="bx bx-camera" style="font-size: 2.5rem;"></i>
+                                    <div class="mt-2 fw-bold">Đổi ảnh bìa</div>
                                 </div>
-                            </form>
+                            </div>
+                            
+                            <div class="profile-avatar" onclick="document.getElementById('avatarUpload').click()">
+                                {% if user.avatar %}
+                                <img id="avatarDisplay" src="{{ user.avatar }}" alt="Avatar" class="avatar-image"/>
+                                {% else %}
+                                <img id="avatarDisplay" src="/images/kairo.jpg" alt="Avatar" class="avatar-image"/>
+                                {% endif %}
+                                <div class="avatar-overlay">
+                                    <i class="bx bx-camera text-white" style="font-size: 1.8rem;"></i>
+                                </div>
+                            </div>
                         </div>
-                        <!-- /Tài khoản -->
+                        
+                        <div class="profile-info">
+                            <h2 class="profile-name">{{ user.name }}</h2>
+                            <p class="profile-username">@{{ user.username }}</p>
+                            {% if user.bio %}
+                            <p class="text-muted mb-3">{{ user.bio }}</p>
+                            {% endif %}
+                            
+                            <div class="profile-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number">{{ user.createdAt | formatDate('DD/MM/YYYY') }}</span>
+                                    <span class="stat-label">Tham gia</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">
+                                        {% if user.role == 'ADMIN' %}Quản trị viên
+                                        {% elif user.role == 'MOD' %}Điều hành viên
+                                        {% else %}Người dùng{% endif %}
+                                    </span>
+                                    <span class="stat-label">Vai trò</span>
+                                </div>
+                                {% if user.gender %}
+                                <div class="stat-item">
+                                    <span class="stat-number">
+                                        {% if user.gender == 'MALE' %}Nam
+                                        {% elif user.gender == 'FEMALE' %}Nữ
+                                        {% else %}Khác{% endif %}
+                                    </span>
+                                    <span class="stat-label">Giới tính</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Section -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="bx bx-edit me-2"></i>
+                            Chỉnh sửa thông tin
+                        </h3>
+                        
+                        <!-- Hidden file inputs -->
+                        <input type="file" id="avatarUpload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)"/>
+                        <input type="file" id="backgroundUpload" accept="image/*" style="display: none;" onchange="handleBackgroundUpload(event)"/>
+
+                        <form id="formAccountSettings" method="POST" action="{{ baseUrl }}/profile/update">
+                            <div class="row g-4">
+                                <!-- Hidden fields -->
+                                <input type="hidden" id="avatar" name="avatar" value="{{ user.avatar }}"/>
+                                <input type="hidden" id="background" name="background" value="{{ user.background }}"/>
+                                
+                                <div class="col-md-6">
+                                    <label for="firstName" class="form-label">
+                                        <i class="bx bx-user me-1"></i>
+                                        Họ và Tên
+                                    </label>
+                                    <input class="form-control" type="text" id="firstName" name="name" value="{{ user.name }}" autofocus/>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="username" class="form-label">
+                                        <i class="bx bx-at me-1"></i>
+                                        Tên người dùng
+                                    </label>
+                                    <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}"/>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">
+                                        <i class="bx bx-envelope me-1"></i>
+                                        E-mail
+                                    </label>
+                                    <input class="form-control" type="email" id="email" disabled value="{{ user.email }}" placeholder="john.doe@example.com"/>
+                                    <div class="upload-hint">Email chỉ có thể thay đổi thông qua chức năng "Đổi email"</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label" for="phoneNumber">
+                                        <i class="bx bx-phone me-1"></i>
+                                        Số Điện Thoại
+                                    </label>
+                                    <input type="text" id="phoneNumber" name="phone" class="form-control" placeholder="0123 456 789" value="{{ user.phone }}"/>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label" for="gender">
+                                        <i class="bx bx-male-female me-1"></i>
+                                        Giới tính
+                                    </label>
+                                    <select class="form-control" id="gender" name="gender">
+                                        <option value="MALE" {% if user.gender == 'MALE' %}selected{% endif %}>Nam</option>
+                                        <option value="FEMALE" {% if user.gender == 'FEMALE' %}selected{% endif %}>Nữ</option>
+                                        <option value="OTHER" {% if user.gender == 'OTHER' %}selected{% endif %}>Khác</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label" for="birthday">
+                                        <i class="bx bx-calendar me-1"></i>
+                                        Ngày sinh
+                                    </label>
+                                    <input type="date" id="birthday" name="birthday" class="form-control" value="{% if user.birthday %}{{ user.birthday | formatDate('YYYY-MM-DD') }}{% endif %}"/>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label class="form-label" for="bio">
+                                        <i class="bx bx-edit-alt me-1"></i>
+                                        Tiểu sử
+                                    </label>
+                                    <textarea id="bio" name="bio" class="form-control" rows="4" placeholder="Viết gì đó về bản thân...">{{ user.bio }}</textarea>
+                                    <div class="upload-hint">Tối đa 500 ký tự</div>
+                                </div>
+                                
+                                <!-- Read-only fields -->
+                                <div class="col-md-6">
+                                    <label class="form-label" for="role">
+                                        <i class="bx bx-shield me-1"></i>
+                                        Quyền Hạn
+                                    </label>
+                                    <input type="text" id="role" class="form-control" value="{% if user.role == 'ADMIN' %}Quản trị viên{% elif user.role == 'MOD' %}Điều hành viên{% else %}Người dùng{% endif %}" disabled/>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label" for="createdAt">
+                                        <i class="bx bx-calendar-plus me-1"></i>
+                                        Ngày tạo tài khoản
+                                    </label>
+                                    <input type="text" id="createdAt" class="form-control" value="{{ user.createdAt | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
+                                </div>
+                                
+                                {% if user.bannedUntil %}
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bannedUntil">
+                                        <i class="bx bx-block me-1"></i>
+                                        Bị cấm đến
+                                    </label>
+                                    <input type="text" id="bannedUntil" class="form-control" value="{{ user.bannedUntil | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bannedReason">
+                                        <i class="bx bx-message-alt-detail me-1"></i>
+                                        Lý do bị cấm
+                                    </label>
+                                    <input type="text" id="bannedReason" class="form-control" value="{{ user.bannedReason }}" disabled/>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-primary me-3">
+                                        <i class="bx bx-save me-2"></i>
+                                        Lưu Thay Đổi
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="bx bx-reset me-2"></i>
+                                        Đặt lại
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Modal Popup Đổi Mật Khẩu -->
     <div class="modal fade" id="changePassModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Đổi mật khẩu</h5>
+            <div class="modal-content" style="border-radius: 16px; border: none;">
+                <div class="modal-header" style="border-bottom: 2px solid #e9ecef;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bx bx-lock me-2"></i>
+                        Đổi mật khẩu
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="formChangePass" method="POST" action="{{ baseUrl }}/users/edit-profile">
                         <div class="mb-3">
                             <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
@@ -182,121 +494,143 @@
                         <input type="hidden" name="type" value="CHANGE_PASS"/>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" form="formChangePass" class="me-2 btn btn-primary">
+                <div class="modal-footer" style="border-top: 2px solid #e9ecef;">
+                    <button type="submit" form="formChangePass" class="btn btn-primary me-2">
+                        <i class="bx bx-save me-2"></i>
                         Lưu thay đổi
                     </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bx bx-x me-2"></i>
                         Đóng
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Modal Popup Đổi Email -->
     <div class="modal fade" id="changeMailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Đổi email</h5>
+            <div class="modal-content" style="border-radius: 16px; border: none;">
+                <div class="modal-header" style="border-bottom: 2px solid #e9ecef;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bx bx-envelope me-2"></i>
+                        Đổi email
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="formChangeMail" method="POST" action="{{ baseUrl }}/users/edit-profile">
                         <div id="message-alert-email"></div>
                         <div class="mb-3">
-                            <label class="form-label" for="apiKey">Nhập email mới</label>
-                            <div class="input-group input-group-merge">
-                                <input type="email" id="email-pre" class="form-control" name="email" placeholder="" required/>
+                            <label class="form-label" for="email-pre">Nhập email mới</label>
+                            <div class="input-group">
+                                <input type="email" id="email-pre" class="form-control" name="email" placeholder="example@email.com" required/>
                                 <button class="btn btn-outline-primary" type="button" onclick="sendCode(this)">
+                                    <i class="bx bx-send me-1"></i>
                                     Nhận mã OTP
                                 </button>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label for="otp" class="form-label">Mã OTP</label>
-                            <input type="text" class="form-control" name="otp" required/>
+                            <input type="text" class="form-control" name="otp" placeholder="Nhập mã 6 số" required/>
                         </div>
                         <input type="hidden" name="type" value="CHANGE_EMAIL"/>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" form="formChangeMail" class="me-2 btn btn-primary">
+                <div class="modal-footer" style="border-top: 2px solid #e9ecef;">
+                    <button type="submit" form="formChangeMail" class="btn btn-primary me-2">
+                        <i class="bx bx-save me-2"></i>
                         Lưu thay đổi
                     </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bx bx-x me-2"></i>
                         Đóng
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="cf-turnstile mt-3" data-sitekey="{{ capchaPublicKey }}" data-theme="light"></div>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script>
         function openFormChangePass() {
-            var changePassModal = new bootstrap.Modal(document.getElementById('changePassModal'),);
+            var changePassModal = new bootstrap.Modal(document.getElementById('changePassModal'));
             changePassModal.show();
         }
+        
         function openFormChangeMail() {
-            var changeMailModal = new bootstrap.Modal(document.getElementById('changeMailModal'),);
+            var changeMailModal = new bootstrap.Modal(document.getElementById('changeMailModal'));
             changeMailModal.show();
         }
+        
         async function sendCode(button) {
             button.disabled = true;
-            button.innerText = 'Đang gửi...';
+            button.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i> Đang gửi...';
+            
             const requestData = {
                 email: document.getElementById('email-pre').value,
-                'cf-turnstile-response': document.querySelector('.cf-turnstile [name="cf-turnstile-response"]',).value || '',
+                'cf-turnstile-response': document.querySelector('.cf-turnstile [name="cf-turnstile-response"]')?.value || '',
                 type: 'CHANGE_MAIL'
             };
-            fetch('{{ baseUrl }}/authentication/verify-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        showToast({message: data.data, header: 'Thông báo', type: 'success', delay: 3000});
-                        startCountdown(button);
-                    } else {
-                        showToast({message: data.message, header: 'Lỗi!', type: 'error', delay: 5000});
-                        button.disabled = false;
-                        button.innerText = 'Gửi lại mã';
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    showToast({message: error.message, header: 'Lỗi!', type: 'error', delay: 5000});
+            
+            try {
+                const response = await fetch('{{ baseUrl }}/authentication/verify-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
                 });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast({message: data.data, header: 'Thành công', type: 'success', delay: 3000});
+                    startCountdown(button);
+                } else {
+                    showToast({message: data.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                    button.disabled = false;
+                    button.innerHTML = '<i class="bx bx-send me-1"></i> Gửi lại mã';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast({message: error.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                button.disabled = false;
+                button.innerHTML = '<i class="bx bx-send me-1"></i> Gửi lại mã';
+            }
         }
+        
         function startCountdown(button) {
             let countdown = 60;
             const interval = setInterval(() => {
-                button.innerText = `${countdown}s`;
+                button.innerHTML = `<i class="bx bx-time me-1"></i> ${countdown}s`;
                 countdown--;
                 if (countdown < 0) {
                     clearInterval(interval);
                     button.disabled = false;
-                    button.innerText = 'Gửi lại mã';
+                    button.innerHTML = '<i class="bx bx-send me-1"></i> Gửi lại mã';
                 }
-            }, 1000);        }        async function uploadFile(file) {
+            }, 1000);
+        }
+        
+        async function uploadFile(file) {
             const formData = new FormData();
             formData.append('file', file);
             try {
                 const response = await fetch('/storage/upload', {
-                method: 'POST',
-                body: formData
+                    method: 'POST',
+                    body: formData
                 });
                 if (!response.ok) throw new Error('Upload failed');
                 const data = await response.json();
-                return data.data.url; // Assuming the API returns the file URL
+                return data.data.url;
             } catch (error) {
                 console.error('Error uploading file:', error);
                 showToast({message: "Lỗi khi tải lên tệp.", type: "error"});
+                throw error;
             }
         }
 
@@ -319,19 +653,27 @@
             try {
                 showToast({message: "Đang tải lên ảnh đại diện...", type: "info"});
                 
+                // Add uploading class for animation
+                const avatarImg = document.getElementById('avatarDisplay');
+                avatarImg.classList.add('uploading');
+                
                 const uploadedUrl = await uploadFile(file);
                 if (uploadedUrl) {
-                    // Update the input field
+                    // Update the hidden input field
                     document.getElementById('avatar').value = uploadedUrl;
                     
-                    // Update preview image
-                    const preview = document.getElementById('avatarPreview');
-                    preview.src = uploadedUrl;
-                    preview.style.display = 'block';
+                    // Update display image with smooth transition
+                    avatarImg.style.opacity = '0';
+                    setTimeout(() => {
+                        avatarImg.src = uploadedUrl;
+                        avatarImg.style.opacity = '1';
+                        avatarImg.classList.remove('uploading');
+                    }, 300);
                     
                     showToast({message: "Tải lên ảnh đại diện thành công!", type: "success"});
                 }
             } catch (error) {
+                document.getElementById('avatarDisplay').classList.remove('uploading');
                 showToast({message: "Lỗi khi tải lên ảnh đại diện: " + error.message, type: "error"});
             }
         }
@@ -355,18 +697,43 @@
             try {
                 showToast({message: "Đang tải lên ảnh bìa...", type: "info"});
                 
+                // Add uploading class for animation
+                const backgroundImg = document.getElementById('backgroundDisplay');
+                if (backgroundImg) {
+                    backgroundImg.classList.add('uploading');
+                }
+                
                 const uploadedUrl = await uploadFile(file);
                 if (uploadedUrl) {
-                    // Update the input field
+                    // Update the hidden input field
                     document.getElementById('background').value = uploadedUrl;
                     
-                    // Update preview image
-                    const preview = document.getElementById('backgroundPreview');
-                    preview.src = uploadedUrl;
-                    preview.style.display = 'block';
+                    // Update display image with smooth transition
+                    if (backgroundImg) {
+                        backgroundImg.style.opacity = '0';
+                        setTimeout(() => {
+                            backgroundImg.src = uploadedUrl;
+                            backgroundImg.style.opacity = '1';
+                            backgroundImg.classList.remove('uploading');
+                        }, 300);
+                    } else {
+                        // Create image element if it doesn't exist
+                        const coverDiv = document.querySelector('.profile-cover');
+                        const newImg = document.createElement('img');
+                        newImg.id = 'backgroundDisplay';
+                        newImg.src = uploadedUrl;
+                        newImg.className = 'cover-image';
+                        newImg.onclick = () => document.getElementById('backgroundUpload').click();
+                        coverDiv.prepend(newImg);
+                    }
                     
                     showToast({message: "Tải lên ảnh bìa thành công!", type: "success"});
-                }            } catch (error) {
+                }
+            } catch (error) {
+                const backgroundImg = document.getElementById('backgroundDisplay');
+                if (backgroundImg) {
+                    backgroundImg.classList.remove('uploading');
+                }
                 showToast({message: "Lỗi khi tải lên ảnh bìa: " + error.message, type: "error"});
             }
         }
@@ -384,6 +751,11 @@
             }
             
             try {
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="bx bx-loader-alt bx-spin me-2"></i> Đang lưu...';
+                submitButton.disabled = true;
+                
                 const response = await fetch(this.action, {
                     method: 'PATCH',
                     headers: {
@@ -402,10 +774,15 @@
                     }, 2000);
                 } else {
                     showToast({message: result.message || "Có lỗi xảy ra khi cập nhật!", type: "error"});
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
                 showToast({message: "Lỗi kết nối. Vui lòng thử lại!", type: "error"});
+                const submitButton = this.querySelector('button[type="submit"]');
+                submitButton.innerHTML = '<i class="bx bx-save me-2"></i> Lưu Thay Đổi';
+                submitButton.disabled = false;
             }
         });
     </script>
