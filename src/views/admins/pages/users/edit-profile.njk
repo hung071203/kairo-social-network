@@ -588,8 +588,7 @@
                 }
             }, 1000);
         }
-        
-        async function uploadFile(file) {
+          async function uploadFile(file) {
             const formData = new FormData();
             formData.append('file', file);
             try {
@@ -607,7 +606,41 @@
             }
         }
 
-        async function handleAvatarUpload(event) {
+        async function autoSaveProfile(updateData) {
+            try {
+                // Get current form data
+                const formData = new FormData(document.getElementById('formAccountSettings'));
+                const data = {};
+                
+                // Convert FormData to regular object
+                for (let [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                
+                // Merge with update data (avatar or background)
+                Object.assign(data, updateData);
+                
+                const response = await fetch('{{ baseUrl }}/profile/update', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || "Có lỗi xảy ra khi cập nhật!");
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('Error auto-saving profile:', error);
+                showToast({message: "Lỗi khi tự động lưu: " + error.message, type: "error"});
+                throw error;
+            }
+        }async function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -643,15 +676,16 @@
                         avatarImg.classList.remove('uploading');
                     }, 300);
                     
-                    showToast({message: "Tải lên ảnh đại diện thành công!", type: "success"});
+                    // Auto-save avatar to profile
+                    await autoSaveProfile({avatar: uploadedUrl});
+                    
+                    showToast({message: "Cập nhật ảnh đại diện thành công!", type: "success"});
                 }
             } catch (error) {
                 document.getElementById('avatarDisplay').classList.remove('uploading');
                 showToast({message: "Lỗi khi tải lên ảnh đại diện: " + error.message, type: "error"});
             }
-        }
-
-        async function handleBackgroundUpload(event) {
+        }        async function handleBackgroundUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -700,7 +734,10 @@
                         coverDiv.prepend(newImg);
                     }
                     
-                    showToast({message: "Tải lên ảnh bìa thành công!", type: "success"});
+                    // Auto-save background to profile
+                    await autoSaveProfile({background: uploadedUrl});
+                    
+                    showToast({message: "Cập nhật ảnh bìa thành công!", type: "success"});
                 }
             } catch (error) {
                 const backgroundImg = document.getElementById('backgroundDisplay');
