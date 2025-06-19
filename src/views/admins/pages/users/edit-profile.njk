@@ -1271,8 +1271,7 @@
                 emailFeedback.className = 'mt-2 text-danger small';
                 return;
             }
-            
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 emailFeedback.textContent = 'Email không hợp lệ';
                 emailFeedback.style.display = 'block';
@@ -1280,7 +1279,11 @@
                 return;
             }
             
-            const submitButton = this.querySelector('button[type="submit"]');
+            const submitButton = document.querySelector('button[form="formChangeMail"][type="submit"]');
+            if (!submitButton) {
+                console.error('Submit button not found for formChangeMail');
+                return;
+            }
             const originalText = submitButton.innerHTML;
             
             try {
@@ -1333,6 +1336,102 @@
                 emailFeedback.textContent = 'Lỗi kết nối. Vui lòng thử lại!';
                 emailFeedback.style.display = 'block';
                 emailFeedback.className = 'mt-2 text-danger small';
+                
+                submitButton.innerHTML = `
+                    <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
+                    Thử lại
+                `;
+                submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                submitButton.disabled = false;
+            }
+              // Reset button after 3 seconds if not successful
+            if (!submitButton.innerHTML.includes('Thành công')) {
+                setTimeout(() => {
+                    submitButton.innerHTML = originalText;
+                    submitButton.style.background = '';
+                }, 3000);
+            }
+        });
+
+        // Handle change password form submission
+        document.getElementById('formChangePass').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            
+            // Validate inputs
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast({message: "Vui lòng điền đầy đủ thông tin", type: "error"});
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast({message: "Mật khẩu mới và xác nhận mật khẩu không khớp", type: "error"});
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showToast({message: "Mật khẩu mới phải có ít nhất 6 ký tự", type: "error"});
+                return;
+            }
+            
+            const submitButton = document.querySelector('button[form="formChangePass"][type="submit"]');
+            if (!submitButton) {
+                console.error('Submit button not found for formChangePass');
+                return;
+            }
+            const originalText = submitButton.innerHTML;
+            
+            try {
+                submitButton.innerHTML = `
+                    <div class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></div>
+                    Đang lưu thay đổi...
+                `;
+                submitButton.disabled = true;
+                
+                const response = await fetch('{{ baseUrl }}/profile/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword,
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success || response.ok) {
+                    submitButton.innerHTML = `
+                        <i class="bx bx-check-circle me-2" style="color: #28a745;"></i>
+                        Thành công!
+                    `;
+                    submitButton.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                    
+                    showToast({message: "Đổi mật khẩu thành công!", type: "success"});
+                    
+                    // Close modal after success
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('changePassModal'));
+                        modal.hide();
+                        this.reset(); // Reset form
+                    }, 1500);
+                } else {
+                    submitButton.innerHTML = `
+                        <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
+                        Thử lại
+                    `;
+                    submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                    submitButton.disabled = false;
+                    
+                    showToast({message: data.message || "Đổi mật khẩu thất bại", type: "error"});
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showToast({message: "Lỗi kết nối. Vui lòng thử lại!", type: "error"});
                 
                 submitButton.innerHTML = `
                     <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
