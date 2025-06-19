@@ -61,6 +61,13 @@
                         <th>Số điện thoại</th>
                         <th
                             class="sortable"
+                            onclick="setQueryParams({sort: 'createdAt', order: '{% if query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                            Ngày tạo
+                            <i class="fas fa-sort{% if query.sort == 'createdAt' and query.order == 'asc' %}-up{% elif query.sort == 'createdAt' and
+                                query.order == 'desc' %}-down{% else %}{% endif %}"></i>
+                        </th>
+                        <th
+                            class="sortable"
                             onclick="setQueryParams({sort: 'role', order: '{% if query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
                             Quyền hạn
                             <i class="fas fa-sort{% if query.sort == 'role' and query.order == 'asc' %}-up{% elif query.sort == 'role' and query.order
@@ -101,6 +108,9 @@
                                     </td>
                                     <td>
                                         <span class="text-muted">{{ item.phone or 'Trống' }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ item.createdAt | formatDate('YYYY-MM-DD HH:mm:ss') }}</span>
                                     </td>
                                     <td>
                                         {% if item.role == 'ADMIN' %}
