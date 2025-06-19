@@ -14,12 +14,15 @@ import {
 import { PaginationDto } from 'src/common/decorators';
 import { isValidObjectId } from 'mongoose';
 import { hashPassword } from 'src/utils';
+import { NotificationService } from 'src/modules/users/notification/notification.service';
+import { NotificationType } from 'src/common/enums';
 
 @Injectable()
 export class UserManagementService {
   constructor(
     @Inject('UserRepositoryInterface')
     private readonly userRepository: UserRepositoryInterface,
+    private readonly notificationService: NotificationService,
   ) {}
 
   getRepository() {
@@ -153,6 +156,12 @@ export class UserManagementService {
     if (!user) {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
+
+    await this.notificationService.create(id, {
+      title: 'Cảnh báo người dùng',
+      message: `Bạn đã nhận được cảnh báo: ${reason}`,
+      type: NotificationType.SYSTEM,
+    });
 
     return this.userRepository.update(id, {
       bannedReason: reason,
