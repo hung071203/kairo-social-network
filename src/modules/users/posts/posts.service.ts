@@ -26,6 +26,13 @@ export class PostsService {
     return this.postRepository;
   }
 
+  async getPostCount(id: string) {
+    const count = await this.postRepository.getModel().countDocuments({
+      author: new Types.ObjectId(id),
+    });
+    return count;
+  }
+
   async createPost(
     id: string,
     { content, privacy }: CreatePostDto,

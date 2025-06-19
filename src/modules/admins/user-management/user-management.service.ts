@@ -16,6 +16,8 @@ import { isValidObjectId } from 'mongoose';
 import { hashPassword } from 'src/utils';
 import { NotificationService } from 'src/modules/users/notification/notification.service';
 import { NotificationType } from 'src/common/enums';
+import { FollowService } from 'src/modules/users/follow/follow.service';
+import { PostsService } from 'src/modules/users/posts/posts.service';
 
 @Injectable()
 export class UserManagementService {
@@ -23,6 +25,8 @@ export class UserManagementService {
     @Inject('UserRepositoryInterface')
     private readonly userRepository: UserRepositoryInterface,
     private readonly notificationService: NotificationService,
+    private readonly followService: FollowService,
+    private readonly postsService: PostsService, // Assuming you have a PostService for posts
   ) {}
 
   getRepository() {
@@ -90,9 +94,14 @@ export class UserManagementService {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
 
+    const followersCount =( await this.followService.getAllFollowers(id)).length;
+    const followingCount = (await this.followService.getAllFollowing(id)).length;
+    const postsCount = await this.postsService.getPostCount(id);
+
+
     // Don't return password
     const { password, ...userWithoutPassword } = user.toObject();
-    return userWithoutPassword;
+    return {...userWithoutPassword, followersCount, followingCount, postsCount};
   }
 
   async updateUser(id: string, dto: UpdateUserDto) {

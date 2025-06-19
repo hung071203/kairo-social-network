@@ -30,7 +30,7 @@ export class FollowService {
       status: FollowInteractionStatusEnum.ACCEPTED,
     });
     return followings.map((item) => {
-      return item.target;
+      return item?.target;
     });
   }
 
@@ -40,7 +40,7 @@ export class FollowService {
       status: FollowInteractionStatusEnum.ACCEPTED,
     });
     return followers.map((item) => {
-      return item.requester;
+      return item?.requester;
     });
   }
 
@@ -61,7 +61,7 @@ export class FollowService {
       });
 
     const blockedIds = blockedInteractions.map((item) => {
-      return item.target.toString() === id ? item.requester : item.target;
+      return item?.target?.toString() === id ? item.requester : item.target;
     });
 
     return blockedIds;
