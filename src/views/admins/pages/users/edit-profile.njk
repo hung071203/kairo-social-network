@@ -1,4 +1,4 @@
-{% extends 'layouts/app.njk' %}
+{% extends 'admins/layouts/app.njk' %}
 {% set title = 'Thông tin cá nhân' %}
 {% set auth = false %}
 {% block css %}
@@ -48,13 +48,16 @@
                         <!-- Tài khoản -->
                         <div
                             class="card-body"><!-- Nội dung của bạn ở đây -->
-                        </div>
-                        <div class="card-body pt-4">
+                        </div>                        <div class="card-body pt-4">
                             <form id="formAccountSettings" method="POST" action="{{ baseUrl }}/users/edit-profile">
                                 <div class="row g-6">
                                     <div class="col-md-6">
                                         <label for="firstName" class="form-label">Họ và Tên</label>
                                         <input class="form-control" type="text" id="firstName" name="name" value="{{ user.name }}" autofocus/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="username" class="form-label">Tên người dùng</label>
+                                        <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}"/>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="email" class="form-label">E-mail</label>
@@ -66,33 +69,55 @@
                                             <input type="text" id="phoneNumber" name="phone" class="form-control" placeholder="202 555 0111" value="{{ user.phone }}"/>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 d-flex">
-                                        <div class="me-2 flex-grow-1">
-                                            <label class="form-label" for="role">Quyền Hạn</label>
-                                            <div class="input-group input-group-merge">
-                                                <input type="text" id="role" class="form-control" placeholder="" value="{% if user.role == 0 %} Dev {% elif user.role == 1 %} Admin {% else %} Người dùng {% endif %} " disabled/>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <label class="form-label" for="role">Số request còn lại</label>
-                                            <div class="input-group input-group-merge">
-                                                <input type="text" class="form-control" placeholder="" value="{% if user.role == 2 %}{{ user.remainingRequests }}{% else %}Không giới hạn{% endif %}" disabled/>
-                                            </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="role">Quyền Hạn</label>
+                                        <div class="input-group input-group-merge">
+                                            <input type="text" id="role" class="form-control" placeholder="" value="{% if user.role == 'ADMIN' %}Quản trị viên{% elif user.role == 'MOD' %}Điều hành viên{% else %}Người dùng{% endif %}" disabled/>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label" for="apiKey">Khóa API</label>
-                                        <div class="input-group input-group-merge">
-                                            <input type="text" id="apiKey" class="form-control" placeholder="" value="{{ user.apikey }}" disabled/>
-                                            <button class="btn btn-outline-primary" type="button" id="getApiBtn">
-                                                Nhận apikey
-                                            </button>
+                                        <label class="form-label" for="gender">Giới tính</label>
+                                        <select class="form-control" id="gender" name="gender">
+                                            <option value="MALE" {% if user.gender == 'MALE' %}selected{% endif %}>Nam</option>
+                                            <option value="FEMALE" {% if user.gender == 'FEMALE' %}selected{% endif %}>Nữ</option>
+                                            <option value="OTHER" {% if user.gender == 'OTHER' %}selected{% endif %}>Khác</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="birthday">Ngày sinh</label>
+                                        <input type="date" id="birthday" name="birthday" class="form-control" value="{% if user.birthday %}{{ user.birthday | formatDate('YYYY/MM/DD') }}{% endif %}"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="avatar">Ảnh đại diện</label>
+                                        <div class="input-group">
+                                            <input type="text" id="avatar" name="avatar" class="form-control" value="{{ user.avatar }}" readonly/>
+                                            {% if user.avatar %}
+                                            <img src="{{ user.avatar }}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-left: 10px;"/>
+                                            {% endif %}
                                         </div>
                                     </div>
-                                    <div class="col-md-6" id="listIP">
-                                        <label class="form-label" for="user-ip-list">Danh Sách IP</label>
-                                        <textarea id="ipList" class="form-control" placeholder="listIP" rows="4" style="max-height: 100px !important" disabled>{{ user.listIps | join('\n') }}</textarea>
+                                    <div class="col-md-12">
+                                        <label class="form-label" for="bio">Tiểu sử</label>
+                                        <textarea id="bio" name="bio" class="form-control" rows="3" placeholder="Viết gì đó về bản thân...">{{ user.bio }}</textarea>
                                     </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="createdAt">Ngày tạo tài khoản</label>
+                                        <input type="text" id="createdAt" class="form-control" value="{{ user.createdAt | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="updatedAt">Cập nhật lần cuối</label>
+                                        <input type="text" id="updatedAt" class="form-control" value="{{ user.updatedAt | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
+                                    </div>
+                                    {% if user.bannedUntil %}
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="bannedUntil">Bị cấm đến</label>
+                                        <input type="text" id="bannedUntil" class="form-control" value="{{ user.bannedUntil | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="bannedReason">Lý do bị cấm</label>
+                                        <input type="text" id="bannedReason" class="form-control" value="{{ user.bannedReason }}" disabled/>
+                                    </div>
+                                    {% endif %}
                                     <input type="hidden" name="type" value="CHANGE_PROFILE"/>
                                     <div class="mt-6">
                                         <button type="submit" class="btn btn-primary me-3">
@@ -237,32 +262,6 @@
                     button.disabled = false;
                     button.innerText = 'Gửi lại mã';
                 }
-            }, 1000);
-        }
-        document.getElementById('getApiBtn').addEventListener('click', function () {
-            const requestData = {
-                type: 'GET_API_KEY'
-            };
-            fetch('{{ baseUrl }}/users/save-profile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        document.getElementById('apiKey').value = data.data.apikey;
-                        showToast({message: 'Tạo khóa mới thành công', header: 'Thông báo', type: 'success', delay: 3000});
-                    } else {
-                        showToast({message: data.message, header: 'Lỗi!', type: 'error', delay: 5000});
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    showToast({message: error.message, header: 'Lỗi!', type: 'error', delay: 5000});
-                });
-        });
+            }, 1000);        }        
     </script>
 {% endblock %}

@@ -17,6 +17,7 @@ export class ProfileController {
     return {
       title: 'Chỉnh sửa thông tin cá nhân',
       content: 'admins/pages/users/edit-profile.njk',
+      capchaPublicKey: process.env.CAPTCHA_PUBLIC_KEY, // Thêm khóa công khai CAPTCHA nếu cần
       user, // Truyền thông tin người dùng hiện tại vào template
     }
   }

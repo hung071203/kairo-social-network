@@ -59,7 +59,9 @@ async function bootstrap() {
     autoescape: true, // tự động escape HTML
     express: app.getHttpAdapter().getInstance(), // Cung cấp đối tượng express cho Nunjucks
     noCache: process.env.APP_ID === 'dev', // Bỏ cache trong môi trường dev
-  });  env.addFilter('formatDate', (value: any, format = 'DD/MM/YYYY HH:mm:ss') => {
+  });
+  
+  env.addFilter('formatDate', (value: any, format = 'DD/MM/YYYY HH:mm:ss') => {
     const timestamp = !value || value === 'now' ? Date.now() : Number(value);
     const date = new Date(timestamp);
 
@@ -88,7 +90,8 @@ async function bootstrap() {
   // Thêm filter để kiểm tra xem thời gian có trong tương lai không
   env.addFilter('isFuture', (value: any) => {
     if (!value) return false;
-    const timestamp = typeof value === 'string' ? new Date(value).getTime() : Number(value);
+    const timestamp =
+      typeof value === 'string' ? new Date(value).getTime() : Number(value);
     return timestamp > Date.now();
   });
 
