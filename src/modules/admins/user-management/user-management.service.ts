@@ -28,30 +28,36 @@ export class UserManagementService {
   getRepository() {
     return this.userRepository;
   }
-
   async getUsers(dto: FilterUserDto, pagination: PaginationDto) {
-    const searchConditions: any[] = [];
+    const form: any = {};
 
-    if (dto.search) {
+    if (dto.search && dto.search.trim()) {
+      const searchTerm = dto.search.trim();
+
       // Nếu là ObjectId hợp lệ → tìm chính xác theo _id
-      if (isValidObjectId(dto.search)) {
-        searchConditions.push({ _id: dto.search });
+      if (isValidObjectId(searchTerm)) {
+        form._id = searchTerm;
+        console.log('Searching by ObjectId');
       } else {
-        searchConditions.push(
-          { username: { $regex: dto.search, $options: 'i' } },
-          { name: { $regex: dto.search, $options: 'i' } },
-          { email: { $regex: dto.search, $options: 'i' } },
-        );
+        // Escape special regex characters
+        const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        form.$or = [
+          { username: { $regex: escapedSearch, $options: 'i' } },
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { email: { $regex: escapedSearch, $options: 'i' } },
+        ];
+
+        // Nếu search term là số điện thoại (chỉ chứa số và có thể có + ở đầu)
+        if (/^[\+]?[0-9]+$/.test(searchTerm)) {
+          form.$or.push({ phone: { $regex: escapedSearch, $options: 'i' } });
+        }
       }
     }
 
-    const form: any = {};
+    const result = await this.userRepository.findAll(form, pagination);
 
-    if (searchConditions.length > 0) {
-      form.$or = searchConditions;
-    }
-
-    return this.userRepository.findAll(form, pagination);
+    return result;
   }
 
   async createUser(dto: CreateUserDto) {
@@ -162,7 +168,7 @@ export class UserManagementService {
       title: 'Cảnh báo từ quản trị viên',
       message: `Bạn đã nhận được cảnh báo: ${reason}`,
       type: NotificationType.SYSTEM,
-    });    // Update user record with warning
+    }); // Update user record with warning
     return this.userRepository.update(id, {
       bannedReason: reason,
       bannedUntil: null, // Warning without ban
@@ -182,7 +188,8 @@ export class UserManagementService {
     // Create notification for user
     await this.notificationService.create(id, {
       title: 'Thông báo từ quản trị viên',
-      message: 'Cảnh báo của bạn đã được gỡ bỏ. Tài khoản đã trở về trạng thái bình thường.',
+      message:
+        'Cảnh báo của bạn đã được gỡ bỏ. Tài khoản đã trở về trạng thái bình thường.',
       type: NotificationType.SYSTEM,
     });
 
