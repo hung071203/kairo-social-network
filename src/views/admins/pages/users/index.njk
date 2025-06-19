@@ -1030,8 +1030,13 @@
                                             document.getElementById("password").required = true;
                                             const addUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
                                             addUserModal.show();
-                                        }
-                                        function openEditUserModal(id) {
+                                        }                                        function openEditUserModal(id) {
+                                            // Đóng modal profile trước khi mở modal chỉnh sửa
+                                            const profileModal = bootstrap.Modal.getInstance(document.getElementById('userProfileModal'));
+                                            if (profileModal) {
+                                                profileModal.hide();
+                                            }
+                                            
                                             document.getElementById("offcanvasAddUserLabel").innerText = "Chỉnh Sửa Người Dùng";
                                             document.getElementById("addNewUserForm").action = "{{ baseUrl }}/user-management/update/" + id;
                                             // Make password optional for editing
