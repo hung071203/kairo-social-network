@@ -10,6 +10,9 @@ export enum NotificationType {
   LIKE = 'LIKE',
   COMMENT = 'COMMENT',
   SYSTEM = 'SYSTEM',
+  POST = 'POST',
+  REPORT = 'REPORT',
+  USER = 'USER',
 }
 
 export enum SystemNotificationRecipientEnum {

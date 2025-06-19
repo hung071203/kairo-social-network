@@ -38,7 +38,7 @@ export class ReportService {
       this.notificationService.create(admin._id.toString(), {
         title: `Báo cáo ${dto.type == ReportType.POST ? 'bài đăng' : 'người dùng'} mới!`,
         message: `Có báo cáo mới về ${dto.type == ReportType.POST ? 'bài đăng' : 'người dùng'}, click để xem chi tiết.`,
-        type: NotificationType.SYSTEM,
+        type: NotificationType.REPORT,
       }),
     );
     await Promise.allSettled(notificationPromises);
