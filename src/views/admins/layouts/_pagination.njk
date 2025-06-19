@@ -1,124 +1,128 @@
 <nav aria-label="Page navigation">
-  <ul class="pagination pagination-rounded">
+  <ul class="pagination pagination-rounded justify-content-center">
     <!-- Nút First -->
     <li class="page-item first {{ 'disabled' if data.page == 1 else '' }}">
-      <a class="page-link" href="?page=1" aria-label="First">
+      <a class="page-link" href="javascript:void(0);" onclick="goToPage(1)" aria-label="First">
         <i class="tf-icon bx bx-chevrons-left bx-sm"></i>
       </a>
     </li>
     <!-- Nút Previous -->
     <li class="page-item prev {{ 'disabled' if not data.hasPrevPage else '' }}">
-      <a class="page-link" href="?page={{ data.prevPage or 1 }}" aria-label="Previous">
+      <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ data.prevPage or 1 }})" aria-label="Previous">
         <i class="tf-icon bx bx-chevron-left bx-sm"></i>
       </a>
-    </li>
-    <!-- Các nút số trang -->
-    {% if data.totalPages >= 5 %}
-      {% if data.page > 2 and data.page < data.totalPages - 1 %}
-        <!-- Trang 1 -->
-        <li class="page-item">
-          <a class="page-link" href="?page=1">1</a>
-        </li>
-        <!-- Dấu ... -->
-        <li class="page-item disabled">
-          <span class="page-link">...</span>
-        </li>
-        <!-- Trang trước, hiện tại, sau -->
-        <li class="page-item">
-          <a class="page-link" href="?page={{ data.page - 1 }}">{{ data.page - 1 }}</a>
-        </li>
-        <li class="page-item active">
-          <a class="page-link" href="?page={{ data.page }}">{{ data.page }}</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="?page={{ data.page + 1 }}">{{ data.page + 1 }}</a>
-        </li>
-        <!-- Dấu ... -->
-        <li class="page-item disabled">
-          <span class="page-link">...</span>
-        </li>
-        <!-- Trang cuối -->
-        <li class="page-item">
-          <a class="page-link" href="?page={{ data.totalPages }}">{{ data.totalPages }}</a>
-        </li>
-      {% else %}
-        <!-- Hiển thị 3 trang đầu nếu ở đầu -->
-        {% if data.page <= 2 %}
-          {% for i in range(1, 4) %}
-            <li class="page-item {{ 'active' if i == data.page else '' }}">
-              <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-            </li>
-          {% endfor %}
-          <!-- Dấu ... -->
-          <li class="page-item disabled">
-            <span class="page-link">...</span>
-          </li>
-          <!-- Trang cuối -->
-          <li class="page-item {{ 'active' if data.page == data.totalPages else '' }}">
-            <a class="page-link" href="?page={{ data.totalPages }}">{{ data.totalPages }}</a>
-          </li>
-        {% else %}
-          <!-- Hiển thị trang 1 và 3 trang cuối nếu ở cuối -->
-          <li class="page-item {{ 'active' if data.page == 1 else '' }}">
-            <a class="page-link" href="?page=1">1</a>
-          </li>
-          <!-- Dấu ... -->
-          <li class="page-item disabled">
-            <span class="page-link">...</span>
-          </li>
-          {% for i in range(data.totalPages - 2, data.totalPages + 1) %}
-            <li class="page-item {{ 'active' if i == data.page else '' }}">
-              <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-            </li>
-          {% endfor %}
-        {% endif %}
-      {% endif %}
-    {% else %}
-      <!-- Hiển thị tất cả trang nếu tổng số trang < 5 -->
+    </li>    <!-- Các nút số trang -->
+    {% if data.totalPages <= 7 %}
+      <!-- Hiển thị tất cả trang nếu tổng số trang <= 7 -->
       {% for i in range(1, data.totalPages + 1) %}
         <li class="page-item {{ 'active' if i == data.page else '' }}">
-          <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+          <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ i }})">{{ i }}</a>
         </li>
       {% endfor %}
-    {% endif %}
-    <!-- Nút Next -->
+    {% else %}
+      <!-- Logic phức tạp hơn cho nhiều trang -->
+      {% if data.page <= 4 %}
+        <!-- Hiển thị trang đầu -->
+        {% for i in range(1, 6) %}
+          <li class="page-item {{ 'active' if i == data.page else '' }}">
+            <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ i }})">{{ i }}</a>
+          </li>
+        {% endfor %}
+        <li class="page-item disabled">
+          <span class="page-link">...</span>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ data.totalPages }})">{{ data.totalPages }}</a>
+        </li>
+      {% elif data.page >= data.totalPages - 3 %}
+        <!-- Hiển thị trang cuối -->
+        <li class="page-item">
+          <a class="page-link" href="javascript:void(0);" onclick="goToPage(1)">1</a>
+        </li>
+        <li class="page-item disabled">
+          <span class="page-link">...</span>
+        </li>
+        {% for i in range(data.totalPages - 4, data.totalPages + 1) %}
+          <li class="page-item {{ 'active' if i == data.page else '' }}">
+            <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ i }})">{{ i }}</a>
+          </li>
+        {% endfor %}
+      {% else %}
+        <!-- Hiển thị trang ở giữa -->
+        <li class="page-item">
+          <a class="page-link" href="javascript:void(0);" onclick="goToPage(1)">1</a>
+        </li>
+        <li class="page-item disabled">
+          <span class="page-link">...</span>
+        </li>
+        {% for i in range(data.page - 1, data.page + 2) %}
+          <li class="page-item {{ 'active' if i == data.page else '' }}">
+            <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ i }})">{{ i }}</a>
+          </li>
+        {% endfor %}
+        <li class="page-item disabled">
+          <span class="page-link">...</span>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ data.totalPages }})">{{ data.totalPages }}</a>
+        </li>
+      {% endif %}
+    {% endif %}    <!-- Nút Next -->
     <li class="page-item next {{ 'disabled' if not data.hasNextPage else '' }}">
-      <a class="page-link" href="?page={{ data.nextPage or data.totalPages }}" aria-label="Next">
+      <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ data.nextPage or data.totalPages }})" aria-label="Next">
         <i class="tf-icon bx bx-chevron-right bx-sm"></i>
       </a>
     </li>
     <!-- Nút Last -->
     <li class="page-item last {{ 'disabled' if data.page == data.totalPages else '' }}">
-      <a class="page-link" href="?page={{ data.totalPages }}" aria-label="Last">
+      <a class="page-link" href="javascript:void(0);" onclick="goToPage({{ data.totalPages }})" aria-label="Last">
         <i class="tf-icon bx bx-chevrons-right bx-sm"></i>
       </a>
     </li>
   </ul>
+  
+  <!-- Thông tin trang -->
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted">
+      Hiển thị {{ (data.page - 1) * data.limit + 1 }} đến {{ data.page * data.limit if data.page * data.limit <= data.totalDocs else data.totalDocs }} trong tổng số {{ data.totalDocs }} kết quả
+    </div>
+    <div class="d-flex align-items-center">
+      <label for="pageSize" class="form-label me-2 mb-0">Hiển thị:</label>
+      <select id="pageSize" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+        <option value="10" {{ 'selected' if data.limit == 10 else '' }}>10</option>
+        <option value="25" {{ 'selected' if data.limit == 25 else '' }}>25</option>
+        <option value="50" {{ 'selected' if data.limit == 50 else '' }}>50</option>
+        <option value="100" {{ 'selected' if data.limit == 100 else '' }}>100</option>
+      </select>
+    </div>
+  </div>
 </nav>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const links = document.querySelectorAll('.page-link');
-    const currentUrl = new URL(window.location.href);
-    const params = new URLSearchParams(currentUrl.search);
+  function goToPage(page) {
+    if (page < 1 || page > {{ data.totalPages }}) return;
+    
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.location.href = url.toString();
+  }
 
-    // Loại bỏ tham số 'page' để tránh xung đột
-    params.delete('page');
+  function changePageSize(limit) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('limit', limit);
+    url.searchParams.set('page', 1); // Reset to first page when changing page size
+    window.location.href = url.toString();
+  }
 
-    // Lấy tất cả các tham số query còn lại
-    const queryString = params.toString();
-
-    links.forEach(link => {
-      const href = new URL(link.href, window.location.origin);
-      // Thêm các tham số query vào href
-      if (queryString) {
-        const linkParams = new URLSearchParams(href.search);
-        // Gộp các tham số hiện có của link với các tham số từ URL hiện tại
-        for (const [key, value] of params) {
-          linkParams.set(key, value);
-        }
-        href.search = linkParams.toString();
-      }
-      link.href = href.toString();
-    });
+  // Keyboard navigation for pagination
+  document.addEventListener('keydown', function(event) {
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+      return; // Don't interfere when user is typing in form fields
+    }
+    
+    if (event.key === 'ArrowLeft' && {{ data.hasPrevPage | default(false) | lower }}) {
+      goToPage({{ data.prevPage or 1 }});
+    } else if (event.key === 'ArrowRight' && {{ data.hasNextPage | default(false) | lower }}) {
+      goToPage({{ data.nextPage or data.totalPages }});
+    }
   });
 </script>

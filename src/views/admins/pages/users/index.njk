@@ -16,8 +16,7 @@
                     <i class="bx bx-search"></i>
                     Tìm kiếm
                 </button>
-            </div>
-            {% if user.role == 0 %}
+            </div>            {% if user.role == 'ADMIN' %}
                 <button class="btn btn-secondary add-new btn-primary" onclick="openAddUser()">
                     <span>
                         <i class="bx bx-plus bx-sm me-0 me-sm-2"></i>
@@ -81,56 +80,48 @@
                     {% for item in data.docs %}
                         <tr>
                             <td>{{ index }}</td>
-                            {% set index = index + 1 %}
-                            <td>
+                            {% set index = index + 1 %}                            <td>
                                 <div class="d-flex justify-content-start align-items-center user-name">
                                     <div class="avatar-wrapper">
-                                        <div class="avatar avatar-sm me-4 avatar-user-{{ item._id }}">
-                                            <span class="avatar-initial rounded-circle bg-label-{{ getColor(item.name) }}">{{ item.name[0] }}</span>
+                                        <div class="avatar avatar-sm me-4">
+                                            {% if item.avatar and item.avatar != '/images/kairo.jpg' %}
+                                                <img src="{{ item.avatar }}" alt="{{ item.name }}" class="rounded-circle">
+                                            {% else %}
+                                                <span class="avatar-initial rounded-circle bg-label-primary">{{ item.name[0].upper() }}</span>
+                                            {% endif %}
                                         </div>
                                     </div>
                                     <div class="d-flex flex-column">
-                                        <a href="app-user-view-account.html" class="text-heading text-truncate">
-                                            <span class="fw-medium">{{ item.name }}</span>
-                                        </a>
-                                        <small>{{ item.email }}</small>
+                                        <span class="fw-medium text-heading">{{ item.name }}</span>
+                                        <small class="text-muted">@{{ item.username }}</small>
+                                        <small class="text-muted">{{ item.email }}</small>
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <span class="text-muted">{{ item.phone or 'Trống' }}</span>
-                            </td>
-                            <td>
-                                {% if item.role == 0 %}
-                                    <span class="badge bg-label-danger me-1">Dev</span>
-                                {% elif item.role == 1 %}
-                                    <span class="badge bg-label-warning me-1">Admin</span>
+                            </td>                            <td>
+                                {% if item.role == 'ADMIN' %}
+                                    <span class="badge bg-label-danger me-1">Admin</span>
+                                {% elif item.role == 'MOD' %}
+                                    <span class="badge bg-label-warning me-1">Moderator</span>
                                 {% else %}
                                     <span class="badge bg-label-success me-1">Người Dùng</span>
                                 {% endif %}
-                            </td>
-                            <td>
-                                {% if item.status == 'BANNED' %}
-                                    <span class="badge bg-label-danger me-1">Khóa</span>
-                                {% elif item.status == 'WARNING' %}
+                            </td>                            <td>
+                                {% if item.bannedUntil and item.bannedUntil > new Date() %}
+                                    <span class="badge bg-label-danger me-1">Bị khóa</span>
+                                {% elif item.bannedReason %}
                                     <span class="badge bg-label-warning me-1">Cảnh báo</span>
                                 {% else %}
-                                    <span class="badge bg-label-primary me-1">Hoạt động</span>
+                                    <span class="badge bg-label-success me-1">Hoạt động</span>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <div
-                                    class="d-flex align-items-center">
-                                    <!-- Form ẩn để khóa tài khoản -->
-                                    <form id="lockUserForm_{{ item._id }}" method="post" action="{{ baseUrl }}/users/update/{{ item._id }}">
-                                        <input type="hidden" name="status" id="status-update_{{ item._id }}" value=""></form>
-                                        <form id="delUserForm_{{ item._id }}" method="post" action="{{ baseUrl }}/users/destroy/">
-                                            <input type="hidden" name="id" id="username" value="{{ item._id }}"></form>
-                                            <div class="dropdown">
-                                                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="bx bx-dots-vertical-rounded"></i>
-                                                </button>
-                                                {% if user.role == 0 %}
+                            </td>                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="dropdown">
+                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bx bx-dots-vertical-rounded"></i>
+                                        </button>{% if user.role == 'ADMIN' or user.role == 'MOD' %}
                                                     <div class="dropdown-menu">
                                                         <a class="dropdown-item" href="javascript:void(0);" onclick="openEditUserModal('{{ item._id }}');">
                                                             <i class="bx bx-edit-alt me-1"></i>
@@ -139,39 +130,39 @@
                                                         <a
                                                             class="dropdown-item"
                                                             href="javascript:void(0);"
-                                                            onclick="confirmLockUser('{{ item.name }}', '{{ item._id }}', '{% if item.status == 'ACTIVE' %}BANNED{% else %}ACTIVE{%
-                                                                endif %}')">
-                                                            {% if item.status == 'ACTIVE' %}
-                                                                <i class="bx bx-lock me-1"></i>
-                                                                Khóa Tài Khoản
-                                                            {% else %}
+                                                            onclick="confirmBanUser('{{ item.name }}', '{{ item._id }}', {% if item.bannedUntil %}false{% else %}true{% endif %})">
+                                                            {% if item.bannedUntil and item.bannedUntil > new Date() %}
                                                                 <i class="bx bx-lock-open me-1"></i>
                                                                 Mở Khóa
+                                                            {% else %}
+                                                                <i class="bx bx-lock me-1"></i>
+                                                                Khóa Tài Khoản
                                                             {% endif %}
                                                         </a>
-                                                        {% if item.status == 'ACTIVE' %}
+                                                        {% if not item.bannedUntil %}
                                                             <a
                                                                 class="dropdown-item"
                                                                 href="javascript:void(0);"
-                                                                onclick="confirmLockUser('{{ item.name }}', '{{ item._id }}', 'WARNING');">
+                                                                onclick="confirmWarnUser('{{ item.name }}', '{{ item._id }}');">
                                                                 <i class="bx bx-error me-1"></i>
-                                                                Bật cảnh báo
+                                                                Cảnh báo
                                                             </a>
                                                         {% endif %}
-                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="delUser('{{ item.name }}', '{{ item._id }}');">
-                                                            <i class="bx bx-trash me-1"></i>
-                                                            Xóa tài khoản
-                                                        </a>
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                                        {% if user.role == 'ADMIN' %}
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="delUser('{{ item.name }}', '{{ item._id }}');">
+                                                                <i class="bx bx-trash me-1"></i>
+                                                                Xóa tài khoản
+                                                            </a>
+                                                        {% endif %}
+                                                    </div>                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
                 {% include '../../layouts/_pagination.njk' %}
                 <!-- Offcanvas to add new user -->
                 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddUser" aria-labelledby="offcanvasAddUserLabel">
@@ -180,8 +171,7 @@
                         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Đóng"></button>
                     </div>
                     <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
-                        <form class="add-new-user pt-0 fv-plugins-bootstrap5 fv-plugins-framework" id="addNewUserForm" method="post" action="{{ baseUrl }}/users/create" novalidate="novalidate">
-                            <div class="mb-6 fv-plugins-icon-container">
+                        <form class="add-new-user pt-0 fv-plugins-bootstrap5 fv-plugins-framework" id="addNewUserForm" method="post" action="{{ baseUrl }}/users/create" novalidate="novalidate">                            <div class="mb-6 fv-plugins-icon-container">
                                 <label class="form-label" for="add-user-fullname">Họ Tên</label>
                                 <input
                                     type="text"
@@ -191,11 +181,23 @@
                                     name="name"
                                     aria-label="Nguyễn Văn A"
                                     required>
-                                    <div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
-                                </div>
-                                <div class="mb-6 fv-plugins-icon-container">
-                                    <label class="form-label" for="add-user-email">Email</label>
-                                    <input
+                                <div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
+                            </div>
+                            <div class="mb-6 fv-plugins-icon-container">
+                                <label class="form-label" for="add-user-username">Tên đăng nhập</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="username"
+                                    placeholder="nguyenvana"
+                                    name="username"
+                                    aria-label="Tên đăng nhập"
+                                    required>
+                                <div class="fv-plugins-message-container fv-plugins-message-container--enabled invalid-feedback"></div>
+                            </div>
+                            <div class="mb-6 fv-plugins-icon-container">
+                                <label class="form-label" for="add-user-email">Email</label>
+                                <input
                                         type="email"
                                         id="email"
                                         class="form-control"
@@ -231,98 +233,120 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div class="mb-6 d-flex justify-content-between">
-                                                <div class="me-2">
-                                                    <label class="form-label" for="user-role">Vai Trò Người Dùng</label>
-                                                    <select id="role" name="role" class="form-select">
-                                                        <option value="0">Dev</option>
-                                                        <option value="1">Admin</option>
-                                                        <option value="2">Người Dùng</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label class="form-label" for="user-role">Số lượng request còn lại</label>
-                                                    <input
-                                                        type="number"
-                                                        id="remainingRequests"
-                                                        class="form-control"
-                                                        placeholder=""
-                                                        aria-label="req còn lại"
-                                                        name="remainingRequests"
-                                                        required></div>
-                                                </div>
-                                                <div class="mb-6" id="apikey"></div>
-                                                <div class="mb-6" id="listIP">
-                                                    <label class="form-label" for="user-ip-list">Danh Sách IP</label>
-                                                    <textarea
-                                                        id="listIps"
-                                                        class="form-control"
-                                                        placeholder="Nhập danh sách IP, mỗi IP trên một dòng"
-                                                        name="listIps"
-                                                        rows="4"
-                                                        required
-                                                        style="max-height: 100px;"></textarea>
-                                                </div>
-                                                <button type="submit" class="btn btn-primary me-3 data-submit">Gửi</button>
-                                                <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Hủy</button>
-                                                <input type="hidden"></form>
+                                            <div class="mb-6 d-flex justify-content-between">                                <div class="me-2 flex-fill">
+                                    <label class="form-label" for="user-role">Vai Trò Người Dùng</label>
+                                    <select id="role" name="role" class="form-select">
+                                        <option value="USER">Người Dùng</option>
+                                        <option value="MOD">Moderator</option>
+                                        <option value="ADMIN">Admin</option>
+                                    </select>
+                                </div>
+                                <div class="flex-fill">
+                                    <label class="form-label" for="user-gender">Giới tính</label>
+                                    <select id="gender" name="gender" class="form-select">
+                                        <option value="OTHER">Khác</option>
+                                        <option value="MALE">Nam</option>
+                                        <option value="FEMALE">Nữ</option>
+                                    </select>
+                                </div>                            </div>
+                            <div class="mb-6">
+                                <label class="form-label" for="add-user-bio">Tiểu sử</label>
+                                <textarea
+                                    id="bio"
+                                    class="form-control"
+                                    placeholder="Mô tả về bản thân..."
+                                    name="bio"
+                                    rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary me-3 data-submit">Gửi</button>
+                            <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Hủy</button>
+                        </form>
                                             </div>
-                                        </div>
-                                        <script>
-                                            function confirmLockUser(username, id, type) {
-                                                if (confirm(`Bạn có chắc chắn muốn thay đổi trạng thái tài khoản của ${username} sang ${type} không?`)) {
-                                                    document.getElementById(`status-update_${id}`).value = type;
-                                                    setTimeout(() => {
-                                                        document.getElementById (`lockUserForm_${id}`).submit();
-                                                    }, 500);
-                                                }
-                                            }
-                                            function delUser(username, id) {
-                                                if (confirm (`Bạn có chắc chắn muốn xóa tài khoản của ${username} không?`)) {
-                                                    document.getElementById (`delUserForm_${id}`).submit();
-                                                }
-                                            }
-                                            function openAddUser() {
-                                                document.getElementById("offcanvasAddUserLabel").innerText = "Thêm Mới Người Dùng";
-                                                document.getElementById("addNewUserForm").action = "{{ baseUrl }}/users/create";
-                                                document.getElementById("addNewUserForm").reset();
-                                                document.getElementById("apikey").innerHTML = "";
-                                                document.getElementById("listIP").hidden = true;
-                                                document.getElementById("remainingRequests").value = 500;
-                                                var addUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
-                                                addUserModal.show();
-                                            }
-                                            function openEditUserModal(id) {
-                                                document.getElementById("offcanvasAddUserLabel").innerText = "Chỉnh Sửa Người Dùng";
-                                                document.getElementById("addNewUserForm").action = "{{ baseUrl }}/users/update/" + id;
-                                                $.ajax({
-                                                    url: "{{ baseUrl }}/users/edit/" + id,
-                                                    method: "GET",
-                                                    success: function (response) {
-                                                        document.getElementById("name").value = response.data.name;
-                                                        document.getElementById("email").value = response.data.email;
-                                                        document.getElementById("phone").value = response.data.phone;
-                                                        document.getElementById("role").value = response.data.role;
-                                                        document.getElementById('password').value = '';
-                                                        document.getElementById("apikey").innerHTML = `
-          <label class="form-label" for="add-user-apikey">API KEY</label>
-          <input type="text" id="apikey-input" class="form-control" placeholder="API Key" name="apikey" value="${
-                                                            response.data.apikey
-                                                        }" required/>
-        `;
-                                                        document.getElementById("listIP").hidden = false;
-                                                        document.getElementById("remainingRequests").value = response.data.remainingRequests;
-                                                        document.getElementById("listIps").value = response
-                                                            .data
-                                                            .listIps
-                                                            .join('\n');
-                                                        var editUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
-                                                        editUserModal.show();
-                                                    },
-                                                    error: function (xhr, status, error) {
-                                                        alert("Lỗi: " + xhr.responseJSON.message);
-                                                    }
-                                                });
-                                            }
-                                        </script>
+                                        </div>                        <script>
+                            function confirmBanUser(username, id, shouldBan) {
+                                const action = shouldBan ? 'khóa' : 'mở khóa';
+                                if (confirm(`Bạn có chắc chắn muốn ${action} tài khoản của ${username} không?`)) {
+                                    const formData = new FormData();
+                                    if (shouldBan) {
+                                        formData.append('bannedUntil', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()); // Ban for 30 days
+                                        formData.append('bannedReason', 'Vi phạm quy định');
+                                    } else {
+                                        formData.append('bannedUntil', '');
+                                        formData.append('bannedReason', '');
+                                    }
+                                    
+                                    fetch(`{{ baseUrl }}/user-management/ban/${id}`, {
+                                        method: 'POST',
+                                        body: formData
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                }
+                            }
+
+                            function confirmWarnUser(username, id) {
+                                const reason = prompt(`Nhập lý do cảnh báo cho ${username}:`);
+                                if (reason) {
+                                    const formData = new FormData();
+                                    formData.append('bannedReason', reason);
+                                    
+                                    fetch(`{{ baseUrl }}/user-management/warn/${id}`, {
+                                        method: 'POST',
+                                        body: formData
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                }
+                            }
+
+                            function delUser(username, id) {
+                                if (confirm(`Bạn có chắc chắn muốn xóa tài khoản của ${username} không?`)) {
+                                    fetch(`{{ baseUrl }}/user-management/delete/${id}`, {
+                                        method: 'DELETE'
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                }
+                            }
+
+                            function openAddUser() {
+                                document.getElementById("offcanvasAddUserLabel").innerText = "Thêm Mới Người Dùng";
+                                document.getElementById("addNewUserForm").action = "{{ baseUrl }}/user-management/create";
+                                document.getElementById("addNewUserForm").reset();
+                                const addUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
+                                addUserModal.show();
+                            }
+
+                            function openEditUserModal(id) {
+                                document.getElementById("offcanvasAddUserLabel").innerText = "Chỉnh Sửa Người Dùng";
+                                document.getElementById("addNewUserForm").action = "{{ baseUrl }}/user-management/update/" + id;
+                                
+                                fetch(`{{ baseUrl }}/user-management/get/${id}`)
+                                    .then(response => response.json())
+                                    .then(response => {
+                                        document.getElementById("name").value = response.data.name || '';
+                                        document.getElementById("username").value = response.data.username || '';
+                                        document.getElementById("email").value = response.data.email || '';
+                                        document.getElementById("phone").value = response.data.phone || '';
+                                        document.getElementById("role").value = response.data.role || 'USER';
+                                        document.getElementById("gender").value = response.data.gender || 'OTHER';
+                                        document.getElementById("bio").value = response.data.bio || '';
+                                        document.getElementById('password').value = '';
+                                        
+                                        const editUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
+                                        editUserModal.show();
+                                    })
+                                    .catch(error => {
+                                        alert("Lỗi: " + error.message);
+                                    });
+                            }
+
+                            function setQueryParams(params) {
+                                const url = new URL(window.location.href);
+                                Object.keys(params).forEach(key => {
+                                    url.searchParams.set(key, params[key]);
+                                });
+                                window.location.href = url.toString();
+                            }
+                        </script>
                                     {% endblock %}
