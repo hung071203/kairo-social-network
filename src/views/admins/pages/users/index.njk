@@ -471,6 +471,7 @@
                                         fetch (`{{ baseUrl }}/user-management/get/${id}`)
                                             .then(response => response.json())
                                             .then(response => {
+                                                response.data = response.data.data
                                                 document.getElementById("name").value = response.data.name || '';
                                                 document.getElementById("username").value = response.data.username || '';
                                                 document.getElementById("email").value = response.data.email || '';
