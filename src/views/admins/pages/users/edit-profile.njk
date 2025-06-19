@@ -300,39 +300,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="profile-info">
-                            <h2 class="profile-name">{{ user.name }}</h2>
-                            <p class="profile-username">@{{ user.username }}</p>
-                            {% if user.bio %}
-                            <p class="text-muted mb-3">{{ user.bio }}</p>
-                            {% endif %}
-                            
-                            <div class="profile-stats">
-                                <div class="stat-item">
-                                    <span class="stat-number">{{ user.createdAt | formatDate('DD/MM/YYYY') }}</span>
-                                    <span class="stat-label">Tham gia</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-number">
-                                        {% if user.role == 'ADMIN' %}Quản trị viên
-                                        {% elif user.role == 'MOD' %}Điều hành viên
-                                        {% else %}Người dùng{% endif %}
-                                    </span>
-                                    <span class="stat-label">Vai trò</span>
-                                </div>
-                                {% if user.gender %}
-                                <div class="stat-item">
-                                    <span class="stat-number">
-                                        {% if user.gender == 'MALE' %}Nam
-                                        {% elif user.gender == 'FEMALE' %}Nữ
-                                        {% else %}Khác{% endif %}
-                                    </span>
-                                    <span class="stat-label">Giới tính</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Form Section -->
