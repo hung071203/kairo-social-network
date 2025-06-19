@@ -49,7 +49,7 @@
                         <div
                             class="card-body"><!-- Nội dung của bạn ở đây -->
                         </div>                        <div class="card-body pt-4">
-                            <form id="formAccountSettings" method="PATCH" action="{{ baseUrl }}/profile/update">
+                            <form id="formAccountSettings" method="POST" action="{{ baseUrl }}/profile/update">
                                 <div class="row g-6">
                                     <div class="col-md-6">
                                         <label for="firstName" class="form-label">Họ và Tên</label>
@@ -86,15 +86,37 @@
                                     <div class="col-md-6">
                                         <label class="form-label" for="birthday">Ngày sinh</label>
                                         <input type="date" id="birthday" name="birthday" class="form-control" value="{% if user.birthday %}{{ user.birthday | formatDate('YYYY/MM/DD') }}{% endif %}"/>
-                                    </div>
-                                    <div class="col-md-6">
+                                    </div>                                    <div class="col-md-6">
                                         <label class="form-label" for="avatar">Ảnh đại diện</label>
                                         <div class="input-group">
                                             <input type="text" id="avatar" name="avatar" class="form-control" value="{{ user.avatar }}" readonly/>
+                                            <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('avatarUpload').click()">
+                                                <i class="bx bx-upload"></i> Tải lên
+                                            </button>
                                             {% if user.avatar %}
-                                            <img src="{{ user.avatar }}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-left: 10px;"/>
+                                            <img id="avatarPreview" src="{{ user.avatar }}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-left: 10px;"/>
+                                            {% else %}
+                                            <img id="avatarPreview" src="/images/kairo.jpg" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; margin-left: 10px; display: none;"/>
                                             {% endif %}
                                         </div>
+                                        <input type="file" id="avatarUpload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)"/>
+                                        <small class="text-muted">Hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="background">Ảnh bìa</label>
+                                        <div class="input-group">
+                                            <input type="text" id="background" name="background" class="form-control" value="{{ user.background }}" readonly/>
+                                            <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('backgroundUpload').click()">
+                                                <i class="bx bx-upload"></i> Tải lên
+                                            </button>
+                                            {% if user.background %}
+                                            <img id="backgroundPreview" src="{{ user.background }}" alt="Background" style="width: 60px; height: 40px; object-fit: cover; border-radius: 8px; margin-left: 10px;"/>
+                                            {% else %}
+                                            <img id="backgroundPreview" src="/images/bg.jpg" alt="Background" style="width: 60px; height: 40px; object-fit: cover; border-radius: 8px; margin-left: 10px; display: none;"/>
+                                            {% endif %}
+                                        </div>
+                                        <input type="file" id="backgroundUpload" accept="image/*" style="display: none;" onchange="handleBackgroundUpload(event)"/>
+                                        <small class="text-muted">Hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)</small>
                                     </div>
                                     <div class="col-md-12">
                                         <label class="form-label" for="bio">Tiểu sử</label>
@@ -118,7 +140,6 @@
                                         <input type="text" id="bannedReason" class="form-control" value="{{ user.bannedReason }}" disabled/>
                                     </div>
                                     {% endif %}
-                                    <input type="hidden" name="type" value="CHANGE_PROFILE"/>
                                     <div class="mt-6">
                                         <button type="submit" class="btn btn-primary me-3">
                                             Lưu Thay Đổi
@@ -262,9 +283,7 @@
                     button.disabled = false;
                     button.innerText = 'Gửi lại mã';
                 }
-            }, 1000);        }    
-
-        async function uploadFile(file) {
+            }, 1000);        }        async function uploadFile(file) {
             const formData = new FormData();
             formData.append('file', file);
             try {
@@ -280,5 +299,114 @@
                 showToast({message: "Lỗi khi tải lên tệp.", type: "error"});
             }
         }
+
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast({message: "Chỉ được chọn tệp hình ảnh!", type: "error"});
+                return;
+            }
+
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast({message: "Kích thước tệp không được vượt quá 5MB!", type: "error"});
+                return;
+            }
+
+            try {
+                showToast({message: "Đang tải lên ảnh đại diện...", type: "info"});
+                
+                const uploadedUrl = await uploadFile(file);
+                if (uploadedUrl) {
+                    // Update the input field
+                    document.getElementById('avatar').value = uploadedUrl;
+                    
+                    // Update preview image
+                    const preview = document.getElementById('avatarPreview');
+                    preview.src = uploadedUrl;
+                    preview.style.display = 'block';
+                    
+                    showToast({message: "Tải lên ảnh đại diện thành công!", type: "success"});
+                }
+            } catch (error) {
+                showToast({message: "Lỗi khi tải lên ảnh đại diện: " + error.message, type: "error"});
+            }
+        }
+
+        async function handleBackgroundUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast({message: "Chỉ được chọn tệp hình ảnh!", type: "error"});
+                return;
+            }
+
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast({message: "Kích thước tệp không được vượt quá 5MB!", type: "error"});
+                return;
+            }
+
+            try {
+                showToast({message: "Đang tải lên ảnh bìa...", type: "info"});
+                
+                const uploadedUrl = await uploadFile(file);
+                if (uploadedUrl) {
+                    // Update the input field
+                    document.getElementById('background').value = uploadedUrl;
+                    
+                    // Update preview image
+                    const preview = document.getElementById('backgroundPreview');
+                    preview.src = uploadedUrl;
+                    preview.style.display = 'block';
+                    
+                    showToast({message: "Tải lên ảnh bìa thành công!", type: "success"});
+                }            } catch (error) {
+                showToast({message: "Lỗi khi tải lên ảnh bìa: " + error.message, type: "error"});
+            }
+        }
+
+        // Handle form submission with PATCH method
+        document.getElementById('formAccountSettings').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {};
+            
+            // Convert FormData to regular object
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch(this.action, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast({message: "Cập nhật thông tin thành công!", type: "success"});
+                    // Reload page after 2 seconds to show updated data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast({message: result.message || "Có lỗi xảy ra khi cập nhật!", type: "error"});
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showToast({message: "Lỗi kết nối. Vui lòng thử lại!", type: "error"});
+            }
+        });
     </script>
 {% endblock %}
