@@ -22,7 +22,6 @@ import { FilterUserDto, CreateUserDto, UpdateUserDto, BanUserDto } from './dto/u
 @UseGuards(ModeratorsAuthGuard)
 export class UserManagementController {
   constructor(private readonly userManagementService: UserManagementService) {}
-
   @Get()
   @Render('admins/pages/users/index.njk')
   @UseFilters(WebExceptionFilter)
@@ -36,6 +35,7 @@ export class UserManagementController {
         title: 'Quản lý người dùng',
         content: 'admins/pages/users/index.njk',
         data,
+        query: dto, // Pass query params to template for sorting
       };
     } catch (error) {
       throw new BadRequestException(error.message);
