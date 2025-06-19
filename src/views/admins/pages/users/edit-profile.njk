@@ -355,7 +355,11 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @keyframes slideInRight {
             from {
                 transform: translateX(100%);
@@ -691,23 +695,29 @@
                         Đổi email
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <form id="formChangeMail" method="POST" action="{{ baseUrl }}/users/edit-profile">
+                </div>                <div class="modal-body p-4">
+                    <form id="formChangeMail" method="POST" action="{{ baseUrl }}/profile/change-mail">
                         <div id="message-alert-email"></div>
                         <div class="mb-3">
                             <label class="form-label" for="email-pre">Nhập email mới</label>
                             <div class="input-group">
                                 <input type="email" id="email-pre" class="form-control" name="email" placeholder="example@email.com" required/>
-                                <button class="btn btn-outline-primary" type="button" onclick="sendCode(this)">
+                                <button class="btn btn-outline-primary" type="button" id="sendOtpBtn" onclick="sendCode(this)">
                                     <i class="bx bx-send me-1"></i>
                                     Nhận mã OTP
                                 </button>
                             </div>
+                            <div id="email-feedback" class="mt-2 text-danger small" style="display: none;"></div>
+                            <div id="countdown-display" class="mt-2 text-muted small" style="display: none;">
+                                Gửi lại OTP sau: <span id="countdown-timer">60</span> giây
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="otp" class="form-label">Mã OTP</label>
-                            <input type="text" class="form-control" name="otp" placeholder="Nhập mã 6 số" required/>
+                            <label for="otp-input" class="form-label">Mã OTP</label>
+                            <input type="text" class="form-control" id="otp-input" name="otp" placeholder="Nhập mã 6 số" required/>
+                        </div>
+                        <div class="mb-3">
+                            <div class="cf-turnstile" data-sitekey="{{ capchaPublicKey }}" data-theme="light"></div>
                         </div>
                         <input type="hidden" name="type" value="CHANGE_EMAIL"/>
                     </form>
@@ -726,7 +736,6 @@
         </div>
     </div>
 
-    <div class="cf-turnstile mt-3" data-sitekey="{{ capchaPublicKey }}" data-theme="light"></div>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script>
         function openFormChangePass() {
@@ -738,19 +747,51 @@
             var changeMailModal = new bootstrap.Modal(document.getElementById('changeMailModal'));
             changeMailModal.show();
         }
-        
-        async function sendCode(button) {
+          async function sendCode(button) {
+            const emailInput = document.getElementById('email-pre');
+            const email = emailInput.value.trim();
+            const emailFeedback = document.getElementById('email-feedback');
+            const countdownDisplay = document.getElementById('countdown-display');
+            const countdownTimer = document.getElementById('countdown-timer');
+            
+            // Validate email
+            if (!email) {
+                emailFeedback.textContent = 'Vui lòng nhập email mới';
+                emailFeedback.style.display = 'block';
+                emailFeedback.className = 'mt-2 text-danger small';
+                return;
+            }
+            
+            // Check if email is valid format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                emailFeedback.textContent = 'Email không hợp lệ';
+                emailFeedback.style.display = 'block';
+                emailFeedback.className = 'mt-2 text-danger small';
+                return;
+            }
+            
+            // Get captcha token
+            const captchaToken = document.querySelector('.cf-turnstile [name="cf-turnstile-response"]')?.value;
+            if (!captchaToken) {
+                emailFeedback.textContent = 'Vui lòng xác thực Captcha';
+                emailFeedback.style.display = 'block';
+                emailFeedback.className = 'mt-2 text-danger small';
+                return;
+            }
+            
             button.disabled = true;
             button.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i> Đang gửi...';
+            emailFeedback.style.display = 'none';
             
             const requestData = {
-                email: document.getElementById('email-pre').value,
-                'cf-turnstile-response': document.querySelector('.cf-turnstile [name="cf-turnstile-response"]')?.value || '',
+                email: email,
+                'cf-turnstile-response': captchaToken,
                 type: 'CHANGE_MAIL'
             };
             
             try {
-                const response = await fetch('{{ baseUrl }}/authentication/verify-email', {
+                const response = await fetch('{{ baseUrl }}/auth/verify-email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -761,33 +802,46 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showToast({message: data.data, header: 'Thành công', type: 'success', delay: 3000});
+                    emailFeedback.textContent = 'Mã OTP đã được gửi đến email của bạn';
+                    emailFeedback.style.display = 'block';
+                    emailFeedback.className = 'mt-2 text-success small';
                     startCountdown(button);
                 } else {
-                    showToast({message: data.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                    emailFeedback.textContent = data.message || 'Gửi OTP thất bại';
+                    emailFeedback.style.display = 'block';
+                    emailFeedback.className = 'mt-2 text-danger small';
                     button.disabled = false;
-                    button.innerHTML = '<i class="bx bx-send me-1"></i> Gửi lại mã';
+                    button.innerHTML = '<i class="bx bx-send me-1"></i> Nhận mã OTP';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showToast({message: error.message, header: 'Lỗi!', type: 'error', delay: 5000});
+                emailFeedback.textContent = 'Lỗi khi gửi OTP. Vui lòng thử lại!';
+                emailFeedback.style.display = 'block';
+                emailFeedback.className = 'mt-2 text-danger small';
                 button.disabled = false;
-                button.innerHTML = '<i class="bx bx-send me-1"></i> Gửi lại mã';
+                button.innerHTML = '<i class="bx bx-send me-1"></i> Nhận mã OTP';
             }
         }
-        
-        function startCountdown(button) {
+          function startCountdown(button) {
+            const countdownDisplay = document.getElementById('countdown-display');
+            const countdownTimer = document.getElementById('countdown-timer');
+            
             let countdown = 60;
+            countdownTimer.textContent = countdown;
+            countdownDisplay.style.display = 'block';
+            
             const interval = setInterval(() => {
-                button.innerHTML = `<i class="bx bx-time me-1"></i> ${countdown}s`;
                 countdown--;
-                if (countdown < 0) {
+                countdownTimer.textContent = countdown;
+                
+                if (countdown <= 0) {
                     clearInterval(interval);
                     button.disabled = false;
-                    button.innerHTML = '<i class="bx bx-send me-1"></i> Gửi lại mã';
+                    button.innerHTML = '<i class="bx bx-send me-1"></i> Nhận mã OTP';
+                    countdownDisplay.style.display = 'none';
                 }
             }, 1000);
-        }        async function uploadFile(file, progressCallback) {
+        }async function uploadFile(file, progressCallback) {
             const formData = new FormData();
             formData.append('file', file);
             
@@ -1193,10 +1247,107 @@
                     submitButton.innerHTML = originalText;
                     submitButton.style.background = '';
                     submitButton.classList.remove('form-submit-loading');
-                }, 3000);
-            } finally {
+                }, 3000);            } finally {
                 // Remove pulse effect
                 this.classList.remove('pulse-update');
+            }
+        });
+
+        // Handle change email form submission
+        document.getElementById('formChangeMail').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const emailInput = document.getElementById('email-pre');
+            const otpInput = document.getElementById('otp-input');
+            const emailFeedback = document.getElementById('email-feedback');
+            
+            const email = emailInput.value.trim();
+            const otp = otpInput.value.trim();
+            
+            // Validate inputs
+            if (!email || !otp) {
+                emailFeedback.textContent = 'Vui lòng điền đầy đủ thông tin';
+                emailFeedback.style.display = 'block';
+                emailFeedback.className = 'mt-2 text-danger small';
+                return;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                emailFeedback.textContent = 'Email không hợp lệ';
+                emailFeedback.style.display = 'block';
+                emailFeedback.className = 'mt-2 text-danger small';
+                return;
+            }
+            
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
+            try {
+                submitButton.innerHTML = `
+                    <div class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></div>
+                    Đang lưu thay đổi...
+                `;
+                submitButton.disabled = true;
+                emailFeedback.style.display = 'none';
+                
+                const response = await fetch('{{ baseUrl }}/profile/change-mail', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, otp })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    submitButton.innerHTML = `
+                        <i class="bx bx-check-circle me-2" style="color: #28a745;"></i>
+                        Thành công!
+                    `;
+                    submitButton.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                    
+                    showToast({message: "Đổi email thành công!", type: "success"});
+                    
+                    // Close modal and reload page after 2 seconds
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('changeMailModal'));
+                        modal.hide();
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    emailFeedback.textContent = data.message || 'Đổi email thất bại';
+                    emailFeedback.style.display = 'block';
+                    emailFeedback.className = 'mt-2 text-danger small';
+                    
+                    submitButton.innerHTML = `
+                        <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
+                        Thử lại
+                    `;
+                    submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                    submitButton.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error changing email:', error);
+                emailFeedback.textContent = 'Lỗi kết nối. Vui lòng thử lại!';
+                emailFeedback.style.display = 'block';
+                emailFeedback.className = 'mt-2 text-danger small';
+                
+                submitButton.innerHTML = `
+                    <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
+                    Thử lại
+                `;
+                submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                submitButton.disabled = false;
+            }
+            
+            // Reset button after 3 seconds if not successful
+            if (!submitButton.innerHTML.includes('Thành công')) {
+                setTimeout(() => {
+                    submitButton.innerHTML = originalText;
+                    submitButton.style.background = '';
+                }, 3000);
             }
         });
     </script>
