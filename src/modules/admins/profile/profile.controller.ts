@@ -13,8 +13,6 @@ import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
 import { GetUser } from 'src/common/decorators';
 import { User } from 'src/schemas/users.schema';
-import { UpdateUserDto } from '../user-management/dto/user-manager.dto';
-import { UpdateProfileDto } from './dto/profile.dto';
 
 @Controller('profile')
 @UseGuards(ModeratorsAuthGuard)
