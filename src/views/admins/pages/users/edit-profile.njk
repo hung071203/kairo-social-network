@@ -201,13 +201,213 @@
             color: #6c757d;
             margin-top: 8px;
         }
-        
-        /* Animation cho upload */
+          /* Animation cho upload */
         .uploading {
             opacity: 0.7;
             transform: scale(0.98);
+            position: relative;
         }
         
+        .uploading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .uploading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: spin 1s linear infinite;
+            z-index: 10;
+        }
+        
+        /* Enhanced Loading Animations */
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: inherit;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 0.875rem;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .upload-progress {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 4px;
+            padding: 5px;
+            color: white;
+            font-size: 0.75rem;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .upload-progress.show {
+            opacity: 1;
+        }
+
+        .success-animation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #28a745;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            scale: 0;
+            transition: all 0.3s ease;
+            z-index: 35;
+        }
+
+        .success-animation.show {
+            opacity: 1;
+            scale: 1;
+        }
+
+        .success-animation i {
+            color: white;
+            font-size: 18px;
+        }
+
+        /* Pulse effect for updating elements */
+        .pulse-update {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+            }
+        }
+
+        /* Enhanced button loading state */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            margin: -8px 0 0 -8px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Enhanced form submit button loading */
+        .form-submit-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .form-submit-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Smooth transitions for image updates */
+        .avatar-image, .cover-image {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .image-updating {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .profile-cover {
@@ -587,27 +787,49 @@
                     button.innerHTML = '<i class="bx bx-send me-1"></i> Gửi lại mã';
                 }
             }, 1000);
-        }
-          async function uploadFile(file) {
+        }        async function uploadFile(file, progressCallback) {
             const formData = new FormData();
             formData.append('file', file);
+            
             try {
-                const response = await fetch('/storage/upload', {
-                    method: 'POST',
-                    body: formData
+                // Create XMLHttpRequest for upload progress tracking
+                return new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    
+                    xhr.upload.addEventListener('progress', (event) => {
+                        if (event.lengthComputable && progressCallback) {
+                            const percentComplete = Math.round((event.loaded / event.total) * 100);
+                            progressCallback(percentComplete);
+                        }
+                    });
+                    
+                    xhr.addEventListener('load', () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            const data = JSON.parse(xhr.responseText);
+                            resolve(data.data.url);
+                        } else {
+                            reject(new Error('Upload failed'));
+                        }
+                    });
+                    
+                    xhr.addEventListener('error', () => {
+                        reject(new Error('Network error during upload'));
+                    });
+                    
+                    xhr.open('POST', '/storage/upload');
+                    xhr.send(formData);
                 });
-                if (!response.ok) throw new Error('Upload failed');
-                const data = await response.json();
-                return data.data.url;
             } catch (error) {
                 console.error('Error uploading file:', error);
                 showToast({message: "Lỗi khi tải lên tệp.", type: "error"});
                 throw error;
             }
-        }
-
-        async function autoSaveProfile(updateData) {
+        }        async function autoSaveProfile(updateData) {
             try {
+                // Show updating progress
+                const updateIndicator = createUpdateIndicator();
+                document.body.appendChild(updateIndicator);
+                
                 // Get current form data
                 const formData = new FormData(document.getElementById('formAccountSettings'));
                 const data = {};
@@ -634,13 +856,56 @@
                     throw new Error(result.message || "Có lỗi xảy ra khi cập nhật!");
                 }
                 
+                // Show success animation
+                updateIndicator.innerHTML = `
+                    <div class="success-animation show">
+                        <i class="bx bx-check"></i>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    document.body.removeChild(updateIndicator);
+                }, 1500);
+                
                 return result;
             } catch (error) {
                 console.error('Error auto-saving profile:', error);
                 showToast({message: "Lỗi khi tự động lưu: " + error.message, type: "error"});
+                
+                // Remove update indicator on error
+                const indicator = document.querySelector('.update-indicator');
+                if (indicator) {
+                    document.body.removeChild(indicator);
+                }
                 throw error;
             }
-        }async function handleAvatarUpload(event) {
+        }
+
+        function createUpdateIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'update-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(102, 126, 234, 0.95);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 500;
+                animation: slideInRight 0.3s ease;
+            `;
+            indicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <span>Đang cập nhật hồ sơ...</span>
+            `;
+            return indicator;
+        }        async function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -656,15 +921,35 @@
                 return;
             }
 
+            const avatarImg = document.getElementById('avatarDisplay');
+            const avatarContainer = document.querySelector('.profile-avatar');
+            
+            // Create loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Đang tải lên... 0%</div>
+            `;
+            avatarContainer.appendChild(loadingOverlay);
+            
+            // Show loading overlay
+            setTimeout(() => loadingOverlay.classList.add('show'), 10);
+
             try {
-                showToast({message: "Đang tải lên ảnh đại diện...", type: "info"});
-                
-                // Add uploading class for animation
-                const avatarImg = document.getElementById('avatarDisplay');
+                // Add uploading class for visual feedback
                 avatarImg.classList.add('uploading');
+                avatarContainer.classList.add('pulse-update');
                 
-                const uploadedUrl = await uploadFile(file);
+                const uploadedUrl = await uploadFile(file, (progress) => {
+                    const loadingText = loadingOverlay.querySelector('.loading-text');
+                    loadingText.textContent = `Đang tải lên... ${progress}%`;
+                });
+                
                 if (uploadedUrl) {
+                    // Update loading text
+                    loadingOverlay.querySelector('.loading-text').textContent = 'Đang cập nhật hồ sơ...';
+                    
                     // Update the hidden input field
                     document.getElementById('avatar').value = uploadedUrl;
                     
@@ -673,17 +958,53 @@
                     setTimeout(() => {
                         avatarImg.src = uploadedUrl;
                         avatarImg.style.opacity = '1';
-                        avatarImg.classList.remove('uploading');
                     }, 300);
                     
                     // Auto-save avatar to profile
                     await autoSaveProfile({avatar: uploadedUrl});
                     
+                    // Show success state
+                    loadingOverlay.innerHTML = `
+                        <div class="success-animation show">
+                            <i class="bx bx-check"></i>
+                        </div>
+                        <div class="loading-text">Cập nhật thành công!</div>
+                    `;
+                    
+                    setTimeout(() => {
+                        loadingOverlay.classList.remove('show');
+                        setTimeout(() => {
+                            if (loadingOverlay.parentNode) {
+                                loadingOverlay.parentNode.removeChild(loadingOverlay);
+                            }
+                        }, 300);
+                    }, 1500);
+                    
                     showToast({message: "Cập nhật ảnh đại diện thành công!", type: "success"});
                 }
             } catch (error) {
-                document.getElementById('avatarDisplay').classList.remove('uploading');
+                // Show error state
+                loadingOverlay.innerHTML = `
+                    <div style="color: #dc3545; text-align: center;">
+                        <i class="bx bx-error-circle" style="font-size: 24px;"></i>
+                        <div class="loading-text" style="color: #dc3545;">Tải lên thất bại!</div>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    loadingOverlay.classList.remove('show');
+                    setTimeout(() => {
+                        if (loadingOverlay.parentNode) {
+                            loadingOverlay.parentNode.removeChild(loadingOverlay);
+                        }
+                    }, 300);
+                }, 2000);
+                
                 showToast({message: "Lỗi khi tải lên ảnh đại diện: " + error.message, type: "error"});
+            } finally {
+                // Clean up classes
+                avatarImg.classList.remove('uploading');
+                avatarContainer.classList.remove('pulse-update');
             }
         }        async function handleBackgroundUpload(event) {
             const file = event.target.files[0];
@@ -701,17 +1022,38 @@
                 return;
             }
 
+            const backgroundImg = document.getElementById('backgroundDisplay');
+            const coverContainer = document.querySelector('.profile-cover');
+            
+            // Create loading overlay for cover image
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.style.borderRadius = '16px 16px 0 0';
+            loadingOverlay.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Đang tải lên... 0%</div>
+            `;
+            coverContainer.appendChild(loadingOverlay);
+            
+            // Show loading overlay
+            setTimeout(() => loadingOverlay.classList.add('show'), 10);
+
             try {
-                showToast({message: "Đang tải lên ảnh bìa...", type: "info"});
-                
-                // Add uploading class for animation
-                const backgroundImg = document.getElementById('backgroundDisplay');
+                // Add visual feedback classes
                 if (backgroundImg) {
                     backgroundImg.classList.add('uploading');
                 }
+                coverContainer.classList.add('pulse-update');
                 
-                const uploadedUrl = await uploadFile(file);
+                const uploadedUrl = await uploadFile(file, (progress) => {
+                    const loadingText = loadingOverlay.querySelector('.loading-text');
+                    loadingText.textContent = `Đang tải lên... ${progress}%`;
+                });
+                
                 if (uploadedUrl) {
+                    // Update loading text
+                    loadingOverlay.querySelector('.loading-text').textContent = 'Đang cập nhật hồ sơ...';
+                    
                     // Update the hidden input field
                     document.getElementById('background').value = uploadedUrl;
                     
@@ -721,34 +1063,66 @@
                         setTimeout(() => {
                             backgroundImg.src = uploadedUrl;
                             backgroundImg.style.opacity = '1';
-                            backgroundImg.classList.remove('uploading');
                         }, 300);
                     } else {
                         // Create image element if it doesn't exist
-                        const coverDiv = document.querySelector('.profile-cover');
                         const newImg = document.createElement('img');
                         newImg.id = 'backgroundDisplay';
                         newImg.src = uploadedUrl;
                         newImg.className = 'cover-image';
                         newImg.onclick = () => document.getElementById('backgroundUpload').click();
-                        coverDiv.prepend(newImg);
+                        coverContainer.prepend(newImg);
                     }
                     
                     // Auto-save background to profile
                     await autoSaveProfile({background: uploadedUrl});
                     
+                    // Show success state
+                    loadingOverlay.innerHTML = `
+                        <div class="success-animation show">
+                            <i class="bx bx-check"></i>
+                        </div>
+                        <div class="loading-text">Cập nhật thành công!</div>
+                    `;
+                    
+                    setTimeout(() => {
+                        loadingOverlay.classList.remove('show');
+                        setTimeout(() => {
+                            if (loadingOverlay.parentNode) {
+                                loadingOverlay.parentNode.removeChild(loadingOverlay);
+                            }
+                        }, 300);
+                    }, 1500);
+                    
                     showToast({message: "Cập nhật ảnh bìa thành công!", type: "success"});
                 }
             } catch (error) {
-                const backgroundImg = document.getElementById('backgroundDisplay');
+                // Show error state
+                loadingOverlay.innerHTML = `
+                    <div style="color: #dc3545; text-align: center;">
+                        <i class="bx bx-error-circle" style="font-size: 24px;"></i>
+                        <div class="loading-text" style="color: #dc3545;">Tải lên thất bại!</div>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    loadingOverlay.classList.remove('show');
+                    setTimeout(() => {
+                        if (loadingOverlay.parentNode) {
+                            loadingOverlay.parentNode.removeChild(loadingOverlay);
+                        }
+                    }, 300);
+                }, 2000);
+                
+                showToast({message: "Lỗi khi tải lên ảnh bìa: " + error.message, type: "error"});
+            } finally {
+                // Clean up classes
                 if (backgroundImg) {
                     backgroundImg.classList.remove('uploading');
                 }
-                showToast({message: "Lỗi khi tải lên ảnh bìa: " + error.message, type: "error"});
+                coverContainer.classList.remove('pulse-update');
             }
-        }
-
-        // Handle form submission with PATCH method
+        }        // Handle form submission with PATCH method
         document.getElementById('formAccountSettings').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -760,11 +1134,20 @@
                 data[key] = value;
             }
             
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
             try {
-                const submitButton = this.querySelector('button[type="submit"]');
-                const originalText = submitButton.innerHTML;
-                submitButton.innerHTML = '<i class="bx bx-loader-alt bx-spin me-2"></i> Đang lưu...';
+                // Enhanced loading state
+                submitButton.innerHTML = `
+                    <div class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></div>
+                    Đang lưu thay đổi...
+                `;
                 submitButton.disabled = true;
+                submitButton.classList.add('form-submit-loading');
+                
+                // Add pulse effect to form
+                this.classList.add('pulse-update');
                 
                 const response = await fetch(this.action, {
                     method: 'PATCH',
@@ -777,22 +1160,43 @@
                 const result = await response.json();
                 
                 if (response.ok) {
+                    // Success state
+                    submitButton.innerHTML = `
+                        <i class="bx bx-check-circle me-2" style="color: #28a745;"></i>
+                        Đã lưu thành công!
+                    `;
+                    submitButton.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                    
                     showToast({message: "Cập nhật thông tin thành công!", type: "success"});
+                    
                     // Reload page after 2 seconds to show updated data
                     setTimeout(() => {
                         window.location.reload();
                     }, 2000);
                 } else {
-                    showToast({message: result.message || "Có lỗi xảy ra khi cập nhật!", type: "error"});
-                    submitButton.innerHTML = originalText;
-                    submitButton.disabled = false;
+                    throw new Error(result.message || "Có lỗi xảy ra khi cập nhật!");
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
                 showToast({message: "Lỗi kết nối. Vui lòng thử lại!", type: "error"});
-                const submitButton = this.querySelector('button[type="submit"]');
-                submitButton.innerHTML = '<i class="bx bx-save me-2"></i> Lưu Thay Đổi';
+                
+                // Error state
+                submitButton.innerHTML = `
+                    <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
+                    Thử lại
+                `;
+                submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
                 submitButton.disabled = false;
+                
+                // Reset to original state after 3 seconds
+                setTimeout(() => {
+                    submitButton.innerHTML = originalText;
+                    submitButton.style.background = '';
+                    submitButton.classList.remove('form-submit-loading');
+                }, 3000);
+            } finally {
+                // Remove pulse effect
+                this.classList.remove('pulse-update');
             }
         });
     </script>
