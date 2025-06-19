@@ -149,12 +149,21 @@
                                                     <a class="dropdown-item" href="javascript:void(0);" onclick="openUserProfileModal('{{ item._id }}');">
                                                         <i class="bx bx-user me-1"></i>
                                                         Xem Hồ Sơ
-                                                    </a>
-                                                    {% if user.role == 'ADMIN' or user.role == 'MOD' %}
-                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="openEditUserModal('{{ item._id }}');">
-                                                            <i class="bx bx-edit-alt me-1"></i>
-                                                            Chỉnh Sửa
-                                                        </a>
+                                                    </a>                                                    {% set canManageUser = false %}
+                                                    {% if user.role == 'ADMIN' %}
+                                                        {% set canManageUser = true %}
+                                                    {% elif user.role == 'MOD' and item.role == 'USER' %}
+                                                        {% set canManageUser = true %}
+                                                    {% endif %}
+
+                                                    {% if canManageUser %}
+                                                        {% if user.role == 'ADMIN' %}
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="openEditUserModal('{{ item._id }}');">
+                                                                <i class="bx bx-edit-alt me-1"></i>
+                                                                Chỉnh Sửa
+                                                            </a>
+                                                        {% endif %}
+                                                        
                                                         <a class="dropdown-item {% if item.bannedUntil and (item.bannedUntil | isFuture) %}text-success{% else %}text-danger{% endif %}" href="javascript:void(0);" onclick="{% if item.bannedUntil and (item.bannedUntil | isFuture) %}confirmUnbanUser('{{ item.name }}', '{{ item._id }}'){% else %}openBanModal('{{ item.name }}', '{{ item._id }}'){% endif %}">
                                                             {% if item.bannedUntil and (item.bannedUntil | isFuture) %}
                                                                 <i class="bx bx-lock-open me-1"></i>
@@ -183,11 +192,13 @@
                                                                 </a>
                                                             {% endif %}
                                                         {% endif %}
-                                                        {% if user.role == 'ADMIN' %}
+                                                        
+                                                        {% if (user.role == 'ADMIN') or (user.role == 'MOD' and item.role == 'USER') %}
                                                             <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="delUser('{{ item.name }}', '{{ item._id }}');">
                                                                 <i class="bx bx-trash me-1"></i>
                                                                 Xóa tài khoản
-                                                            </a>                                                        {% endif %}
+                                                            </a>
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                             </div>
@@ -512,7 +523,7 @@
                                                 </div>
                                             </div>                                            <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                                                {% if user.role == 'ADMIN' or user.role == 'MOD' %}
+                                                {% if user.role == 'ADMIN' %}
                                                     <button type="button" class="btn btn-primary" onclick="openEditUserModal(currentProfileUserId)">
                                                         <i class="bx bx-edit-alt me-1"></i>Chỉnh Sửa
                                                     </button>
