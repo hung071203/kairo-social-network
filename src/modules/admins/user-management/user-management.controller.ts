@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserManagementService } from './user-management.service';
-import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
+import { AdminAuthGuard, ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
 import { Pagination, PaginationDto } from 'src/common/decorators';
 import { FilterUserDto, CreateUserDto, UpdateUserDto, BanUserDto } from './dto/user-manager.dto';
@@ -44,6 +44,7 @@ export class UserManagementController {
 
   @Post('create')
   @UseFilters(WebExceptionFilter)
+  @UseGuards(AdminAuthGuard)
   async createUser(@Body() dto: CreateUserDto) {
     try {
       const user = await this.userManagementService.createUser(dto);
@@ -72,6 +73,7 @@ export class UserManagementController {
 
   @Put('update/:id')
   @UseFilters(WebExceptionFilter)
+  @UseGuards(AdminAuthGuard)
   async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     try {
       const user = await this.userManagementService.updateUser(id, dto);
