@@ -28,7 +28,7 @@ async function bootstrap() {
   app.useWebSocketAdapter(redisIoAdapter);
 
   app.useGlobalFilters(new AllExceptionsFilter()); // 🔹 Đăng ký filter toàn cục
- 
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // Xóa các biến không có trong DTO
@@ -49,27 +49,42 @@ async function bootstrap() {
       },
     }),
   );
-  const viewsPath = path.join(process.cwd(), 'src', 'views'); 
+  const viewsPath = path.join(process.cwd(), 'src', 'views');
 
   app.setBaseViewsDir(viewsPath);
   app.useStaticAssets(path.join(process.cwd(), 'src', 'public'));
   app.use(cookieParser()); // Kích hoạt cookie-parser
 
-  const env =  nunjucks.configure(viewsPath, {
+  const env = nunjucks.configure(viewsPath, {
     autoescape: true, // tự động escape HTML
     express: app.getHttpAdapter().getInstance(), // Cung cấp đối tượng express cho Nunjucks
     noCache: process.env.APP_ID === 'dev', // Bỏ cache trong môi trường dev
   });
 
-  env.addFilter('date', (value: any, locale = 'vi-VN', timeZone = 'Asia/Ho_Chi_Minh') => {
-    if (!value) return '';
-    if (locale === 'X') {
-      return Date.now();
-    }
-    const date = new Date(parseInt(value)).toLocaleString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-    });
-    return date;
+  env.addFilter('formatDate', (value: any, format = 'DD/MM/YYYY HH:mm:ss') => {
+    const timestamp = !value || value === 'now' ? Date.now() : Number(value);
+    const date = new Date(timestamp);
+
+    if (isNaN(date.getTime())) return '';
+
+    // ✅ Trả về string
+    const pad = (n: number): string => (n < 10 ? '0' + n : n.toString());
+
+    const DD = pad(date.getDate());
+    const MM = pad(date.getMonth() + 1);
+    const YYYY = date.getFullYear().toString(); // ✅ ép về string
+
+    const HH = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    const ss = pad(date.getSeconds());
+
+    return format
+      .replace('DD', DD)
+      .replace('MM', MM)
+      .replace('YYYY', YYYY)
+      .replace('HH', HH)
+      .replace('mm', mm)
+      .replace('ss', ss);
   });
 
   app.setViewEngine('njk');

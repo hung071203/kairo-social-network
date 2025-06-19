@@ -88,7 +88,11 @@
                                         <div class="avatar-wrapper">
                                             <div class="avatar avatar-sm me-4">
                                                 {% if item.avatar %}
-                                                    <img src="{{ item.avatar }}" alt="{{ item.name }}" class="rounded-circle">
+                                                    <img src="{{ item.avatar }}" alt="{{ item.name or 'User' }}" class="rounded-circle">
+                                                    {% else %}
+                                                        <span class="avatar-initial rounded-circle bg-label-primary">
+                                                            {{ (item.name or item.username or 'U')[0] | upper }}
+                                                        </span>
                                                     {% endif %}
                                                 </div>
                                             </div>
@@ -112,12 +116,22 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if item.bannedUntil %}
-                                            <span class="badge bg-label-danger me-1">Bị khóa</span>
-                                        {% elif item.bannedReason %}
-                                            <span class="badge bg-label-warning me-1">Cảnh báo</span>
+                                        {% if item.bannedUntil and item.bannedUntil > "now" | formatDate %}
+                                            {% set bannedDate = item.bannedUntil | formatDate('YYYY-MM-DD HH:mm:ss') %}
+                                            <span
+                                                class="badge bg-label-danger me-1"
+                                                title="Bị khóa đến: {{ bannedDate }}{% if item.bannedReason %} | Lý do: {{ item.bannedReason }}{% endif %}"
+                                                data-bs-toggle="tooltip">
+                                                <i class="bx bx-lock me-1"></i>Khóa đến {{ bannedDate }}
+                                            </span>
+                                        {% elif item.bannedReason and not (item.bannedUntil and item.bannedUntil > "now" | formatDate) %}
+                                            <span class="badge bg-label-warning me-1" title="Cảnh báo: {{ item.bannedReason }}" data-bs-toggle="tooltip">
+                                                <i class="bx bx-error me-1"></i>Cảnh báo
+                                            </span>
                                         {% else %}
-                                            <span class="badge bg-label-success me-1">Hoạt động</span>
+                                            <span class="badge bg-label-success me-1" title="Tài khoản hoạt động bình thường" data-bs-toggle="tooltip">
+                                                <i class="bx bx-check me-1"></i>Hoạt động
+                                            </span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -131,32 +145,37 @@
                                                         <a class="dropdown-item" href="javascript:void(0);" onclick="openEditUserModal('{{ item._id }}');">
                                                             <i class="bx bx-edit-alt me-1"></i>
                                                             Chỉnh Sửa
-                                                        </a>                                                        <a
-                                                            class="dropdown-item"
-                                                            href="javascript:void(0);"
-                                                            onclick="{% if item.bannedUntil %}confirmUnbanUser('{{ item.name }}', '{{ item._id }}'){% else %}openBanModal('{{ item.name }}', '{{ item._id }}'){% endif %}">
-                                                            {% if item.bannedUntil %}
+                                                        </a>
+                                                        <a class="dropdown-item {% if item.bannedUntil and item.bannedUntil > "now" | formatDate %}text-success{% else %}text-danger{% endif %}" href="javascript:void(0);" onclick="{% if item.bannedUntil and item.bannedUntil > "now" | formatDate %}confirmUnbanUser('{{ item.name }}', '{{ item._id }}'){% else %}openBanModal('{{ item.name }}', '{{ item._id }}'){% endif %}">
+                                                            {% if item.bannedUntil and item.bannedUntil > "now" | formatDate %}
                                                                 <i class="bx bx-lock-open me-1"></i>
                                                                 Mở Khóa
                                                             {% else %}
                                                                 <i class="bx bx-lock me-1"></i>
                                                                 Khóa Tài Khoản
                                                             {% endif %}
-                                                        </a>                                                        {% if not item.bannedUntil %}
-                                                            {% if item.bannedReason and not item.bannedUntil %}
-                                                                <a class="dropdown-item" href="javascript:void(0);" onclick="openRemoveWarningModal('{{ item.name }}', '{{ item._id }}');">
+                                                        </a>
+                                                        {% if not (item.bannedUntil and item.bannedUntil > "now" | formatDate) %}
+                                                            {% if item.bannedReason and not (item.bannedUntil and item.bannedUntil > "now" | formatDate) %}
+                                                                <a
+                                                                    class="dropdown-item text-success"
+                                                                    href="javascript:void(0);"
+                                                                    onclick="openRemoveWarningModal('{{ item.name }}', '{{ item._id }}');">
                                                                     <i class="bx bx-shield-check me-1"></i>
                                                                     Bỏ Cảnh Báo
                                                                 </a>
                                                             {% else %}
-                                                                <a class="dropdown-item" href="javascript:void(0);" onclick="confirmWarnUser('{{ item.name }}', '{{ item._id }}');">
+                                                                <a
+                                                                    class="dropdown-item text-warning"
+                                                                    href="javascript:void(0);"
+                                                                    onclick="confirmWarnUser('{{ item.name }}', '{{ item._id }}');">
                                                                     <i class="bx bx-error me-1"></i>
                                                                     Cảnh báo
                                                                 </a>
                                                             {% endif %}
                                                         {% endif %}
                                                         {% if user.role == 'ADMIN' %}
-                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="delUser('{{ item.name }}', '{{ item._id }}');">
+                                                            <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="delUser('{{ item.name }}', '{{ item._id }}');">
                                                                 <i class="bx bx-trash me-1"></i>
                                                                 Xóa tài khoản
                                                             </a>
@@ -275,7 +294,10 @@
                                             </div>
                                             <button type="submit" class="btn btn-primary me-3 data-submit">Gửi</button>
                                             <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Hủy</button>
-                                        </form>                                    </div>                                </div>                                <!-- Warning User Modal -->
+                                        </form>
+                                    </div>
+                                </div>
+                                <!-- Warning User Modal -->
                                 <div class="modal fade" id="warnUserModal" tabindex="-1" aria-labelledby="warnUserModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
@@ -292,7 +314,8 @@
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="warnReason" class="form-label">Lý do cảnh báo:</label>
-                                                    <textarea id="warnReason" class="form-control" rows="4" placeholder="Nhập lý do cảnh báo người dùng..." required>Vi phạm quy định cộng đồng</textarea>
+                                                    <textarea id="warnReason" class="form-control" rows="4" placeholder="Nhập lý do cảnh báo người dùng..." required>Vi phạm
+                                                        quy định cộng đồng</textarea>
                                                 </div>
                                                 <div class="alert alert-warning">
                                                     <i class="bx bx-info-circle me-2"></i>
@@ -308,7 +331,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <!-- Delete Confirmation Modal -->
                                 <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
@@ -329,7 +351,8 @@
                                                 </div>
                                                 <div class="alert alert-danger">
                                                     <i class="bx bx-error me-2"></i>
-                                                    <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. Tất cả dữ liệu của người dùng sẽ bị xóa vĩnh viễn.
+                                                    <strong>Cảnh báo:</strong>
+                                                    Hành động này không thể hoàn tác. Tất cả dữ liệu của người dùng sẽ bị xóa vĩnh viễn.
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -341,14 +364,18 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <!-- Success/Error Notification Modal -->
-                                <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+                                <div
+                                    class="modal fade"
+                                    id="notificationModal"
+                                    tabindex="-1"
+                                    aria-labelledby="notificationModalLabel"
+                                    aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered modal-sm">
                                         <div class="modal-content">
                                             <div class="modal-body text-center py-4">
-                                                <div id="notificationIcon" class="mb-3">
-                                                    <!-- Icon will be set by JavaScript -->
+                                                <div
+                                                    id="notificationIcon" class="mb-3"><!-- Icon will be set by JavaScript -->
                                                 </div>
                                                 <h6 id="notificationTitle" class="mb-2"></h6>
                                                 <p id="notificationMessage" class="text-muted mb-3"></p>
@@ -356,7 +383,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>                                <!-- Ban User Modal -->
+                                </div>
+                                <!-- Ban User Modal -->
                                 <div class="modal fade" id="banUserModal" tabindex="-1" aria-labelledby="banUserModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
@@ -384,115 +412,171 @@
                                                 </div>
                                                 <div class="mb-3" id="customDateGroup" style="display: none;">
                                                     <label for="customBanDate" class="form-label">Chọn ngày kết thúc:</label>
-                                                    <input type="datetime-local" id="customBanDate" class="form-control">
+                                                    <input type="datetime-local" id="customBanDate" class="form-control"></div>
+                                                    <div class="mb-3">
+                                                        <label for="banReason" class="form-label">Lý do khóa:</label>
+                                                        <textarea id="banReason" class="form-control" rows="3" placeholder="Nhập lý do khóa tài khoản...">Vi phạm quy định</textarea>
+                                                    </div>
                                                 </div>
-                                                <div class="mb-3">
-                                                    <label for="banReason" class="form-label">Lý do khóa:</label>
-                                                    <textarea id="banReason" class="form-control" rows="3" placeholder="Nhập lý do khóa tài khoản...">Vi phạm quy định</textarea>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                    <button type="button" class="btn btn-danger" onclick="confirmBan()">Khóa Tài Khoản</button>
                                                 </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                <button type="button" class="btn btn-danger" onclick="confirmBan()">Khóa Tài Khoản</button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Unban Confirmation Modal -->
-                                <div class="modal fade" id="unbanUserModal" tabindex="-1" aria-labelledby="unbanUserModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="unbanUserModalLabel">
-                                                    <i class="bx bx-lock-open text-success me-2"></i>Mở Khóa Tài Khoản
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="text-center mb-3">
-                                                    <i class="bx bx-unlock text-success" style="font-size: 48px;"></i>
+                                    <!-- Unban Confirmation Modal -->
+                                    <div class="modal fade" id="unbanUserModal" tabindex="-1" aria-labelledby="unbanUserModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="unbanUserModalLabel">
+                                                        <i class="bx bx-lock-open text-success me-2"></i>Mở Khóa Tài Khoản
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
-                                                <div class="mb-3">
-                                                    <p class="text-center">Bạn có chắc chắn muốn mở khóa tài khoản của:</p>
-                                                    <p class="text-center fw-bold fs-5" id="unbanUserName"></p>
+                                                <div class="modal-body">
+                                                    <div class="text-center mb-3">
+                                                        <i class="bx bx-unlock text-success" style="font-size: 48px;"></i>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <p class="text-center">Bạn có chắc chắn muốn mở khóa tài khoản của:</p>
+                                                        <p class="text-center fw-bold fs-5" id="unbanUserName"></p>
+                                                    </div>
+                                                    <div class="alert alert-info">
+                                                        <i class="bx bx-info-circle me-2"></i>
+                                                        Sau khi mở khóa, người dùng sẽ có thể đăng nhập và sử dụng hệ thống bình thường.
+                                                    </div>
                                                 </div>
-                                                <div class="alert alert-info">
-                                                    <i class="bx bx-info-circle me-2"></i>
-                                                    Sau khi mở khóa, người dùng sẽ có thể đăng nhập và sử dụng hệ thống bình thường.
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                    <button type="button" class="btn btn-success" onclick="confirmUnban()">
+                                                        <i class="bx bx-check me-1"></i>Mở Khóa
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                <button type="button" class="btn btn-success" onclick="confirmUnban()">
-                                                    <i class="bx bx-check me-1"></i>Mở Khóa
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Remove Warning Modal -->
-                                <div class="modal fade" id="removeWarningModal" tabindex="-1" aria-labelledby="removeWarningModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="removeWarningModalLabel">
-                                                    <i class="bx bx-check-circle text-success me-2"></i>Bỏ Cảnh Báo
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="text-center mb-3">
-                                                    <i class="bx bx-shield-check text-success" style="font-size: 48px;"></i>
+                                    <!-- Remove Warning Modal -->
+                                    <div
+                                        class="modal fade"
+                                        id="removeWarningModal"
+                                        tabindex="-1"
+                                        aria-labelledby="removeWarningModalLabel"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="removeWarningModalLabel">
+                                                        <i class="bx bx-check-circle text-success me-2"></i>Bỏ Cảnh Báo
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
-                                                <div class="mb-3">
-                                                    <p class="text-center">Bạn có chắc chắn muốn bỏ cảnh báo cho:</p>
-                                                    <p class="text-center fw-bold fs-5" id="removeWarningUserName"></p>
+                                                <div class="modal-body">
+                                                    <div class="text-center mb-3">
+                                                        <i class="bx bx-shield-check text-success" style="font-size: 48px;"></i>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <p class="text-center">Bạn có chắc chắn muốn bỏ cảnh báo cho:</p>
+                                                        <p class="text-center fw-bold fs-5" id="removeWarningUserName"></p>
+                                                    </div>
+                                                    <div class="alert alert-success">
+                                                        <i class="bx bx-info-circle me-2"></i>
+                                                        Sau khi bỏ cảnh báo, trạng thái tài khoản sẽ trở về bình thường.
+                                                    </div>
                                                 </div>
-                                                <div class="alert alert-success">
-                                                    <i class="bx bx-info-circle me-2"></i>
-                                                    Sau khi bỏ cảnh báo, trạng thái tài khoản sẽ trở về bình thường.
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                    <button type="button" class="btn btn-success" onclick="confirmRemoveWarning()">
+                                                        <i class="bx bx-check me-1"></i>Bỏ Cảnh Báo
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                <button type="button" class="btn btn-success" onclick="confirmRemoveWarning()">
-                                                    <i class="bx bx-check me-1"></i>Bỏ Cảnh Báo
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div><script>
-                                    let currentBanUserId = null;
-                                    let currentBanUserName = null;
-
-                                    function openBanModal(username, id) {
-                                        currentBanUserId = id;
-                                        currentBanUserName = username;
-                                        document.getElementById('banUserName').textContent = username;
-                                        document.getElementById('banDuration').value = '30';
-                                        document.getElementById('banReason').value = 'Vi phạm quy định';
-                                        document.getElementById('customDateGroup').style.display = 'none';
-                                        
-                                        const banModal = new bootstrap.Modal(document.getElementById('banUserModal'));
-                                        banModal.show();
-                                    }                                    function confirmUnbanUser(username, id) {
-                                        if (confirm(`Bạn có chắc chắn muốn mở khóa tài khoản của ${username} không?`)) {
+                                    <script>
+                                        let currentBanUserId = null;
+                                        let currentBanUserName = null;
+                                        function openBanModal(username, id) {
+                                            currentBanUserId = id;
+                                            currentBanUserName = username;
+                                            document.getElementById('banUserName').textContent = username;
+                                            document.getElementById('banDuration').value = '30';
+                                            document.getElementById('banReason').value = 'Vi phạm quy định';
+                                            document
+                                                .getElementById('customDateGroup')
+                                                .style
+                                                .display = 'none';
+                                            const banModal = new bootstrap.Modal(document.getElementById('banUserModal'));
+                                            banModal.show();
+                                        }
+                                        function confirmUnbanUser(username, id) {
+                                            if (confirm (`Bạn có chắc chắn muốn mở khóa tài khoản của ${username} không?`)) {
+                                                const data = {
+                                                    bannedUntil: null,
+                                                    bannedReason: null
+                                                };
+                                                fetch (`{{ baseUrl }}/user-management/ban/${id}`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    },
+                                                    body: JSON.stringify(data)
+                                                }).then(response => {
+                                                    if (response.ok) {
+                                                        showNotification('success', 'Thành công!', `Đã mở khóa tài khoản ${username}`);
+                                                        setTimeout(() => {
+                                                            location.reload();
+                                                        }, 2000);
+                                                    } else {
+                                                        return response.json().then(err => {
+                                                            throw new Error(err.message || 'Có lỗi xảy ra');
+                                                        });
+                                                    }
+                                                }).catch(error => {
+                                                    showNotification('error', 'Lỗi!', error.message);
+                                                });
+                                            }
+                                        }
+                                        function confirmBan() {
+                                            const duration = document.getElementById('banDuration').value;
+                                            const reason = document
+                                                .getElementById('banReason')
+                                                .value
+                                                .trim();
+                                            if (! reason) {
+                                                alert('Vui lòng nhập lý do khóa tài khoản');
+                                                return;
+                                            }
+                                            let bannedUntil = null;
+                                            if (duration === 'permanent') { // Set to a very far future date for permanent ban
+                                                bannedUntil = new Date('2099-12-31T23:59:59.999Z').toISOString();
+                                            } else if (duration === 'custom') {
+                                                const customDate = document.getElementById('customBanDate').value;
+                                                if (! customDate) {
+                                                    showNotification('error', 'Lỗi!', 'Vui lòng chọn ngày kết thúc khóa');
+                                                    return;
+                                                }
+                                                bannedUntil = new Date(customDate).toISOString();
+                                            } else {
+                                                const days = parseInt(duration);
+                                                bannedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+                                            }
                                             const data = {
-                                                bannedUntil: null,
-                                                bannedReason: null
+                                                bannedUntil: bannedUntil,
+                                                bannedReason: reason
                                             };
-                                            
-                                            fetch(`{{ baseUrl }}/user-management/ban/${id}`, {
+                                            fetch (`{{ baseUrl }}/user-management/ban/${currentBanUserId}`, {
                                                 method: 'POST',
                                                 headers: {
-                                                    'Content-Type': 'application/json',
+                                                    'Content-Type': 'application/json'
                                                 },
                                                 body: JSON.stringify(data)
                                             }).then(response => {
-                                                if (response.ok) {
-                                                    showNotification('success', 'Thành công!', `Đã mở khóa tài khoản ${username}`);
+                                                if (response.ok) { // Close modal and show success notification
+                                                    const banModal = bootstrap.Modal.getInstance(document.getElementById('banUserModal'));
+                                                    banModal.hide();
+                                                    showNotification('success', 'Thành công!', `Đã khóa tài khoản ${currentBanUserName}`);
                                                     setTimeout(() => {
                                                         location.reload();
                                                     }, 2000);
@@ -505,381 +589,302 @@
                                                 showNotification('error', 'Lỗi!', error.message);
                                             });
                                         }
-                                    }
-
-                                    function confirmBan() {
-                                        const duration = document.getElementById('banDuration').value;
-                                        const reason = document.getElementById('banReason').value.trim();
-                                        
-                                        if (!reason) {
-                                            alert('Vui lòng nhập lý do khóa tài khoản');
-                                            return;
+                                        // Handle ban duration change
+                                        document.addEventListener('DOMContentLoaded', function () {
+                                            const banDurationSelect = document.getElementById('banDuration');
+                                            const customDateGroup = document.getElementById('customDateGroup');
+                                            if (banDurationSelect) {
+                                                banDurationSelect.addEventListener('change', function () {
+                                                    if (this.value === 'custom') {
+                                                        customDateGroup.style.display = 'block';
+                                                        // Set minimum date to current time
+                                                        const now = new Date();
+                                                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                                                        document.getElementById('customBanDate').min = now.toISOString().slice(0, 16);
+                                                    } else {
+                                                        customDateGroup.style.display = 'none';
+                                                    }
+                                                });
+                                            }
+                                        });
+                                        // Variables for managing modals
+                                        let currentWarnUserId = null;
+                                        let currentWarnUserName = null;
+                                        let currentDeleteUserId = null;
+                                        let currentDeleteUserName = null;
+                                        let currentUnbanUserId = null;
+                                        let currentUnbanUserName = null;
+                                        let currentRemoveWarningUserId = null;
+                                        let currentRemoveWarningUserName = null;
+                                        // Unban user functions
+                                        function openUnbanModal(username, id) {
+                                            currentUnbanUserId = id;
+                                            currentUnbanUserName = username;
+                                            document.getElementById('unbanUserName').textContent = username;
+                                            const unbanModal = new bootstrap.Modal(document.getElementById('unbanUserModal'));
+                                            unbanModal.show();
                                         }
-
-                                        let bannedUntil = null;
-                                        
-                                        if (duration === 'permanent') {
-                                            // Set to a very far future date for permanent ban
-                                            bannedUntil = new Date('2099-12-31T23:59:59.999Z').toISOString();                                        } else if (duration === 'custom') {
-                                            const customDate = document.getElementById('customBanDate').value;
-                                            if (!customDate) {
-                                                showNotification('error', 'Lỗi!', 'Vui lòng chọn ngày kết thúc khóa');
+                                        function confirmUnban() {
+                                            const data = {
+                                                bannedUntil: null,
+                                                bannedReason: null
+                                            };
+                                            fetch (`{{ baseUrl }}/user-management/ban/${currentUnbanUserId}`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                },
+                                                body: JSON.stringify(data)
+                                            }).then(response => {
+                                                if (response.ok) { // Close unban modal
+                                                    const unbanModal = bootstrap.Modal.getInstance(document.getElementById('unbanUserModal'));
+                                                    unbanModal.hide();
+                                                    showNotification('success', 'Thành công!', `Đã mở khóa tài khoản ${currentUnbanUserName}`);
+                                                    setTimeout(() => {
+                                                        location.reload();
+                                                    }, 2000);
+                                                } else {
+                                                    return response.json().then(err => {
+                                                        throw new Error(err.message || 'Có lỗi xảy ra');
+                                                    });
+                                                }
+                                            }).catch(error => {
+                                                showNotification('error', 'Lỗi!', error.message);
+                                            });
+                                        }
+                                        // Remove warning functions
+                                        function openRemoveWarningModal(username, id) {
+                                            currentRemoveWarningUserId = id;
+                                            currentRemoveWarningUserName = username;
+                                            document.getElementById('removeWarningUserName').textContent = username;
+                                            const removeWarningModal = new bootstrap.Modal(document.getElementById('removeWarningModal'));
+                                            removeWarningModal.show();
+                                        }
+                                        function confirmRemoveWarning() {
+                                            fetch (`{{ baseUrl }}/user-management/remove-warning/${currentRemoveWarningUserId}`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            }).then(response => {
+                                                if (response.ok) { // Close remove warning modal
+                                                    const removeWarningModal = bootstrap.Modal.getInstance(document.getElementById('removeWarningModal'));
+                                                    removeWarningModal.hide();
+                                                    // Show success notification
+                                                    showNotification('success', 'Thành công!', `Đã gỡ bỏ cảnh báo cho ${currentRemoveWarningUserName}`);
+                                                    // Reload page after 2 seconds
+                                                    setTimeout(() => {
+                                                        location.reload();
+                                                    }, 2000);
+                                                } else {
+                                                    return response.json().then(err => {
+                                                        throw new Error(err.message || 'Có lỗi xảy ra');
+                                                    });
+                                                }
+                                            }).catch(error => {
+                                                showNotification('error', 'Lỗi!', error.message);
+                                            });
+                                        }
+                                        // Update confirmUnbanUser to use modal
+                                        function confirmUnbanUser(username, id) {
+                                            openUnbanModal(username, id);
+                                        } // Warning user functions
+                                        function openWarnModal(username, id) {
+                                            currentWarnUserId = id;
+                                            currentWarnUserName = username;
+                                            document.getElementById('warnUserName').textContent = username;
+                                            document.getElementById('warnReason').value = 'Vi phạm quy định cộng đồng';
+                                            const warnModal = new bootstrap.Modal(document.getElementById('warnUserModal'));
+                                            warnModal.show();
+                                        }
+                                        function confirmWarn() {
+                                            const reason = document
+                                                .getElementById('warnReason')
+                                                .value
+                                                .trim();
+                                            if (! reason) {
+                                                showNotification('error', 'Lỗi!', 'Vui lòng nhập lý do cảnh báo');
                                                 return;
                                             }
-                                            bannedUntil = new Date(customDate).toISOString();
-                                        } else {
-                                            const days = parseInt(duration);
-                                            bannedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-                                        }
-
-                                        const data = {
-                                            bannedUntil: bannedUntil,
-                                            bannedReason: reason
-                                        };                                        fetch(`{{ baseUrl }}/user-management/ban/${currentBanUserId}`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                            },
-                                            body: JSON.stringify(data)
-                                        }).then(response => {
-                                            if (response.ok) {
-                                                // Close modal and show success notification
-                                                const banModal = bootstrap.Modal.getInstance(document.getElementById('banUserModal'));
-                                                banModal.hide();
-                                                
-                                                showNotification('success', 'Thành công!', `Đã khóa tài khoản ${currentBanUserName}`);
-                                                
-                                                setTimeout(() => {
-                                                    location.reload();
-                                                }, 2000);
-                                            } else {
-                                                return response.json().then(err => {
-                                                    throw new Error(err.message || 'Có lỗi xảy ra');
-                                                });
-                                            }
-                                        }).catch(error => {
-                                            showNotification('error', 'Lỗi!', error.message);
-                                        });
-                                    }
-
-                                    // Handle ban duration change
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        const banDurationSelect = document.getElementById('banDuration');
-                                        const customDateGroup = document.getElementById('customDateGroup');
-                                        
-                                        if (banDurationSelect) {
-                                            banDurationSelect.addEventListener('change', function() {
-                                                if (this.value === 'custom') {
-                                                    customDateGroup.style.display = 'block';
-                                                    // Set minimum date to current time
-                                                    const now = new Date();
-                                                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                                                    document.getElementById('customBanDate').min = now.toISOString().slice(0, 16);
+                                            const data = {
+                                                bannedReason: reason
+                                            };
+                                            fetch (`{{ baseUrl }}/user-management/warn/${currentWarnUserId}`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                },
+                                                body: JSON.stringify(data)
+                                            }).then(response => {
+                                                if (response.ok) { // Close warning modal
+                                                    const warnModal = bootstrap.Modal.getInstance(document.getElementById('warnUserModal'));
+                                                    warnModal.hide();
+                                                    // Show success notification
+                                                    showNotification('success', 'Thành công!', `Đã gửi cảnh báo cho ${currentWarnUserName}`);
+                                                    // Reload page after 2 seconds
+                                                    setTimeout(() => {
+                                                        location.reload();
+                                                    }, 2000);
                                                 } else {
-                                                    customDateGroup.style.display = 'none';
+                                                    return response.json().then(err => {
+                                                        throw new Error(err.message || 'Có lỗi xảy ra');
+                                                    });
                                                 }
+                                            }).catch(error => {
+                                                showNotification('error', 'Lỗi!', error.message);
                                             });
-                                        }                                    });                                    
-                                    // Variables for managing modals
-                                    let currentWarnUserId = null;
-                                    let currentWarnUserName = null;
-                                    let currentDeleteUserId = null;
-                                    let currentDeleteUserName = null;
-                                    let currentUnbanUserId = null;
-                                    let currentUnbanUserName = null;
-                                    let currentRemoveWarningUserId = null;
-                                    let currentRemoveWarningUserName = null;
-
-                                    // Unban user functions
-                                    function openUnbanModal(username, id) {
-                                        currentUnbanUserId = id;
-                                        currentUnbanUserName = username;
-                                        document.getElementById('unbanUserName').textContent = username;
-                                        
-                                        const unbanModal = new bootstrap.Modal(document.getElementById('unbanUserModal'));
-                                        unbanModal.show();
-                                    }
-
-                                    function confirmUnban() {
-                                        const data = {
-                                            bannedUntil: null,
-                                            bannedReason: null
-                                        };
-                                        
-                                        fetch(`{{ baseUrl }}/user-management/ban/${currentUnbanUserId}`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                            },
-                                            body: JSON.stringify(data)
-                                        }).then(response => {
-                                            if (response.ok) {
-                                                // Close unban modal
-                                                const unbanModal = bootstrap.Modal.getInstance(document.getElementById('unbanUserModal'));
-                                                unbanModal.hide();
-                                                
-                                                showNotification('success', 'Thành công!', `Đã mở khóa tài khoản ${currentUnbanUserName}`);
-                                                setTimeout(() => {
-                                                    location.reload();
-                                                }, 2000);
-                                            } else {
-                                                return response.json().then(err => {
-                                                    throw new Error(err.message || 'Có lỗi xảy ra');
-                                                });
-                                            }
-                                        }).catch(error => {
-                                            showNotification('error', 'Lỗi!', error.message);
-                                        });
-                                    }
-
-                                    // Remove warning functions
-                                    function openRemoveWarningModal(username, id) {
-                                        currentRemoveWarningUserId = id;
-                                        currentRemoveWarningUserName = username;
-                                        document.getElementById('removeWarningUserName').textContent = username;
-                                        
-                                        const removeWarningModal = new bootstrap.Modal(document.getElementById('removeWarningModal'));
-                                        removeWarningModal.show();
-                                    }
-
-                                    function confirmRemoveWarning() {
-                                        fetch(`{{ baseUrl }}/user-management/remove-warning/${currentRemoveWarningUserId}`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            }
-                                        }).then(response => {
-                                            if (response.ok) {
-                                                // Close remove warning modal
-                                                const removeWarningModal = bootstrap.Modal.getInstance(document.getElementById('removeWarningModal'));
-                                                removeWarningModal.hide();
-                                                
-                                                // Show success notification
-                                                showNotification('success', 'Thành công!', `Đã gỡ bỏ cảnh báo cho ${currentRemoveWarningUserName}`);
-                                                
-                                                // Reload page after 2 seconds
-                                                setTimeout(() => {
-                                                    location.reload();
-                                                }, 2000);
-                                            } else {
-                                                return response.json().then(err => {
-                                                    throw new Error(err.message || 'Có lỗi xảy ra');
-                                                });
-                                            }
-                                        }).catch(error => {
-                                            showNotification('error', 'Lỗi!', error.message);
-                                        });
-                                    }
-
-                                    // Update confirmUnbanUser to use modal
-                                    function confirmUnbanUser(username, id) {
-                                        openUnbanModal(username, id);
-                                    }// Warning user functions
-                                    function openWarnModal(username, id) {
-                                        currentWarnUserId = id;
-                                        currentWarnUserName = username;
-                                        document.getElementById('warnUserName').textContent = username;
-                                        document.getElementById('warnReason').value = 'Vi phạm quy định cộng đồng';
-                                        
-                                        const warnModal = new bootstrap.Modal(document.getElementById('warnUserModal'));
-                                        warnModal.show();
-                                    }
-
-                                    function confirmWarn() {
-                                        const reason = document.getElementById('warnReason').value.trim();
-                                        
-                                        if (!reason) {
-                                            showNotification('error', 'Lỗi!', 'Vui lòng nhập lý do cảnh báo');
-                                            return;
                                         }
-
-                                        const data = {
-                                            bannedReason: reason
-                                        };
-
-                                        fetch(`{{ baseUrl }}/user-management/warn/${currentWarnUserId}`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            },
-                                            body: JSON.stringify(data)
-                                        }).then(response => {
-                                            if (response.ok) {
-                                                // Close warning modal
-                                                const warnModal = bootstrap.Modal.getInstance(document.getElementById('warnUserModal'));
-                                                warnModal.hide();
-                                                
-                                                // Show success notification
-                                                showNotification('success', 'Thành công!', `Đã gửi cảnh báo cho ${currentWarnUserName}`);
-                                                
-                                                // Reload page after 2 seconds
-                                                setTimeout(() => {
-                                                    location.reload();
-                                                }, 2000);
-                                            } else {
-                                                return response.json().then(err => {
-                                                    throw new Error(err.message || 'Có lỗi xảy ra');
-                                                });
-                                            }
-                                        }).catch(error => {
-                                            showNotification('error', 'Lỗi!', error.message);
-                                        });
-                                    }
-
-                                    // Delete user functions
-                                    function openDeleteModal(username, id) {
-                                        currentDeleteUserId = id;
-                                        currentDeleteUserName = username;
-                                        document.getElementById('deleteUserName').textContent = username;
-                                        
-                                        const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-                                        deleteModal.show();
-                                    }
-
-                                    function confirmDelete() {
-                                        fetch(`{{ baseUrl }}/user-management/delete/${currentDeleteUserId}`, {
-                                            method: 'DELETE'
-                                        }).then(response => {
-                                            if (response.ok) {
-                                                // Close delete modal
-                                                const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
-                                                deleteModal.hide();
-                                                
-                                                // Show success notification
-                                                showNotification('success', 'Thành công!', `Đã xóa tài khoản ${currentDeleteUserName}`);
-                                                
-                                                // Reload page after 2 seconds
-                                                setTimeout(() => {
-                                                    location.reload();
-                                                }, 2000);
-                                            } else {
-                                                return response.json().then(err => {
-                                                    throw new Error(err.message || 'Có lỗi xảy ra');
-                                                });
-                                            }
-                                        }).catch(error => {
-                                            showNotification('error', 'Lỗi!', error.message);
-                                        });
-                                    }
-
-                                    // Notification function
-                                    function showNotification(type, title, message) {
-                                        const notificationModal = document.getElementById('notificationModal');
-                                        const notificationIcon = document.getElementById('notificationIcon');
-                                        const notificationTitle = document.getElementById('notificationTitle');
-                                        const notificationMessage = document.getElementById('notificationMessage');
-                                        
-                                        // Set icon and colors based on type
-                                        if (type === 'success') {
-                                            notificationIcon.innerHTML = '<i class="bx bx-check-circle text-success" style="font-size: 48px;"></i>';
-                                            notificationTitle.className = 'mb-2 text-success';
-                                        } else if (type === 'error') {
-                                            notificationIcon.innerHTML = '<i class="bx bx-error-circle text-danger" style="font-size: 48px;"></i>';
-                                            notificationTitle.className = 'mb-2 text-danger';
-                                        } else if (type === 'warning') {
-                                            notificationIcon.innerHTML = '<i class="bx bx-error text-warning" style="font-size: 48px;"></i>';
-                                            notificationTitle.className = 'mb-2 text-warning';
+                                        // Delete user functions
+                                        function openDeleteModal(username, id) {
+                                            currentDeleteUserId = id;
+                                            currentDeleteUserName = username;
+                                            document.getElementById('deleteUserName').textContent = username;
+                                            const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+                                            deleteModal.show();
                                         }
-                                        
-                                        notificationTitle.textContent = title;
-                                        notificationMessage.textContent = message;
-                                        
-                                        const modal = new bootstrap.Modal(notificationModal);
-                                        modal.show();
-                                    }
-
-                                    function confirmWarnUser(username, id) {
-                                        openWarnModal(username, id);
-                                    }
-                                    
-                                    function delUser(username, id) {
-                                        openDeleteModal(username, id);
-                                    }
-                                    function openAddUser() {
-                                        document.getElementById("offcanvasAddUserLabel").innerText = "Thêm Mới Người Dùng";
-                                        document.getElementById("addNewUserForm").action = "{{ baseUrl }}/user-management/create";
-                                        document.getElementById("addNewUserForm").reset();
-                                        // Make password required for new users
-                                        document.getElementById("password").required = true;
-                                        const addUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
-                                        addUserModal.show();
-                                    }
-                                    function openEditUserModal(id) {
-                                        document.getElementById("offcanvasAddUserLabel").innerText = "Chỉnh Sửa Người Dùng";
-                                        document.getElementById("addNewUserForm").action = "{{ baseUrl }}/user-management/update/" + id;
-                                        // Make password optional for editing
-                                        document.getElementById("password").required = false;
-                                        fetch (`{{ baseUrl }}/user-management/get/${id}`)
-                                            .then(response => response.json())
-                                            .then(response => {
-                                                response.data = response.data.data
-                                                document.getElementById("name").value = response.data.name || '';
-                                                document.getElementById("username").value = response.data.username || '';
-                                                document.getElementById("email").value = response.data.email || '';
-                                                document.getElementById("phone").value = response.data.phone || '';
-                                                document.getElementById("role").value = response.data.role || 'USER';
-                                                document.getElementById("gender").value = response.data.gender || 'OTHER';
-                                                document.getElementById("bio").value = response.data.bio || '';
-                                                document.getElementById('password').value = '';
-                                                const editUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
-                                                editUserModal.show();                                            })
-                                            .catch(error => {
-                                                showNotification('error', 'Lỗi!', `Không thể tải thông tin người dùng: ${error.message}`);
-                                            });
-                                    }
-                                    function setQueryParams(params) {
-                                        const url = new URL(window.location.href);
-                                        Object.keys(params).forEach(key => {
-                                            url.searchParams.set(key, params[key]);
-                                        });
-                                        window.location.href = url.toString();
-                                    }
-                                    // Handle form submission
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        const form = document.getElementById('addNewUserForm');
-                                        if (form) {
-                                            form.addEventListener('submit', function (e) {
-                                                e.preventDefault();
-                                                const formData = new FormData(form);
-                                                const data = {};
-                                                // Convert FormData to object, excluding empty password on edit
-                                                for (let [key, value] of formData.entries()) {
-                                                    if (key === 'password' && value === '' && form.action.includes('update')) {
-                                                        continue; // Skip empty password on update
-                                                    }data[key] = value;
+                                        function confirmDelete() {
+                                            fetch (`{{ baseUrl }}/user-management/delete/${currentDeleteUserId}`, {method: 'DELETE'}).then(response => {
+                                                if (response.ok) { // Close delete modal
+                                                    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
+                                                    deleteModal.hide();
+                                                    // Show success notification
+                                                    showNotification('success', 'Thành công!', `Đã xóa tài khoản ${currentDeleteUserName}`);
+                                                    // Reload page after 2 seconds
+                                                    setTimeout(() => {
+                                                        location.reload();
+                                                    }, 2000);
+                                                } else {
+                                                    return response.json().then(err => {
+                                                        throw new Error(err.message || 'Có lỗi xảy ra');
+                                                    });
                                                 }
-                                                fetch(form.action, {
-                                                    method: form.action.includes('update')
-                                                        ? 'PUT'
-                                                        : 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json'
-                                                    },
-                                                    body: JSON.stringify(data)                                                }).then(response => {
-                                                    if (response.ok) {
-                                                        // Close offcanvas
-                                                        const addUserModal = bootstrap.Offcanvas.getInstance(document.getElementById("offcanvasAddUser"));
-                                                        addUserModal.hide();
-                                                        
-                                                        // Show success notification
-                                                        const isEdit = form.action.includes('update');
-                                                        const successMessage = isEdit ? 'Cập nhật người dùng thành công!' : 'Tạo người dùng mới thành công!';
-                                                        showNotification('success', 'Thành công!', successMessage);
-                                                        
-                                                        // Reload page after 2 seconds
-                                                        setTimeout(() => {
-                                                            location.reload();
-                                                        }, 2000);
-                                                    } else {
-                                                        return response.json().then(err => {
-                                                            throw new Error(err.message || 'Có lỗi xảy ra');
-                                                        });
+                                            }).catch(error => {
+                                                showNotification('error', 'Lỗi!', error.message);
+                                            });
+                                        }
+                                        // Notification function
+                                        function showNotification(type, title, message) {
+                                            const notificationModal = document.getElementById('notificationModal');
+                                            const notificationIcon = document.getElementById('notificationIcon');
+                                            const notificationTitle = document.getElementById('notificationTitle');
+                                            const notificationMessage = document.getElementById('notificationMessage');
+                                            // Set icon and colors based on type
+                                            if (type === 'success') {
+                                                notificationIcon.innerHTML = '<i class="bx bx-check-circle text-success" style="font-size: 48px;"></i>';
+                                                notificationTitle.className = 'mb-2 text-success';
+                                            } else if (type === 'error') {
+                                                notificationIcon.innerHTML = '<i class="bx bx-error-circle text-danger" style="font-size: 48px;"></i>';
+                                                notificationTitle.className = 'mb-2 text-danger';
+                                            } else if (type === 'warning') {
+                                                notificationIcon.innerHTML = '<i class="bx bx-error text-warning" style="font-size: 48px;"></i>';
+                                                notificationTitle.className = 'mb-2 text-warning';
+                                            }
+                                            notificationTitle.textContent = title;
+                                            notificationMessage.textContent = message;
+                                            const modal = new bootstrap.Modal(notificationModal);
+                                            modal.show();
+                                        }
+                                        function confirmWarnUser(username, id) {
+                                            openWarnModal(username, id);
+                                        }
+                                        function delUser(username, id) {
+                                            openDeleteModal(username, id);
+                                        }
+                                        function openAddUser() {
+                                            document.getElementById("offcanvasAddUserLabel").innerText = "Thêm Mới Người Dùng";
+                                            document.getElementById("addNewUserForm").action = "{{ baseUrl }}/user-management/create";
+                                            document.getElementById("addNewUserForm").reset();
+                                            // Make password required for new users
+                                            document.getElementById("password").required = true;
+                                            const addUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
+                                            addUserModal.show();
+                                        }
+                                        function openEditUserModal(id) {
+                                            document.getElementById("offcanvasAddUserLabel").innerText = "Chỉnh Sửa Người Dùng";
+                                            document.getElementById("addNewUserForm").action = "{{ baseUrl }}/user-management/update/" + id;
+                                            // Make password optional for editing
+                                            document.getElementById("password").required = false;
+                                            fetch (`{{ baseUrl }}/user-management/get/${id}`)
+                                                .then(response => response.json())
+                                                .then(response => {
+                                                    response.data = response
+                                                        .data
+                                                        .data
+                                                        document
+                                                        .getElementById("name")
+                                                        .value = response.data.name || '';
+                                                    document.getElementById("username").value = response.data.username || '';
+                                                    document.getElementById("email").value = response.data.email || '';
+                                                    document.getElementById("phone").value = response.data.phone || '';
+                                                    document.getElementById("role").value = response.data.role || 'USER';
+                                                    document.getElementById("gender").value = response.data.gender || 'OTHER';
+                                                    document.getElementById("bio").value = response.data.bio || '';
+                                                    document.getElementById('password').value = '';
+                                                    const editUserModal = new bootstrap.Offcanvas(document.getElementById("offcanvasAddUser"));
+                                                    editUserModal.show();
+                                                })
+                                                .catch(error => {
+                                                    showNotification('error', 'Lỗi!', `Không thể tải thông tin người dùng: ${
+                                                        error.message
+                                                    }`);
+                                                });
+                                        }
+                                        function setQueryParams(params) {
+                                            const url = new URL(window.location.href);
+                                            Object.keys(params).forEach(key => {
+                                                url.searchParams.set(key, params[key]);
+                                            });
+                                            window.location.href = url.toString();
+                                        } // Handle form submission
+                                        document.addEventListener('DOMContentLoaded', function () { // Initialize tooltips
+                                            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                                            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                                return new bootstrap.Tooltip(tooltipTriggerEl);
+                                            });
+                                            const form = document.getElementById('addNewUserForm');
+                                            if (form) {
+                                                form.addEventListener('submit', function (e) {
+                                                    e.preventDefault();
+                                                    const formData = new FormData(form);
+                                                    const data = {};
+                                                    // Convert FormData to object, excluding empty password on edit
+                                                    for (let [key, value] of formData.entries()) {
+                                                        if (key === 'password' && value === '' && form.action.includes('update')) {
+                                                            continue; // Skip empty password on update
+                                                        }data[key] = value;
                                                     }
-                                                }).catch(error => {
-                                                    showNotification('error', 'Lỗi!', error.message);
+                                                    fetch(form.action, {
+                                                        method: form.action.includes('update')
+                                                            ? 'PUT'
+                                                            : 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json'
+                                                        },
+                                                        body: JSON.stringify(data)
+                                                    }).then(response => {
+                                                        if (response.ok) { // Close offcanvas
+                                                            const addUserModal = bootstrap.Offcanvas.getInstance(document.getElementById("offcanvasAddUser"));
+                                                            addUserModal.hide();
+                                                            // Show success notification
+                                                            const isEdit = form.action.includes('update');
+                                                            const successMessage = isEdit
+                                                                ? 'Cập nhật người dùng thành công!'
+                                                                : 'Tạo người dùng mới thành công!';
+                                                            showNotification('success', 'Thành công!', successMessage);
+                                                            // Reload page after 2 seconds
+                                                            setTimeout(() => {
+                                                                location.reload();
+                                                            }, 2000);
+                                                        } else {
+                                                            return response.json().then(err => {
+                                                                throw new Error(err.message || 'Có lỗi xảy ra');
+                                                            });
+                                                        }
+                                                    }).catch(error => {
+                                                        showNotification('error', 'Lỗi!', error.message);
+                                                    });
                                                 });
-                                            });
-                                        }
-                                    });
-                                </script>
-                            {% endblock %}
+                                            }
+                                        });
+                                    </script>
+                                {% endblock %}
