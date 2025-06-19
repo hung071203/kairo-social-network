@@ -131,11 +131,10 @@
                                                         <a class="dropdown-item" href="javascript:void(0);" onclick="openEditUserModal('{{ item._id }}');">
                                                             <i class="bx bx-edit-alt me-1"></i>
                                                             Chỉnh Sửa
-                                                        </a>
-                                                        <a
+                                                        </a>                                                        <a
                                                             class="dropdown-item"
                                                             href="javascript:void(0);"
-                                                            onclick="confirmBanUser('{{ item.name }}', '{{ item._id }}', {% if item.bannedUntil %}false{% else %}true{% endif %})">
+                                                            onclick="{% if item.bannedUntil %}confirmUnbanUser('{{ item.name }}', '{{ item._id }}'){% else %}openBanModal('{{ item.name }}', '{{ item._id }}'){% endif %}">
                                                             {% if item.bannedUntil %}
                                                                 <i class="bx bx-lock-open me-1"></i>
                                                                 Mở Khóa
@@ -270,36 +269,165 @@
                                             </div>
                                             <button type="submit" class="btn btn-primary me-3 data-submit">Gửi</button>
                                             <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Hủy</button>
-                                        </form>
-                                    </div>
+                                        </form>                                    </div>
                                 </div>
-                                <script>
-                                    function confirmBanUser(username, id, shouldBan) {
-                                        const action = shouldBan
-                                            ? 'khóa'
-                                            : 'mở khóa';
-                                        if (confirm(`Bạn có chắc chắn muốn ${action} tài khoản của ${username} không?`)) {
-                                            const data = {};
-                                            if (shouldBan) {
-                                                data.bannedUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-                                                data.bannedReason = 'Vi phạm quy định';
-                                            } else {
-                                                data.bannedUntil = '';
-                                                data.bannedReason = '';
-                                            }
-                                            fetch (`{{ baseUrl }}/user-management/ban/${id}`, {
+
+                                <!-- Ban User Modal -->
+                                <div class="modal fade" id="banUserModal" tabindex="-1" aria-labelledby="banUserModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="banUserModalLabel">Khóa Tài Khoản</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Tên người dùng:</label>
+                                                    <span id="banUserName" class="fw-bold"></span>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="banDuration" class="form-label">Thời gian khóa:</label>
+                                                    <select id="banDuration" class="form-select">
+                                                        <option value="1">1 ngày</option>
+                                                        <option value="3">3 ngày</option>
+                                                        <option value="7">7 ngày</option>
+                                                        <option value="30" selected>30 ngày</option>
+                                                        <option value="90">90 ngày</option>
+                                                        <option value="365">365 ngày (1 năm)</option>
+                                                        <option value="permanent">Vĩnh viễn</option>
+                                                        <option value="custom">Tùy chỉnh...</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3" id="customDateGroup" style="display: none;">
+                                                    <label for="customBanDate" class="form-label">Chọn ngày kết thúc:</label>
+                                                    <input type="datetime-local" id="customBanDate" class="form-control">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="banReason" class="form-label">Lý do khóa:</label>
+                                                    <textarea id="banReason" class="form-control" rows="3" placeholder="Nhập lý do khóa tài khoản...">Vi phạm quy định</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="button" class="btn btn-danger" onclick="confirmBan()">Khóa Tài Khoản</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>                                <script>
+                                    let currentBanUserId = null;
+                                    let currentBanUserName = null;
+
+                                    function openBanModal(username, id) {
+                                        currentBanUserId = id;
+                                        currentBanUserName = username;
+                                        document.getElementById('banUserName').textContent = username;
+                                        document.getElementById('banDuration').value = '30';
+                                        document.getElementById('banReason').value = 'Vi phạm quy định';
+                                        document.getElementById('customDateGroup').style.display = 'none';
+                                        
+                                        const banModal = new bootstrap.Modal(document.getElementById('banUserModal'));
+                                        banModal.show();
+                                    }
+
+                                    function confirmUnbanUser(username, id) {
+                                        if (confirm(`Bạn có chắc chắn muốn mở khóa tài khoản của ${username} không?`)) {
+                                            const data = {
+                                                bannedUntil: null,
+                                                bannedReason: null
+                                            };
+                                            
+                                            fetch(`{{ baseUrl }}/user-management/ban/${id}`, {
                                                 method: 'POST',
                                                 headers: {
-                                                    'Content-Type': 'application/json'
+                                                    'Content-Type': 'application/json',
                                                 },
                                                 body: JSON.stringify(data)
-                                            }).then(() => {
-                                                location.reload();
+                                            }).then(response => {
+                                                if (response.ok) {
+                                                    location.reload();
+                                                } else {
+                                                    return response.json().then(err => {
+                                                        throw new Error(err.message || 'Có lỗi xảy ra');
+                                                    });
+                                                }
                                             }).catch(error => {
                                                 alert('Lỗi: ' + error.message);
                                             });
                                         }
                                     }
+
+                                    function confirmBan() {
+                                        const duration = document.getElementById('banDuration').value;
+                                        const reason = document.getElementById('banReason').value.trim();
+                                        
+                                        if (!reason) {
+                                            alert('Vui lòng nhập lý do khóa tài khoản');
+                                            return;
+                                        }
+
+                                        let bannedUntil = null;
+                                        
+                                        if (duration === 'permanent') {
+                                            // Set to a very far future date for permanent ban
+                                            bannedUntil = new Date('2099-12-31T23:59:59.999Z').toISOString();
+                                        } else if (duration === 'custom') {
+                                            const customDate = document.getElementById('customBanDate').value;
+                                            if (!customDate) {
+                                                alert('Vui lòng chọn ngày kết thúc khóa');
+                                                return;
+                                            }
+                                            bannedUntil = new Date(customDate).toISOString();
+                                        } else {
+                                            const days = parseInt(duration);
+                                            bannedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+                                        }
+
+                                        const data = {
+                                            bannedUntil: bannedUntil,
+                                            bannedReason: reason
+                                        };
+
+                                        fetch(`{{ baseUrl }}/user-management/ban/${currentBanUserId}`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify(data)
+                                        }).then(response => {
+                                            if (response.ok) {
+                                                // Close modal and reload page
+                                                const banModal = bootstrap.Modal.getInstance(document.getElementById('banUserModal'));
+                                                banModal.hide();
+                                                location.reload();
+                                            } else {
+                                                return response.json().then(err => {
+                                                    throw new Error(err.message || 'Có lỗi xảy ra');
+                                                });
+                                            }
+                                        }).catch(error => {
+                                            alert('Lỗi: ' + error.message);
+                                        });
+                                    }
+
+                                    // Handle ban duration change
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const banDurationSelect = document.getElementById('banDuration');
+                                        const customDateGroup = document.getElementById('customDateGroup');
+                                        
+                                        if (banDurationSelect) {
+                                            banDurationSelect.addEventListener('change', function() {
+                                                if (this.value === 'custom') {
+                                                    customDateGroup.style.display = 'block';
+                                                    // Set minimum date to current time
+                                                    const now = new Date();
+                                                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                                                    document.getElementById('customBanDate').min = now.toISOString().slice(0, 16);
+                                                } else {
+                                                    customDateGroup.style.display = 'none';
+                                                }
+                                            });
+                                        }
+                                    });
                                     function confirmWarnUser(username, id) {
                                         const reason = prompt (`Nhập lý do cảnh báo cho ${username}:`);
                                         if (reason) {
