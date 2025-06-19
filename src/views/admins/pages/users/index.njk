@@ -488,7 +488,7 @@
                                                             </div>
                                                         </div><!-- Statistics -->
                                                         <div class="row">
-                                                            <div class="col-md-12">
+                                                            <div class="col-md-12" id="profileStats">
                                                                 <h6 class="fw-semibold mb-3">
                                                                     <i class="bx bx-bar-chart me-1 text-primary"></i>Thống kê hoạt động
                                                                 </h6>                                                                <div class="row text-center g-3">
@@ -521,13 +521,8 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                                                {% if user.role == 'ADMIN' %}
-                                                    <button type="button" class="btn btn-primary" onclick="openEditUserModal(currentProfileUserId)">
-                                                        <i class="bx bx-edit-alt me-1"></i>Chỉnh Sửa
-                                                    </button>
-                                                {% endif %}
+                                            </div>                                            
+                                            <div class="modal-footer">
                                             </div>
                                         </div>
                                     </div>
@@ -735,6 +730,12 @@
                                               document.getElementById('profileCreatedAt').textContent = formatDate(user.createdAt);
                                             document.getElementById('profileUpdatedAt').textContent = formatDate(user.updatedAt);
                                               // Statistics (using sample data for now)
+                                            const profileStats = document.getElementById('profileStats');
+                                            if(user.role === 'USER') {
+                                                profileStats.classList.remove('d-none');
+                                            } else {
+                                                profileStats.classList.add('d-none');
+                                            }
                                             document.getElementById('profilePostsCount').textContent = user.postsCount || 0;
                                             document.getElementById('profileFollowersCount').textContent = user.followersCount || 0;
                                             document.getElementById('profileFollowingCount').textContent = user.followingCount || 0;
