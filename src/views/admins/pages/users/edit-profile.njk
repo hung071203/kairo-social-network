@@ -49,7 +49,7 @@
                         <div
                             class="card-body"><!-- Nội dung của bạn ở đây -->
                         </div>                        <div class="card-body pt-4">
-                            <form id="formAccountSettings" method="POST" action="{{ baseUrl }}/users/edit-profile">
+                            <form id="formAccountSettings" method="PATCH" action="{{ baseUrl }}/profile/update">
                                 <div class="row g-6">
                                     <div class="col-md-6">
                                         <label for="firstName" class="form-label">Họ và Tên</label>
@@ -262,6 +262,23 @@
                     button.disabled = false;
                     button.innerText = 'Gửi lại mã';
                 }
-            }, 1000);        }        
+            }, 1000);        }    
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch('/storage/upload', {
+                method: 'POST',
+                body: formData
+                });
+                if (!response.ok) throw new Error('Upload failed');
+                const data = await response.json();
+                return data.data.url; // Assuming the API returns the file URL
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                showToast({message: "Lỗi khi tải lên tệp.", type: "error"});
+            }
+        }
     </script>
 {% endblock %}

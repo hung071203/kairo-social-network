@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { UsersAuthGuard } from 'src/common/guards/jwt/jwt.guard';
+import { AllGuard, UsersAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { GetUser, Pagination, PaginationDto } from 'src/common/decorators';
 import {
   ChangeMailDto,
@@ -24,11 +24,11 @@ import { User } from 'src/schemas/users.schema';
 import { WebExceptionFilter } from 'src/common/filters';
 
 @Controller('profile')
-@UseGuards(UsersAuthGuard)
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get('search')
+  @UseGuards(UsersAuthGuard)
   async searchUser(
     @GetUser() user: User,
     @Query() dto: SearchUserDto,
@@ -52,6 +52,7 @@ export class ProfileController {
 
   @Get('user/:username')
   @UseFilters(WebExceptionFilter)
+  @UseGuards(UsersAuthGuard)
   @Render('users/pages/users/profile.njk')
   async getProfile(@Param('username') username: string, @GetUser() user: User) {
     try {
@@ -75,6 +76,7 @@ export class ProfileController {
 
   @Get('settings')
   @UseFilters(WebExceptionFilter)
+  @UseGuards(UsersAuthGuard)
   @Render('users/pages/users/settings.njk')
   async getSettings() {
     try {
@@ -89,6 +91,7 @@ export class ProfileController {
   }
 
   @Patch('update')
+  @UseGuards(AllGuard)
   async updateProfile(
     @GetUser() user: User,
     @Body() dto: UpdateUserDto, // Replace with actual DTO
@@ -101,6 +104,7 @@ export class ProfileController {
   }
 
   @Post('change-password')
+  @UseGuards(AllGuard)
   async updatePassword(
     @GetUser() user: User,
     @Body() dto: UpdatePassDto, // Replace with actual DTO
@@ -113,6 +117,7 @@ export class ProfileController {
   }
 
   @Post('unlink-google')
+  @UseGuards(UsersAuthGuard)
   async unlinkGoogle(@GetUser() user: User) {
     try {
       return await this.profileService.unlinkGoogle(user._id as string);
@@ -131,6 +136,7 @@ export class ProfileController {
   }
 
   @Post('update-username')
+  @UseGuards(AllGuard)
   async updateUsername(
     @GetUser() user: User,
     @Body('username') username: string,
@@ -146,6 +152,7 @@ export class ProfileController {
   }
 
   @Patch('change-mail')
+  @UseGuards(AllGuard)
   async changeMail(@GetUser() user: User, @Body() dto: ChangeMailDto) {
     try {
       return await this.profileService.changeMail(user._id as string, dto);

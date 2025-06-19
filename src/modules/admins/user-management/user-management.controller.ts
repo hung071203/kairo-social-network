@@ -13,10 +13,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserManagementService } from './user-management.service';
-import { AdminAuthGuard, ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
+import {
+  AdminAuthGuard,
+  ModeratorsAuthGuard,
+} from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
 import { Pagination, PaginationDto } from 'src/common/decorators';
-import { FilterUserDto, CreateUserDto, UpdateUserDto, BanUserDto } from './dto/user-manager.dto';
+import {
+  FilterUserDto,
+  CreateUserDto,
+  UpdateUserDto,
+  BanUserDto,
+} from './dto/user-manager.dto';
 
 @Controller('user-management')
 @UseGuards(ModeratorsAuthGuard)
@@ -43,7 +51,6 @@ export class UserManagementController {
   }
 
   @Post('create')
-  @UseFilters(WebExceptionFilter)
   @UseGuards(AdminAuthGuard)
   async createUser(@Body() dto: CreateUserDto) {
     try {
@@ -58,7 +65,6 @@ export class UserManagementController {
   }
 
   @Get('get/:id')
-  @UseFilters(WebExceptionFilter)
   async getUser(@Param('id') id: string) {
     try {
       const user = await this.userManagementService.getUserById(id);
@@ -72,7 +78,6 @@ export class UserManagementController {
   }
 
   @Put('update/:id')
-  @UseFilters(WebExceptionFilter)
   @UseGuards(AdminAuthGuard)
   async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     try {
@@ -87,22 +92,30 @@ export class UserManagementController {
   }
 
   @Post('ban/:id')
-  @UseFilters(WebExceptionFilter)
   async banUser(@Param('id') id: string, @Body() dto: BanUserDto) {
     try {
       const user = await this.userManagementService.banUser(id, dto);
       return {
-        message: dto.bannedUntil ? 'Khóa người dùng thành công' : 'Mở khóa người dùng thành công',
+        message: dto.bannedUntil
+          ? 'Khóa người dùng thành công'
+          : 'Mở khóa người dùng thành công',
         data: user,
       };
     } catch (error) {
       throw new BadRequestException(error.message);
     }
-  }  @Post('warn/:id')
-  @UseFilters(WebExceptionFilter)
-  async warnUser(@Param('id') id: string, @Body() dto: { bannedReason: string }) {
+  }
+  
+  @Post('warn/:id')
+  async warnUser(
+    @Param('id') id: string,
+    @Body() dto: { bannedReason: string },
+  ) {
     try {
-      const user = await this.userManagementService.warnUser(id, dto.bannedReason);
+      const user = await this.userManagementService.warnUser(
+        id,
+        dto.bannedReason,
+      );
       return {
         message: 'Cảnh báo người dùng thành công',
         data: user,
@@ -113,7 +126,6 @@ export class UserManagementController {
   }
 
   @Post('remove-warning/:id')
-  @UseFilters(WebExceptionFilter)
   async removeWarning(@Param('id') id: string) {
     try {
       const user = await this.userManagementService.removeWarning(id);
@@ -127,7 +139,6 @@ export class UserManagementController {
   }
 
   @Delete('delete/:id')
-  @UseFilters(WebExceptionFilter)
   async deleteUser(@Param('id') id: string) {
     try {
       await this.userManagementService.deleteUser(id);
