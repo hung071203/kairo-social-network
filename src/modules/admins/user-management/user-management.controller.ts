@@ -110,6 +110,20 @@ export class UserManagementController {
     }
   }
 
+  @Post('remove-warning/:id')
+  @UseFilters(WebExceptionFilter)
+  async removeWarning(@Param('id') id: string) {
+    try {
+      const user = await this.userManagementService.removeWarning(id);
+      return {
+        message: 'Gỡ bỏ cảnh báo thành công',
+        data: user,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   @Delete('delete/:id')
   @UseFilters(WebExceptionFilter)
   async deleteUser(@Param('id') id: string) {

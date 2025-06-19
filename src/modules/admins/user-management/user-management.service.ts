@@ -145,7 +145,9 @@ export class UserManagementService {
     }
 
     return this.userRepository.update(id, updateData);
-  }  async warnUser(id: string, reason: string) {
+  }
+
+  async warnUser(id: string, reason: string) {
     if (!isValidObjectId(id)) {
       throw new NotFoundException('ID người dùng không hợp lệ');
     }
@@ -160,12 +162,34 @@ export class UserManagementService {
       title: 'Cảnh báo từ quản trị viên',
       message: `Bạn đã nhận được cảnh báo: ${reason}`,
       type: NotificationType.SYSTEM,
-    });
-
-    // Update user record with warning
+    });    // Update user record with warning
     return this.userRepository.update(id, {
       bannedReason: reason,
       bannedUntil: null, // Warning without ban
+    });
+  }
+
+  async removeWarning(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new NotFoundException('ID người dùng không hợp lệ');
+    }
+
+    const user = await this.userRepository.findOneById(id);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    // Create notification for user
+    await this.notificationService.create(id, {
+      title: 'Thông báo từ quản trị viên',
+      message: 'Cảnh báo của bạn đã được gỡ bỏ. Tài khoản đã trở về trạng thái bình thường.',
+      type: NotificationType.SYSTEM,
+    });
+
+    // Remove warning from user record
+    return this.userRepository.update(id, {
+      bannedReason: null,
+      bannedUntil: null,
     });
   }
 

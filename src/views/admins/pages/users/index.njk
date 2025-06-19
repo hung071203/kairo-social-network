@@ -142,12 +142,18 @@
                                                                 <i class="bx bx-lock me-1"></i>
                                                                 Khóa Tài Khoản
                                                             {% endif %}
-                                                        </a>
-                                                        {% if not item.bannedUntil %}
-                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="confirmWarnUser('{{ item.name }}', '{{ item._id }}');">
-                                                                <i class="bx bx-error me-1"></i>
-                                                                Cảnh báo
-                                                            </a>
+                                                        </a>                                                        {% if not item.bannedUntil %}
+                                                            {% if item.bannedReason and not item.bannedUntil %}
+                                                                <a class="dropdown-item" href="javascript:void(0);" onclick="openRemoveWarningModal('{{ item.name }}', '{{ item._id }}');">
+                                                                    <i class="bx bx-shield-check me-1"></i>
+                                                                    Bỏ Cảnh Báo
+                                                                </a>
+                                                            {% else %}
+                                                                <a class="dropdown-item" href="javascript:void(0);" onclick="confirmWarnUser('{{ item.name }}', '{{ item._id }}');">
+                                                                    <i class="bx bx-error me-1"></i>
+                                                                    Cảnh báo
+                                                                </a>
+                                                            {% endif %}
                                                         {% endif %}
                                                         {% if user.role == 'ADMIN' %}
                                                             <a class="dropdown-item" href="javascript:void(0);" onclick="delUser('{{ item.name }}', '{{ item._id }}');">
@@ -350,9 +356,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Ban User Modal -->
+                                </div>                                <!-- Ban User Modal -->
                                 <div class="modal fade" id="banUserModal" tabindex="-1" aria-labelledby="banUserModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
@@ -393,7 +397,73 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>                                <script>
+                                </div>
+
+                                <!-- Unban Confirmation Modal -->
+                                <div class="modal fade" id="unbanUserModal" tabindex="-1" aria-labelledby="unbanUserModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="unbanUserModalLabel">
+                                                    <i class="bx bx-lock-open text-success me-2"></i>Mở Khóa Tài Khoản
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="text-center mb-3">
+                                                    <i class="bx bx-unlock text-success" style="font-size: 48px;"></i>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <p class="text-center">Bạn có chắc chắn muốn mở khóa tài khoản của:</p>
+                                                    <p class="text-center fw-bold fs-5" id="unbanUserName"></p>
+                                                </div>
+                                                <div class="alert alert-info">
+                                                    <i class="bx bx-info-circle me-2"></i>
+                                                    Sau khi mở khóa, người dùng sẽ có thể đăng nhập và sử dụng hệ thống bình thường.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="button" class="btn btn-success" onclick="confirmUnban()">
+                                                    <i class="bx bx-check me-1"></i>Mở Khóa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Remove Warning Modal -->
+                                <div class="modal fade" id="removeWarningModal" tabindex="-1" aria-labelledby="removeWarningModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="removeWarningModalLabel">
+                                                    <i class="bx bx-check-circle text-success me-2"></i>Bỏ Cảnh Báo
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="text-center mb-3">
+                                                    <i class="bx bx-shield-check text-success" style="font-size: 48px;"></i>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <p class="text-center">Bạn có chắc chắn muốn bỏ cảnh báo cho:</p>
+                                                    <p class="text-center fw-bold fs-5" id="removeWarningUserName"></p>
+                                                </div>
+                                                <div class="alert alert-success">
+                                                    <i class="bx bx-info-circle me-2"></i>
+                                                    Sau khi bỏ cảnh báo, trạng thái tài khoản sẽ trở về bình thường.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="button" class="btn btn-success" onclick="confirmRemoveWarning()">
+                                                    <i class="bx bx-check me-1"></i>Bỏ Cảnh Báo
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div><script>
                                     let currentBanUserId = null;
                                     let currentBanUserName = null;
 
@@ -450,11 +520,10 @@
                                         
                                         if (duration === 'permanent') {
                                             // Set to a very far future date for permanent ban
-                                            bannedUntil = new Date('2099-12-31T23:59:59.999Z').toISOString();
-                                        } else if (duration === 'custom') {
+                                            bannedUntil = new Date('2099-12-31T23:59:59.999Z').toISOString();                                        } else if (duration === 'custom') {
                                             const customDate = document.getElementById('customBanDate').value;
                                             if (!customDate) {
-                                                alert('Vui lòng chọn ngày kết thúc khóa');
+                                                showNotification('error', 'Lỗi!', 'Vui lòng chọn ngày kết thúc khóa');
                                                 return;
                                             }
                                             bannedUntil = new Date(customDate).toISOString();
@@ -510,13 +579,102 @@
                                                     customDateGroup.style.display = 'none';
                                                 }
                                             });
-                                        }                                    });
-                                    
+                                        }                                    });                                    
                                     // Variables for managing modals
                                     let currentWarnUserId = null;
                                     let currentWarnUserName = null;
                                     let currentDeleteUserId = null;
-                                    let currentDeleteUserName = null;                                    // Warning user functions
+                                    let currentDeleteUserName = null;
+                                    let currentUnbanUserId = null;
+                                    let currentUnbanUserName = null;
+                                    let currentRemoveWarningUserId = null;
+                                    let currentRemoveWarningUserName = null;
+
+                                    // Unban user functions
+                                    function openUnbanModal(username, id) {
+                                        currentUnbanUserId = id;
+                                        currentUnbanUserName = username;
+                                        document.getElementById('unbanUserName').textContent = username;
+                                        
+                                        const unbanModal = new bootstrap.Modal(document.getElementById('unbanUserModal'));
+                                        unbanModal.show();
+                                    }
+
+                                    function confirmUnban() {
+                                        const data = {
+                                            bannedUntil: null,
+                                            bannedReason: null
+                                        };
+                                        
+                                        fetch(`{{ baseUrl }}/user-management/ban/${currentUnbanUserId}`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify(data)
+                                        }).then(response => {
+                                            if (response.ok) {
+                                                // Close unban modal
+                                                const unbanModal = bootstrap.Modal.getInstance(document.getElementById('unbanUserModal'));
+                                                unbanModal.hide();
+                                                
+                                                showNotification('success', 'Thành công!', `Đã mở khóa tài khoản ${currentUnbanUserName}`);
+                                                setTimeout(() => {
+                                                    location.reload();
+                                                }, 2000);
+                                            } else {
+                                                return response.json().then(err => {
+                                                    throw new Error(err.message || 'Có lỗi xảy ra');
+                                                });
+                                            }
+                                        }).catch(error => {
+                                            showNotification('error', 'Lỗi!', error.message);
+                                        });
+                                    }
+
+                                    // Remove warning functions
+                                    function openRemoveWarningModal(username, id) {
+                                        currentRemoveWarningUserId = id;
+                                        currentRemoveWarningUserName = username;
+                                        document.getElementById('removeWarningUserName').textContent = username;
+                                        
+                                        const removeWarningModal = new bootstrap.Modal(document.getElementById('removeWarningModal'));
+                                        removeWarningModal.show();
+                                    }
+
+                                    function confirmRemoveWarning() {
+                                        fetch(`{{ baseUrl }}/user-management/remove-warning/${currentRemoveWarningUserId}`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            }
+                                        }).then(response => {
+                                            if (response.ok) {
+                                                // Close remove warning modal
+                                                const removeWarningModal = bootstrap.Modal.getInstance(document.getElementById('removeWarningModal'));
+                                                removeWarningModal.hide();
+                                                
+                                                // Show success notification
+                                                showNotification('success', 'Thành công!', `Đã gỡ bỏ cảnh báo cho ${currentRemoveWarningUserName}`);
+                                                
+                                                // Reload page after 2 seconds
+                                                setTimeout(() => {
+                                                    location.reload();
+                                                }, 2000);
+                                            } else {
+                                                return response.json().then(err => {
+                                                    throw new Error(err.message || 'Có lỗi xảy ra');
+                                                });
+                                            }
+                                        }).catch(error => {
+                                            showNotification('error', 'Lỗi!', error.message);
+                                        });
+                                    }
+
+                                    // Update confirmUnbanUser to use modal
+                                    function confirmUnbanUser(username, id) {
+                                        openUnbanModal(username, id);
+                                    }// Warning user functions
                                     function openWarnModal(username, id) {
                                         currentWarnUserId = id;
                                         currentWarnUserName = username;
