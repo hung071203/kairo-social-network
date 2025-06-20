@@ -61,15 +61,15 @@ export class PostManagementController {
       };
     }
   }
-
   @Get('comments/:id')
-  async getPostComments(@Param('id') id: string) {
+  async getPostComments(
+    @Param('id') id: string,
+    @Query() query: any,
+    @Pagination() pagination: PaginationDto,
+  ) {
     try {
-      const comments = await this.postManagementService.getPostComments(id);
-      return {
-        success: true,
-        data: comments,
-      };
+      const comments = await this.postManagementService.getPostComments(id, pagination);
+      return comments
     } catch (error) {
       return {
         success: false,

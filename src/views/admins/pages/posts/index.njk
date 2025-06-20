@@ -237,17 +237,35 @@
             </div>
         </div>
     </div>
-    
-    <!-- Post Comments Modal -->
+      <!-- Post Comments Modal -->
     <div class="modal fade" id="postCommentsModal" tabindex="-1" aria-labelledby="postCommentsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="postCommentsModalLabel">Bình Luận Bài Viết</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
+                </div>                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;" id="commentsModalBody">
                     <div id="postCommentsContent">
+                        <!-- Post comments content will be loaded here -->
+                    </div>
+                    <div id="commentsLoader" class="text-center mt-3" style="display: none;">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                        <p class="mt-2 mb-0 text-muted">Đang tải thêm bình luận...</p>
+                    </div>
+                    <div id="commentsEndMessage" class="text-center mt-3 text-muted" style="display: none;">
+                        <i class="bx bx-check-circle me-1"></i>
+                        <span>Đã hiển thị hết tất cả bình luận</span>
+                    </div>
+                    <div id="commentsEmptyMessage" class="text-center mt-3 text-muted" style="display: none;">
+                        <i class="bx bx-comment me-1"></i>
+                        <span>Cuộn xuống để tải thêm bình luận</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
                         <!-- Post comments content will be loaded here -->
                     </div>
                 </div>
@@ -324,10 +342,14 @@
             </div>
         </div>
     </div>
-    
-    <script>
+      <script>
         let currentPostId = null;
         let currentPostAuthor = null;
+        // Variables for infinite scroll comments
+        let currentCommentsPage = 1;
+        let isLoadingComments = false;
+        let hasMoreComments = true;
+        let allComments = [];
         
         // Utility functions for URL parameters
         function setQueryParams(params) {
@@ -378,26 +400,99 @@
                     showNotification('error', 'Có lỗi xảy ra khi tải media bài viết');
                 });
         }
-        
-        // View post comments
+          // View post comments
         function viewPostComments(postId) {
             currentPostId = postId;
-            // Load post comments via AJAX
-            fetch(`{{ baseUrl }}/post-management/comments/${postId}`)
+            // Reset pagination state
+            currentCommentsPage = 1;
+            hasMoreComments = true;
+            allComments = [];
+              // Clear previous content
+            document.getElementById('postCommentsContent').innerHTML = '';
+            document.getElementById('commentsLoader').style.display = 'none';
+            document.getElementById('commentsEndMessage').style.display = 'none';
+            document.getElementById('commentsEmptyMessage').style.display = 'none';
+            
+            // Load first page of comments
+            loadComments(postId, 1, true);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('postCommentsModal'));
+            modal.show();
+            
+            // Add scroll listener for infinite scroll
+            const modalBody = document.getElementById('commentsModalBody');
+            modalBody.addEventListener('scroll', function() {
+                if (modalBody.scrollTop + modalBody.clientHeight >= modalBody.scrollHeight - 10) {
+                    if (!isLoadingComments && hasMoreComments) {
+                        loadComments(postId, currentCommentsPage + 1, false);
+                    }
+                }
+            });
+        }
+        
+        // Load comments with pagination
+        function loadComments(postId, page, isFirstLoad = false) {
+            if (isLoadingComments) return;
+            
+            isLoadingComments = true;
+            document.getElementById('commentsLoader').style.display = 'block';
+            
+            fetch(`{{ baseUrl }}/post-management/comments/${postId}?page=${page}&limit=20`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.data && data.data.success) {
-                        document.getElementById('postCommentsContent').innerHTML = formatPostComments(data.data.data);
-                        new bootstrap.Modal(document.getElementById('postCommentsModal')).show();
+                    if (data.success && data.data) {
+                        let comments = [];
+                        let totalPages = 1;
+                        
+                        // Handle both array and paginated response
+                        if (Array.isArray(data.data)) {
+                            comments = data.data;
+                            hasMoreComments = false; // No pagination info, assume no more
+                        } else {
+                            comments = data.data.docs || [];
+                            totalPages = data.data.totalPages || 1;
+                            hasMoreComments = page < totalPages;
+                        }
+                        
+                        if (isFirstLoad) {
+                            allComments = comments;
+                            document.getElementById('postCommentsContent').innerHTML = formatPostComments(allComments);
+                        } else {
+                            allComments = allComments.concat(comments);
+                            appendComments(comments);
+                        }
+                        
+                        currentCommentsPage = page;
+                          if (!hasMoreComments) {
+                            document.getElementById('commentsEndMessage').style.display = 'block';
+                        } else if (allComments.length > 0) {
+                            document.getElementById('commentsEmptyMessage').style.display = 'block';
+                        }
                     } else {
-                        const errorMessage = (data.data && data.data.message) || data.message || 'Không thể tải bình luận bài viết';
-                        showNotification('error', errorMessage);
+                        const errorMessage = data.message || 'Không thể tải bình luận bài viết';
+                        if (isFirstLoad) {
+                            showNotification('error', errorMessage);
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showNotification('error', 'Có lỗi xảy ra khi tải bình luận bài viết');
+                    if (isFirstLoad) {
+                        showNotification('error', 'Có lỗi xảy ra khi tải bình luận bài viết');
+                    }
+                })
+                .finally(() => {
+                    isLoadingComments = false;
+                    document.getElementById('commentsLoader').style.display = 'none';
                 });
+        }
+        
+        // Append new comments to existing list
+        function appendComments(comments) {
+            const commentsContainer = document.getElementById('postCommentsContent');
+            const newCommentsHtml = comments.map(comment => formatSingleComment(comment)).join('');
+            commentsContainer.insertAdjacentHTML('beforeend', newCommentsHtml);
         }
         
         // Delete post
@@ -550,51 +645,68 @@
                     `).join('')}
                 </div>
             `;
-        }
-          function formatPostComments(comments) {
+        }          function formatPostComments(comments) {
             if (!comments || comments.length === 0) {
-                return '<p class="text-muted">Bài viết này chưa có bình luận nào.</p>';
+                return '<p class="text-muted text-center py-4">Bài viết này chưa có bình luận nào.</p>';
             }
             
             return `
                 <div class="comments-list">
-                    ${comments.map(comment => {
-                        // Safely access comment author data
-                        const author = comment.author || {};
-                        const authorName = author.name || 'Không có tên';
-                        const authorAvatar = author.avatar || null;
-                        const commentContent = comment.content || 'Không có nội dung';
-                        const createdAt = comment.createdAt ? new Date(comment.createdAt).toLocaleString('vi-VN') : 'Không rõ thời gian';
-                        const isReply = comment.isReply || false;
-                        const parentAuthor = comment.parentCommentAuthor || '';
-                        
-                        return `
-                        <div class="card mb-2 ${isReply ? 'ms-4' : ''}" style="${isReply ? 'border-left: 3px solid #007bff;' : ''}">
-                            <div class="card-body ${isReply ? 'py-2' : ''}">
-                                <div class="d-flex align-items-start">
-                                    <div class="avatar avatar-sm me-3">
-                                        ${authorAvatar ? 
-                                            `<img src="${authorAvatar}" alt="${authorName}" class="rounded-circle">` :
-                                            `<span class="avatar-initial rounded-circle ${isReply ? 'bg-label-info' : 'bg-label-secondary'}">${authorName[0].toUpperCase()}</span>`
-                                        }
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <h6 class="mb-0 me-2">${authorName}</h6>
-                                            ${isReply ? `<small class="text-muted">trả lời <strong>${parentAuthor}</strong></small>` : ''}
-                                        </div>
-                                        <p class="mb-1">${commentContent}</p>
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <small class="text-muted">${createdAt}</small>
-                                            ${!isReply ? `<small class="text-primary" style="cursor: pointer;">Trả lời</small>` : ''}                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        `;
-                    }).join('')}
+                    ${comments.map(comment => formatSingleComment(comment)).join('')}
                 </div>
             `;
+        }
+        
+        function formatSingleComment(comment) {
+            // Safely access comment author data
+            const author = comment.author || {};
+            const authorName = author.name || 'Không có tên';
+            const authorUsername = author.username || 'unknown';
+            const authorAvatar = author.avatar || null;
+            const commentContent = comment.content || 'Không có nội dung';
+            const createdAt = comment.createdAt ? new Date(comment.createdAt).toLocaleString('vi-VN') : 'Không rõ thời gian';
+            const isReply = comment.isReply || false;
+            const parentAuthor = comment.parentCommentAuthor || '';
+            const parentContent = comment.parentCommentContent || '';
+            
+            return `
+            <div class="card mb-2 ${isReply ? 'ms-3' : ''}" style="${isReply ? 'border-left: 3px solid #007bff;' : ''}">
+                <div class="card-body ${isReply ? 'py-2' : ''}">
+                    ${isReply && parentAuthor ? `
+                        <div class="mb-2 p-2 bg-light rounded small">
+                            <strong class="text-muted">Trả lời ${parentAuthor}:</strong>
+                            <div class="text-muted">${parentContent ? (parentContent.length > 100 ? parentContent.substring(0, 100) + '...' : parentContent) : ''}</div>
+                        </div>
+                    ` : ''}
+                    <div class="d-flex align-items-start">
+                        <div class="avatar avatar-sm me-3">
+                            ${authorAvatar ? 
+                                `<img src="${authorAvatar}" alt="${authorName}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">` :
+                                `<span class="avatar-initial rounded-circle ${isReply ? 'bg-label-info' : 'bg-label-secondary'}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px;">${authorName[0].toUpperCase()}</span>`
+                            }
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <h6 class="mb-0 me-2">${authorName}</h6>
+                                <small class="text-muted">@${authorUsername}</small>
+                            </div>
+                            <p class="mb-1">${commentContent}</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <small class="text-muted">${createdAt}</small>
+                                ${!isReply ? `<small class="text-primary" style="cursor: pointer;" onclick="replyToComment('${comment._id}', '${authorName}')">Trả lời</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+        
+        // Reply to comment function (placeholder for future implementation)
+        function replyToComment(commentId, authorName) {
+            console.log('Reply to comment:', commentId, 'by', authorName);
+            // TODO: Implement reply functionality
+            showNotification('info', `Tính năng trả lời bình luận của ${authorName} sẽ được triển khai sau`);
         }
         
         // Show notification
