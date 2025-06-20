@@ -14,9 +14,6 @@ export class Post extends Document {
   @Prop({ type: String, required: true })
   content: string;
 
-  @Prop({ type: Boolean, default: false })
-  isPinned: boolean;
-
   @Prop({
     type: [
       {
