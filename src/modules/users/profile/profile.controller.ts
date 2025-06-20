@@ -125,7 +125,7 @@ export class ProfileController {
       throw new BadRequestException(error.message);
     }
   }
-
+  
   @Post('check-username')
   async checkUsername(@Body('username') username: string) {
     try {

@@ -409,6 +409,74 @@
         .image-updating {
             opacity: 0.6;
             transform: scale(0.95);
+        }        /* Username validation styles */
+        .username-container {
+            position: relative;
+        }
+        
+        .username-feedback {
+            display: none;
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: fadeInScale 0.3s ease;
+        }
+        
+        .username-feedback.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .username-feedback.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .username-feedback.checking {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .username-checking {
+            border-color: #17a2b8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.15) !important;
+        }
+        
+        .username-valid {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15) !important;
+        }
+        
+        .username-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+        }
+        
+        .username-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .username-icon.checking {
+            color: #17a2b8;
+            animation: spin 1s linear infinite;
+        }
+        
+        .username-icon.valid {
+            color: #28a745;
+        }
+        
+        .username-icon.invalid {
+            color: #dc3545;
         }
 
         /* Responsive */
@@ -535,13 +603,17 @@
                                     </label>
                                     <input class="form-control" type="text" id="firstName" name="name" value="{{ user.name }}" autofocus/>
                                 </div>
-                                
-                                <div class="col-md-6">
+                                  <div class="col-md-6">
                                     <label for="username" class="form-label">
                                         <i class="bx bx-at me-1"></i>
                                         Tên người dùng
                                     </label>
-                                    <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}"/>
+                                    <div class="username-container">
+                                        <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}" data-original="{{ user.username }}"/>
+                                        <i class="username-icon bx bx-loader-alt" id="usernameIcon" style="display: none;"></i>
+                                    </div>
+                                    <div class="username-feedback" id="usernameFeedback"></div>
+                                    <div class="upload-hint">Tên người dùng phải có ít nhất 8 ký tự, không có khoảng trắng.</div>
                                 </div>
                                 
                                 <div class="col-md-6">
@@ -1174,9 +1246,20 @@
                 }
                 coverContainer.classList.remove('pulse-update');
             }
-        }        // Handle form submission with PATCH method
-        document.getElementById('formAccountSettings').addEventListener('submit', async function(e) {
+        }        // Handle form submission with PATCH method        document.getElementById('formAccountSettings').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Validate username before submitting
+            const usernameInput = document.getElementById('username');
+            const currentUsername = usernameInput.value.trim();
+            const originalUsername = usernameInput.getAttribute('data-original');
+            
+            // If username changed and is not valid, prevent submission
+            if (currentUsername !== originalUsername && !isUsernameValid) {
+                showToast({message: "Vui lòng chọn tên người dùng hợp lệ trước khi lưu.", type: "error"});
+                usernameInput.focus();
+                return;
+            }
             
             const formData = new FormData(this);
             const data = {};
@@ -1445,7 +1528,142 @@
                     submitButton.innerHTML = originalText;
                     submitButton.style.background = '';
                 }, 3000);
+            }        });
+
+        // Username validation functionality
+        let usernameCheckTimeout;
+        let lastCheckedUsername = '';
+        let isUsernameValid = false;        function validateUsernameFormat(username) {
+            // Username should be at least 8 characters, no spaces (according to backend)
+            if (!username || username.length < 8) {
+                return false;
             }
-        });
-    </script>
+            if (username.includes(' ')) {
+                return false;
+            }
+            return true;
+        }
+
+        async function checkUsernameAvailability(username) {
+            try {
+                const response = await fetch('{{ baseUrl }}/profile/check-username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username: username })
+                });
+                
+                const result = await response.json();
+                
+                // Backend returns {valid: true, message: '...'} on success
+                // or throws error (BadRequestException) on failure
+                if (response.ok && result.valid) {
+                    return { success: true, message: result.message };
+                } else {
+                    return { success: false, message: result.message || 'Tên người dùng không hợp lệ' };
+                }
+            } catch (error) {
+                console.error('Error checking username:', error);
+                return { success: false, message: 'Lỗi kết nối. Vui lòng thử lại.' };
+            }
+        }
+
+        function updateUsernameUI(state, message = '', icon = '') {
+            const usernameInput = document.getElementById('username');
+            const usernameFeedback = document.getElementById('usernameFeedback');
+            const usernameIcon = document.getElementById('usernameIcon');
+            
+            // Reset classes
+            usernameInput.classList.remove('username-checking', 'username-valid', 'username-invalid');
+            usernameFeedback.classList.remove('success', 'error', 'checking');
+            usernameIcon.classList.remove('checking', 'valid', 'invalid', 'bx-loader-alt', 'bx-check', 'bx-x');
+            
+            switch (state) {
+                case 'checking':
+                    usernameInput.classList.add('username-checking');
+                    usernameFeedback.classList.add('checking');
+                    usernameIcon.classList.add('checking', 'bx-loader-alt');
+                    usernameIcon.style.display = 'block';
+                    break;
+                case 'valid':
+                    usernameInput.classList.add('username-valid');
+                    usernameFeedback.classList.add('success');
+                    usernameIcon.classList.add('valid', 'bx-check');
+                    usernameIcon.style.display = 'block';
+                    isUsernameValid = true;
+                    break;
+                case 'invalid':
+                    usernameInput.classList.add('username-invalid');
+                    usernameFeedback.classList.add('error');
+                    usernameIcon.classList.add('invalid', 'bx-x');
+                    usernameIcon.style.display = 'block';
+                    isUsernameValid = false;
+                    break;
+                case 'hide':
+                    usernameIcon.style.display = 'none';
+                    usernameFeedback.style.display = 'none';
+                    isUsernameValid = false;
+                    return;
+            }
+            
+            if (message) {
+                usernameFeedback.textContent = message;
+                usernameFeedback.style.display = 'block';
+            }
+        }
+
+        // Add event listener for username input
+        document.getElementById('username').addEventListener('input', function(e) {
+            const username = e.target.value.trim();
+            const originalUsername = e.target.getAttribute('data-original');
+            
+            // Clear previous timeout
+            if (usernameCheckTimeout) {
+                clearTimeout(usernameCheckTimeout);
+            }
+            
+            // If username is same as original, hide validation
+            if (username === originalUsername) {
+                updateUsernameUI('hide');
+                isUsernameValid = true;
+                return;
+            }
+            
+            // If username is empty, hide validation
+            if (!username) {
+                updateUsernameUI('hide');
+                return;
+            }
+              // Validate format first
+            if (!validateUsernameFormat(username)) {
+                updateUsernameUI('invalid', 'Tên người dùng phải có ít nhất 8 ký tự và không có khoảng trắng.');
+                return;
+            }
+            
+            // Show checking state
+            updateUsernameUI('checking', 'Đang kiểm tra tên người dùng...');
+            
+            // Set timeout to check availability
+            usernameCheckTimeout = setTimeout(async () => {
+                // Skip if this username was already checked
+                if (username === lastCheckedUsername) {
+                    return;
+                }
+                
+                lastCheckedUsername = username;
+                
+                try {
+                    const result = await checkUsernameAvailability(username);
+                    
+                    if (result.success) {
+                        updateUsernameUI('valid', 'Tên người dùng khả dụng!');
+                    } else {
+                        updateUsernameUI('invalid', result.message || 'Tên người dùng đã được sử dụng.');
+                    }
+                } catch (error) {
+                    updateUsernameUI('invalid', 'Lỗi khi kiểm tra tên người dùng. Vui lòng thử lại.');
+                }
+            }, 500); // Wait 500ms after user stops typing
+        });    </script>
 {% endblock %}

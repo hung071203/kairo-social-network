@@ -146,7 +146,6 @@ export class ProfileService {
       googleId: null,
     });
   }
-
   async checkUsername(username: string) {
     if (username.length < 8 || username.includes(' ')) {
       throw new Error(
@@ -192,7 +191,7 @@ export class ProfileService {
       throw new Error('Vui lòng xác thực email trước khi thay đổi');
     }
     const data = JSON.parse(dataRedis || '{}');
-    
+
     if (data.code != dto.otp) {
       throw new Error('Mã xác thực không đúng');
     }
@@ -203,9 +202,9 @@ export class ProfileService {
   }
 
   async getAllAdminAndMod() {
-    const adminsAndMods = await this.userRepository.findAll({
+    const adminsAndMods = (await this.userRepository.findAll({
       role: { $in: [UserRole.ADMIN, UserRole.MOD] },
-    }) as any;
+    })) as any;
 
     if (!adminsAndMods || adminsAndMods.length === 0) {
       return [];

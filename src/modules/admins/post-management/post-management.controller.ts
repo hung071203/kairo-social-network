@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Render, UseFilters, UseGuards, Param, Delete, Post, Body } from '@nestjs/common';
+import { Controller, Get, Query, Render, UseFilters, UseGuards, Param, Delete, Post, Body, BadRequestException } from '@nestjs/common';
 import { PostManagementService } from './post-management.service';
 import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
@@ -26,7 +26,7 @@ export class PostManagementController {
         query, // Pass query params to template for sorting
       };
     } catch (error) {
-      throw new Error(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -39,10 +39,7 @@ export class PostManagementController {
         data: post,
       };
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -55,10 +52,7 @@ export class PostManagementController {
         data: post.mediaUrls,
       };
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      throw new BadRequestException(error.message);
     }
   }
   @Get('comments/:id')
@@ -71,10 +65,7 @@ export class PostManagementController {
       const comments = await this.postManagementService.getPostComments(id, pagination);
       return comments
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -87,10 +78,7 @@ export class PostManagementController {
         message: 'Xóa bài viết thành công',
       };
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -106,10 +94,7 @@ export class PostManagementController {
         message: 'Báo cáo đã được gửi thành công',
       };
     } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      throw new BadRequestException(error.message);
     }
   }
 }
