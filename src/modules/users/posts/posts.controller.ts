@@ -101,7 +101,7 @@ export class PostsController {
   async getPostDetail(@GetUser() user: User, @Param('id') id: string) {
     try {
       const data = await this.postsService.getPostDetail(
-        user._id as string,
+        user._id.toString(),
         id,
       );
       return { ...data };

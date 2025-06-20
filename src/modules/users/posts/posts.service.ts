@@ -214,7 +214,7 @@ export class PostsService {
       throw new Error('Bạn không có quyền xem bài viết này');
     }
 
-    if (post.type === PostTypeEnum.PRIVATE) {
+    if (post.type === PostTypeEnum.PRIVATE && post.author._id.toString() !== userId) {
       throw new Error('Bài viết này là riêng tư');
     }
 
