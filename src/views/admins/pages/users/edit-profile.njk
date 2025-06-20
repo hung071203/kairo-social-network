@@ -1,5 +1,4 @@
-{% extends 'admins/layouts/app.njk' %}
-{% set title = 'Thông tin cá nhân' %}
+{% extends 'admins/layouts/app.njk' %}More actions {% set title = 'Thông tin cá nhân' %}
 {% set auth = false %}
 {% block css %}
     <style>
@@ -9,16 +8,15 @@
             height: 100%;
             margin: 0;
         }
-          /* Facebook-like Profile Header Styles */
+        /* Facebook-like Profile Header Styles */
         .profile-cover {
             position: relative;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 16px 16px 0 0;
             overflow: visible;
-            margin: -24px -24px 0 -24px;
+            margin: -24px -24px 0;
             z-index: 10;
         }
-        
         .cover-image {
             width: 100%;
             height: 250px;
@@ -26,12 +24,10 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
         .cover-image:hover {
             transform: scale(1.02);
             filter: brightness(0.9);
         }
-        
         .cover-overlay {
             position: absolute;
             top: 0;
@@ -46,12 +42,11 @@
             transition: opacity 0.3s ease;
             cursor: pointer;
         }
-        
         .cover-image:hover + .cover-overlay,
         .cover-overlay:hover {
             opacity: 1;
         }
-          .profile-avatar {
+        .profile-avatar {
             position: absolute;
             bottom: -60px;
             left: 40px;
@@ -65,19 +60,17 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 15;
         }
-        
         .profile-avatar:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
         }
-        
         .avatar-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
             border-radius: 50%;
         }
-          .avatar-overlay {
+        .avatar-overlay {
             position: absolute;
             top: 0;
             left: 0;
@@ -92,11 +85,10 @@
             transition: opacity 0.3s ease;
             z-index: 20;
         }
-        
         .profile-avatar:hover .avatar-overlay {
             opacity: 1;
         }
-          .profile-info {
+        .profile-info {
             padding: 80px 40px 30px;
             background: white;
             border-radius: 0 0 16px 16px;
@@ -104,44 +96,37 @@
             position: relative;
             z-index: 5;
         }
-        
         .profile-name {
             font-size: 2rem;
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 5px;
         }
-        
         .profile-username {
             font-size: 1.1rem;
             color: #7f8c8d;
             margin-bottom: 15px;
         }
-        
         .profile-stats {
             display: flex;
             gap: 30px;
             margin-top: 20px;
         }
-        
         .stat-item {
             text-align: center;
         }
-        
         .stat-number {
             font-size: 1.5rem;
             font-weight: 600;
             color: #2c3e50;
             display: block;
         }
-        
         .stat-label {
             font-size: 0.9rem;
             color: #7f8c8d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
         .form-section {
             background: white;
             border-radius: 16px;
@@ -150,7 +135,6 @@
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
             border: 1px solid #f0f0f0;
         }
-        
         .section-title {
             font-size: 1.4rem;
             font-weight: 600;
@@ -159,13 +143,11 @@
             padding-bottom: 15px;
             border-bottom: 2px solid #e9ecef;
         }
-        
         .form-label {
             font-weight: 500;
             color: #495057;
             margin-bottom: 8px;
         }
-        
         .form-control {
             border: 2px solid #e9ecef;
             border-radius: 10px;
@@ -173,40 +155,34 @@
             font-size: 0.95rem;
             transition: all 0.3s ease;
         }
-        
         .form-control:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
         }
-        
         .btn {
             border-radius: 10px;
             padding: 12px 30px;
             font-weight: 500;
             transition: all 0.3s ease;
         }
-        
         .btn-primary {
             border: none;
         }
-        
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
         }
-        
         .upload-hint {
             font-size: 0.85rem;
             color: #6c757d;
             margin-top: 8px;
         }
-          /* Animation cho upload */
+        /* Animation cho upload */
         .uploading {
             opacity: 0.7;
             transform: scale(0.98);
             position: relative;
         }
-        
         .uploading::after {
             content: '';
             position: absolute;
@@ -220,7 +196,6 @@
             align-items: center;
             justify-content: center;
         }
-        
         .uploading::before {
             content: '';
             position: absolute;
@@ -235,7 +210,6 @@
             animation: spin 1s linear infinite;
             z-index: 10;
         }
-        
         /* Enhanced Loading Animations */
         .loading-spinner {
             width: 20px;
@@ -245,7 +219,6 @@
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
         }
-
         .loading-overlay {
             position: absolute;
             top: 0;
@@ -262,18 +235,15 @@
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-
         .loading-overlay.show {
             opacity: 1;
         }
-
         .loading-text {
             color: white;
             font-size: 0.875rem;
             margin-top: 8px;
             font-weight: 500;
         }
-
         .upload-progress {
             position: absolute;
             bottom: 10px;
@@ -288,11 +258,9 @@
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-
         .upload-progress.show {
             opacity: 1;
         }
-
         .success-animation {
             position: absolute;
             top: 50%;
@@ -310,37 +278,32 @@
             transition: all 0.3s ease;
             z-index: 35;
         }
-
         .success-animation.show {
             opacity: 1;
             scale: 1;
         }
-
         .success-animation i {
             color: white;
             font-size: 18px;
         }
-
         /* Pulse effect for updating elements */
         .pulse-update {
             animation: pulse-glow 2s infinite;
         }
-
         @keyframes pulse-glow {
-            0%, 100% { 
+            0,
+            100% {
                 box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
             }
-            50% { 
+            50% {
                 box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
             }
         }
-
         /* Enhanced button loading state */
         .btn-loading {
             position: relative;
             pointer-events: none;
         }
-
         .btn-loading::after {
             content: '';
             position: absolute;
@@ -354,11 +317,14 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
-
         @keyframes slideInRight {
             from {
                 transform: translateX(100%);
@@ -369,7 +335,6 @@
                 opacity: 1;
             }
         }
-
         @keyframes fadeInScale {
             from {
                 opacity: 0;
@@ -380,13 +345,11 @@
                 transform: scale(1);
             }
         }
-
         /* Enhanced form submit button loading */
         .form-submit-loading {
             position: relative;
             color: transparent !important;
         }
-
         .form-submit-loading::after {
             content: '';
             position: absolute;
@@ -400,115 +363,39 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         /* Smooth transitions for image updates */
-        .avatar-image, .cover-image {
+        .avatar-image,
+        .cover-image {
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
-
         .image-updating {
             opacity: 0.6;
             transform: scale(0.95);
-        }        /* Username validation styles */
-        .username-container {
-            position: relative;
         }
-        
-        .username-feedback {
-            display: none;
-            margin-top: 8px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            animation: fadeInScale 0.3s ease;
-        }
-        
-        .username-feedback.success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        
-        .username-feedback.error {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-        
-        .username-feedback.checking {
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-        }
-        
-        .username-checking {
-            border-color: #17a2b8 !important;
-            box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.15) !important;
-        }
-        
-        .username-valid {
-            border-color: #28a745 !important;
-            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15) !important;
-        }
-        
-        .username-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
-        }
-        
-        .username-icon {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-        
-        .username-icon.checking {
-            color: #17a2b8;
-            animation: spin 1s linear infinite;
-        }
-        
-        .username-icon.valid {
-            color: #28a745;
-        }
-        
-        .username-icon.invalid {
-            color: #dc3545;
-        }
-
         /* Responsive */
-        @media (max-width: 768px) {
+        @media(max-width: 768px) {
             .profile-cover {
-                margin: -16px -16px 0 -16px;
+                margin: -16px -16px 0;
             }
-            
             .cover-image {
                 height: 180px;
             }
-            
             .profile-avatar {
                 width: 100px;
                 height: 100px;
                 bottom: -50px;
                 left: 20px;
             }
-            
             .profile-info {
                 padding: 60px 20px 20px;
                 margin: 0 -16px;
             }
-            
             .profile-name {
                 font-size: 1.5rem;
             }
-            
             .profile-stats {
                 gap: 20px;
             }
-            
             .form-section {
                 padding: 20px;
                 margin-top: 20px;
@@ -520,7 +407,8 @@
     <div class="content-wrapper">
         <div class="container-xxl flex-grow-1 container-p-y">
             <div class="row">
-                <div class="col-md-12">
+                <div
+                    class="col-md-12">
                     <!-- Navigation Tabs -->
                     <div class="nav-align-top mb-4">
                         <ul class="nav nav-pills flex-column flex-md-row">
@@ -544,58 +432,61 @@
                             </li>
                         </ul>
                     </div>
-
                     <!-- Profile Header Card -->
-                    <div class="card mb-4" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);">
+                    <div
+                        class="card mb-4"
+                        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);">
                         <div class="profile-cover">
                             {% if user.background %}
-                            <img id="backgroundDisplay" src="{{ user.background }}" alt="Cover" class="cover-image" onclick="document.getElementById('backgroundUpload').click()"/>
+                                <img id="backgroundDisplay" src="{{ user.background }}" alt="Cover" class="cover-image" onclick="document.getElementById('backgroundUpload').click()"/>
                             {% else %}
-                            <div class="cover-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="document.getElementById('backgroundUpload').click()"></div>
+                                <div
+                                    class="cover-image"
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+                                    onclick="document.getElementById('backgroundUpload').click()"></div>
                             {% endif %}
-                            
                             <div class="cover-overlay" onclick="document.getElementById('backgroundUpload').click()">
                                 <div class="text-white text-center">
                                     <i class="bx bx-camera" style="font-size: 2.5rem;"></i>
                                     <div class="mt-2 fw-bold">Đổi ảnh bìa</div>
                                 </div>
                             </div>
-                            
                             <div class="profile-avatar" onclick="document.getElementById('avatarUpload').click()">
                                 {% if user.avatar %}
-                                <img id="avatarDisplay" src="{{ user.avatar }}" alt="Avatar" class="avatar-image"/>
+                                    <img id="avatarDisplay" src="{{ user.avatar }}" alt="Avatar" class="avatar-image"/>
                                 {% else %}
-                                <img id="avatarDisplay" src="/images/kairo.jpg" alt="Avatar" class="avatar-image"/>
+                                    <img id="avatarDisplay" src="/images/kairo.jpg" alt="Avatar" class="avatar-image"/>
                                 {% endif %}
                                 <div class="avatar-overlay">
                                     <i class="bx bx-camera text-white" style="font-size: 1.8rem;"></i>
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="profile-info">
                             <h2 class="profile-name">{{ user.name }}</h2>
                             <p class="profile-username">{{ user.username }}</p>
                         </div>
                     </div>
-
                     <!-- Form Section -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="bx bx-edit me-2"></i>
                             Chỉnh sửa thông tin
                         </h3>
-                        
                         <!-- Hidden file inputs -->
                         <input type="file" id="avatarUpload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)"/>
-                        <input type="file" id="backgroundUpload" accept="image/*" style="display: none;" onchange="handleBackgroundUpload(event)"/>
-
+                        <input
+                            type="file"
+                            id="backgroundUpload"
+                            accept="image/*"
+                            style="display: none;"
+                            onchange="handleBackgroundUpload(event)"/>
                         <form id="formAccountSettings" method="POST" action="{{ baseUrl }}/profile/update">
-                            <div class="row g-4">
+                            <div
+                                class="row g-4">
                                 <!-- Hidden fields -->
                                 <input type="hidden" id="avatar" name="avatar" value="{{ user.avatar }}"/>
                                 <input type="hidden" id="background" name="background" value="{{ user.background }}"/>
-                                
                                 <div class="col-md-6">
                                     <label for="firstName" class="form-label">
                                         <i class="bx bx-user me-1"></i>
@@ -603,19 +494,13 @@
                                     </label>
                                     <input class="form-control" type="text" id="firstName" name="name" value="{{ user.name }}" autofocus/>
                                 </div>
-                                  <div class="col-md-6">
+                                <div class="col-md-6">
                                     <label for="username" class="form-label">
                                         <i class="bx bx-at me-1"></i>
                                         Tên người dùng
                                     </label>
-                                    <div class="username-container">
-                                        <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}" data-original="{{ user.username }}"/>
-                                        <i class="username-icon bx bx-loader-alt" id="usernameIcon" style="display: none;"></i>
-                                    </div>
-                                    <div class="username-feedback" id="usernameFeedback"></div>
-                                    <div class="upload-hint">Tên người dùng phải có ít nhất 8 ký tự, không có khoảng trắng.</div>
+                                    <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}"/>
                                 </div>
-                                
                                 <div class="col-md-6">
                                     <label for="email" class="form-label">
                                         <i class="bx bx-envelope me-1"></i>
@@ -624,7 +509,6 @@
                                     <input class="form-control" type="email" id="email" disabled value="{{ user.email }}" placeholder="john.doe@example.com"/>
                                     <div class="upload-hint">Email chỉ có thể thay đổi thông qua chức năng "Đổi email"</div>
                                 </div>
-                                
                                 <div class="col-md-6">
                                     <label class="form-label" for="phoneNumber">
                                         <i class="bx bx-phone me-1"></i>
@@ -632,19 +516,17 @@
                                     </label>
                                     <input type="text" id="phoneNumber" name="phone" class="form-control" placeholder="0123 456 789" value="{{ user.phone }}"/>
                                 </div>
-                                
                                 <div class="col-md-6">
                                     <label class="form-label" for="gender">
                                         <i class="bx bx-male-female me-1"></i>
                                         Giới tính
                                     </label>
                                     <select class="form-control" id="gender" name="gender">
-                                        <option value="MALE" {% if user.gender == 'MALE' %}selected{% endif %}>Nam</option>
-                                        <option value="FEMALE" {% if user.gender == 'FEMALE' %}selected{% endif %}>Nữ</option>
-                                        <option value="OTHER" {% if user.gender == 'OTHER' %}selected{% endif %}>Khác</option>
+                                        <option value="MALE" {% if user.gender == 'MALE' %} selected {% endif %}>Nam</option>
+                                        <option value="FEMALE" {% if user.gender == 'FEMALE' %} selected {% endif %}>Nữ</option>
+                                        <option value="OTHER" {% if user.gender == 'OTHER' %} selected {% endif %}>Khác</option>
                                     </select>
                                 </div>
-                                
                                 <div class="col-md-6">
                                     <label class="form-label" for="birthday">
                                         <i class="bx bx-calendar me-1"></i>
@@ -652,7 +534,6 @@
                                     </label>
                                     <input type="date" id="birthday" name="birthday" class="form-control" value="{% if user.birthday %}{{ user.birthday | formatDate('YYYY-MM-DD') }}{% endif %}"/>
                                 </div>
-                                
                                 <div class="col-12">
                                     <label class="form-label" for="bio">
                                         <i class="bx bx-edit-alt me-1"></i>
@@ -661,7 +542,6 @@
                                     <textarea id="bio" name="bio" class="form-control" rows="4" placeholder="Viết gì đó về bản thân...">{{ user.bio }}</textarea>
                                     <div class="upload-hint">Tối đa 500 ký tự</div>
                                 </div>
-                                
                                 <!-- Read-only fields -->
                                 <div class="col-md-6">
                                     <label class="form-label" for="role">
@@ -670,7 +550,6 @@
                                     </label>
                                     <input type="text" id="role" class="form-control" value="{% if user.role == 'ADMIN' %}Quản trị viên{% elif user.role == 'MOD' %}Điều hành viên{% else %}Người dùng{% endif %}" disabled/>
                                 </div>
-                                
                                 <div class="col-md-6">
                                     <label class="form-label" for="createdAt">
                                         <i class="bx bx-calendar-plus me-1"></i>
@@ -678,24 +557,23 @@
                                     </label>
                                     <input type="text" id="createdAt" class="form-control" value="{{ user.createdAt | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
                                 </div>
-                                
                                 {% if user.bannedUntil %}
-                                <div class="col-md-6">
-                                    <label class="form-label" for="bannedUntil">
-                                        <i class="bx bx-block me-1"></i>
-                                        Bị cấm đến
-                                    </label>
-                                    <input type="text" id="bannedUntil" class="form-control" value="{{ user.bannedUntil | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label" for="bannedReason">
-                                        <i class="bx bx-message-alt-detail me-1"></i>
-                                        Lý do bị cấm
-                                    </label>
-                                    <input type="text" id="bannedReason" class="form-control" value="{{ user.bannedReason }}" disabled/>
-                                </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="bannedUntil">
+                                            <i class="bx bx-block me-1"></i>
+                                            Bị cấm đến
+                                        </label>
+                                        <input type="text" id="bannedUntil" class="form-control" value="{{ user.bannedUntil | formatDate('DD/MM/YYYY HH:mm:ss') }}" disabled/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="bannedReason">
+                                            <i class="bx bx-message-alt-detail me-1"></i>
+                                            Lý do bị cấm
+                                        </label>
+                                        <input type="text" id="bannedReason" class="form-control" value="{{ user.bannedReason }}" disabled/>
+                                    </div>
                                 {% endif %}
-                                  <div class="col-12 mt-4">
+                                <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary me-3 data-submit">
                                         <i class="bx bx-save me-2"></i>
                                         Lưu Thay Đổi
@@ -712,7 +590,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Popup Đổi Mật Khẩu -->
     <div class="modal fade" id="changePassModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -754,7 +631,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Popup Đổi Email -->
     <div class="modal fade" id="changeMailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -765,7 +641,8 @@
                         Đổi email
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>                <div class="modal-body p-4">
+                </div>
+                <div class="modal-body p-4">
                     <form id="formChangeMail" method="POST" action="{{ baseUrl }}/profile/change-mail">
                         <div id="message-alert-email"></div>
                         <div class="mb-3">
@@ -779,7 +656,9 @@
                             </div>
                             <div id="email-feedback" class="mt-2 text-danger small" style="display: none;"></div>
                             <div id="countdown-display" class="mt-2 text-muted small" style="display: none;">
-                                Gửi lại OTP sau: <span id="countdown-timer">60</span> giây
+                                Gửi lại OTP sau:
+                                <span id="countdown-timer">60</span>
+                                giây
                             </div>
                         </div>
                         <div class="mb-3">
@@ -805,61 +684,53 @@
             </div>
         </div>
     </div>
-
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script>
         function openFormChangePass() {
             var changePassModal = new bootstrap.Modal(document.getElementById('changePassModal'));
             changePassModal.show();
         }
-        
         function openFormChangeMail() {
             var changeMailModal = new bootstrap.Modal(document.getElementById('changeMailModal'));
             changeMailModal.show();
         }
-          async function sendCode(button) {
+        async function sendCode(button) {
             const emailInput = document.getElementById('email-pre');
             const email = emailInput.value.trim();
             const emailFeedback = document.getElementById('email-feedback');
             const countdownDisplay = document.getElementById('countdown-display');
             const countdownTimer = document.getElementById('countdown-timer');
-            
             // Validate email
-            if (!email) {
+            if (! email) {
                 emailFeedback.textContent = 'Vui lòng nhập email mới';
                 emailFeedback.style.display = 'block';
                 emailFeedback.className = 'mt-2 text-danger small';
                 return;
             }
-            
             // Check if email is valid format
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
+            if (! emailRegex.test(email)) {
                 emailFeedback.textContent = 'Email không hợp lệ';
                 emailFeedback.style.display = 'block';
                 emailFeedback.className = 'mt-2 text-danger small';
                 return;
             }
-            
             // Get captcha token
-            const captchaToken = document.querySelector('.cf-turnstile [name="cf-turnstile-response"]')?.value;
-            if (!captchaToken) {
+            const captchaToken = document.querySelector('.cf-turnstile [name="cf-turnstile-response"]') ?. value;
+            if (! captchaToken) {
                 emailFeedback.textContent = 'Vui lòng xác thực Captcha';
                 emailFeedback.style.display = 'block';
                 emailFeedback.className = 'mt-2 text-danger small';
                 return;
             }
-            
             button.disabled = true;
             button.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i> Đang gửi...';
             emailFeedback.style.display = 'none';
-            
             const requestData = {
                 email: email,
                 'cf-turnstile-response': captchaToken,
                 type: 'CHANGE_MAIL'
             };
-            
             try {
                 const response = await fetch('{{ baseUrl }}/auth/verify-email', {
                     method: 'POST',
@@ -868,9 +739,7 @@
                     },
                     body: JSON.stringify(requestData)
                 });
-                
                 const data = await response.json();
-                
                 if (data.success) {
                     emailFeedback.textContent = 'Mã OTP đã được gửi đến email của bạn';
                     emailFeedback.style.display = 'block';
@@ -892,18 +761,15 @@
                 button.innerHTML = '<i class="bx bx-send me-1"></i> Nhận mã OTP';
             }
         }
-          function startCountdown(button) {
+        function startCountdown(button) {
             const countdownDisplay = document.getElementById('countdown-display');
             const countdownTimer = document.getElementById('countdown-timer');
-            
             let countdown = 60;
             countdownTimer.textContent = countdown;
             countdownDisplay.style.display = 'block';
-            
             const interval = setInterval(() => {
                 countdown--;
                 countdownTimer.textContent = countdown;
-                
                 if (countdown <= 0) {
                     clearInterval(interval);
                     button.disabled = false;
@@ -911,22 +777,19 @@
                     countdownDisplay.style.display = 'none';
                 }
             }, 1000);
-        }async function uploadFile(file, progressCallback) {
+        }
+        async function uploadFile(file, progressCallback) {
             const formData = new FormData();
             formData.append('file', file);
-            
-            try {
-                // Create XMLHttpRequest for upload progress tracking
+            try { // Create XMLHttpRequest for upload progress tracking
                 return new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
-                    
                     xhr.upload.addEventListener('progress', (event) => {
                         if (event.lengthComputable && progressCallback) {
                             const percentComplete = Math.round((event.loaded / event.total) * 100);
                             progressCallback(percentComplete);
                         }
                     });
-                    
                     xhr.addEventListener('load', () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
                             const data = JSON.parse(xhr.responseText);
@@ -935,11 +798,9 @@
                             reject(new Error('Upload failed'));
                         }
                     });
-                    
                     xhr.addEventListener('error', () => {
                         reject(new Error('Network error during upload'));
                     });
-                    
                     xhr.open('POST', '/storage/upload');
                     xhr.send(formData);
                 });
@@ -948,24 +809,20 @@
                 showToast({message: "Lỗi khi tải lên tệp.", type: "error"});
                 throw error;
             }
-        }        async function autoSaveProfile(updateData) {
-            try {
-                // Show updating progress
+        }
+        async function autoSaveProfile(updateData) {
+            try { // Show updating progress
                 const updateIndicator = createUpdateIndicator();
                 document.body.appendChild(updateIndicator);
-                
                 // Get current form data
                 const formData = new FormData(document.getElementById('formAccountSettings'));
                 const data = {};
-                
                 // Convert FormData to regular object
                 for (let [key, value] of formData.entries()) {
                     data[key] = value;
                 }
-                
                 // Merge with update data (avatar or background)
                 Object.assign(data, updateData);
-                
                 const response = await fetch('{{ baseUrl }}/profile/update', {
                     method: 'PATCH',
                     headers: {
@@ -973,29 +830,26 @@
                     },
                     body: JSON.stringify(data)
                 });
-                
                 const result = await response.json();
-                
-                if (!response.ok) {
+                if (! response.ok) {
                     throw new Error(result.message || "Có lỗi xảy ra khi cập nhật!");
                 }
-                
                 // Show success animation
                 updateIndicator.innerHTML = `
                     <div class="success-animation show">
                         <i class="bx bx-check"></i>
                     </div>
                 `;
-                
                 setTimeout(() => {
                     document.body.removeChild(updateIndicator);
                 }, 1500);
-                
                 return result;
             } catch (error) {
                 console.error('Error auto-saving profile:', error);
-                showToast({message: "Lỗi khi tự động lưu: " + error.message, type: "error"});
-                
+                showToast({
+                    message: "Lỗi khi tự động lưu: " + error.message,
+                    type: "error"
+                });
                 // Remove update indicator on error
                 const indicator = document.querySelector('.update-indicator');
                 if (indicator) {
@@ -1004,7 +858,6 @@
                 throw error;
             }
         }
-
         function createUpdateIndicator() {
             const indicator = document.createElement('div');
             indicator.className = 'update-indicator';
@@ -1029,25 +882,24 @@
                 <span>Đang cập nhật hồ sơ...</span>
             `;
             return indicator;
-        }        async function handleAvatarUpload(event) {
+        }
+        async function handleAvatarUpload(event) {
             const file = event.target.files[0];
-            if (!file) return;
-
+            if (! file) 
+                return;
+            
             // Validate file type
-            if (!file.type.startsWith('image/')) {
+            if (! file.type.startsWith('image/')) {
                 showToast({message: "Chỉ được chọn tệp hình ảnh!", type: "error"});
                 return;
             }
-
             // Validate file size (5MB limit)
             if (file.size > 5 * 1024 * 1024) {
                 showToast({message: "Kích thước tệp không được vượt quá 5MB!", type: "error"});
                 return;
             }
-
             const avatarImg = document.getElementById('avatarDisplay');
             const avatarContainer = document.querySelector('.profile-avatar');
-            
             // Create loading overlay
             const loadingOverlay = document.createElement('div');
             loadingOverlay.className = 'loading-overlay';
@@ -1056,37 +908,27 @@
                 <div class="loading-text">Đang tải lên... 0%</div>
             `;
             avatarContainer.appendChild(loadingOverlay);
-            
             // Show loading overlay
             setTimeout(() => loadingOverlay.classList.add('show'), 10);
-
-            try {
-                // Add uploading class for visual feedback
+            try { // Add uploading class for visual feedback
                 avatarImg.classList.add('uploading');
                 avatarContainer.classList.add('pulse-update');
-                
                 const uploadedUrl = await uploadFile(file, (progress) => {
                     const loadingText = loadingOverlay.querySelector('.loading-text');
                     loadingText.textContent = `Đang tải lên... ${progress}%`;
                 });
-                
-                if (uploadedUrl) {
-                    // Update loading text
+                if (uploadedUrl) { // Update loading text
                     loadingOverlay.querySelector('.loading-text').textContent = 'Đang cập nhật hồ sơ...';
-                    
                     // Update the hidden input field
                     document.getElementById('avatar').value = uploadedUrl;
-                    
                     // Update display image with smooth transition
                     avatarImg.style.opacity = '0';
                     setTimeout(() => {
                         avatarImg.src = uploadedUrl;
                         avatarImg.style.opacity = '1';
                     }, 300);
-                    
                     // Auto-save avatar to profile
                     await autoSaveProfile({avatar: uploadedUrl});
-                    
                     // Show success state
                     loadingOverlay.innerHTML = `
                         <div class="success-animation show">
@@ -1094,7 +936,6 @@
                         </div>
                         <div class="loading-text">Cập nhật thành công!</div>
                     `;
-                    
                     setTimeout(() => {
                         loadingOverlay.classList.remove('show');
                         setTimeout(() => {
@@ -1103,18 +944,15 @@
                             }
                         }, 300);
                     }, 1500);
-                    
                     showToast({message: "Cập nhật ảnh đại diện thành công!", type: "success"});
                 }
-            } catch (error) {
-                // Show error state
+            } catch (error) { // Show error state
                 loadingOverlay.innerHTML = `
                     <div style="color: #dc3545; text-align: center;">
                         <i class="bx bx-error-circle" style="font-size: 24px;"></i>
                         <div class="loading-text" style="color: #dc3545;">Tải lên thất bại!</div>
                     </div>
                 `;
-                
                 setTimeout(() => {
                     loadingOverlay.classList.remove('show');
                     setTimeout(() => {
@@ -1123,32 +961,32 @@
                         }
                     }, 300);
                 }, 2000);
-                
-                showToast({message: "Lỗi khi tải lên ảnh đại diện: " + error.message, type: "error"});
-            } finally {
-                // Clean up classes
+                showToast({
+                    message: "Lỗi khi tải lên ảnh đại diện: " + error.message,
+                    type: "error"
+                });
+            } finally { // Clean up classes
                 avatarImg.classList.remove('uploading');
                 avatarContainer.classList.remove('pulse-update');
             }
-        }        async function handleBackgroundUpload(event) {
+        }
+        async function handleBackgroundUpload(event) {
             const file = event.target.files[0];
-            if (!file) return;
-
+            if (! file) 
+                return;
+            
             // Validate file type
-            if (!file.type.startsWith('image/')) {
+            if (! file.type.startsWith('image/')) {
                 showToast({message: "Chỉ được chọn tệp hình ảnh!", type: "error"});
                 return;
             }
-
             // Validate file size (5MB limit)
             if (file.size > 5 * 1024 * 1024) {
                 showToast({message: "Kích thước tệp không được vượt quá 5MB!", type: "error"});
                 return;
             }
-
             const backgroundImg = document.getElementById('backgroundDisplay');
             const coverContainer = document.querySelector('.profile-cover');
-            
             // Create loading overlay for cover image
             const loadingOverlay = document.createElement('div');
             loadingOverlay.className = 'loading-overlay';
@@ -1158,29 +996,21 @@
                 <div class="loading-text">Đang tải lên... 0%</div>
             `;
             coverContainer.appendChild(loadingOverlay);
-            
             // Show loading overlay
             setTimeout(() => loadingOverlay.classList.add('show'), 10);
-
-            try {
-                // Add visual feedback classes
+            try { // Add visual feedback classes
                 if (backgroundImg) {
                     backgroundImg.classList.add('uploading');
                 }
                 coverContainer.classList.add('pulse-update');
-                
                 const uploadedUrl = await uploadFile(file, (progress) => {
                     const loadingText = loadingOverlay.querySelector('.loading-text');
                     loadingText.textContent = `Đang tải lên... ${progress}%`;
                 });
-                
-                if (uploadedUrl) {
-                    // Update loading text
+                if (uploadedUrl) { // Update loading text
                     loadingOverlay.querySelector('.loading-text').textContent = 'Đang cập nhật hồ sơ...';
-                    
                     // Update the hidden input field
                     document.getElementById('background').value = uploadedUrl;
-                    
                     // Update display image with smooth transition
                     if (backgroundImg) {
                         backgroundImg.style.opacity = '0';
@@ -1188,8 +1018,7 @@
                             backgroundImg.src = uploadedUrl;
                             backgroundImg.style.opacity = '1';
                         }, 300);
-                    } else {
-                        // Create image element if it doesn't exist
+                    } else { // Create image element if it doesn't exist
                         const newImg = document.createElement('img');
                         newImg.id = 'backgroundDisplay';
                         newImg.src = uploadedUrl;
@@ -1197,10 +1026,8 @@
                         newImg.onclick = () => document.getElementById('backgroundUpload').click();
                         coverContainer.prepend(newImg);
                     }
-                    
                     // Auto-save background to profile
                     await autoSaveProfile({background: uploadedUrl});
-                    
                     // Show success state
                     loadingOverlay.innerHTML = `
                         <div class="success-animation show">
@@ -1208,7 +1035,6 @@
                         </div>
                         <div class="loading-text">Cập nhật thành công!</div>
                     `;
-                    
                     setTimeout(() => {
                         loadingOverlay.classList.remove('show');
                         setTimeout(() => {
@@ -1217,18 +1043,15 @@
                             }
                         }, 300);
                     }, 1500);
-                    
                     showToast({message: "Cập nhật ảnh bìa thành công!", type: "success"});
                 }
-            } catch (error) {
-                // Show error state
+            } catch (error) { // Show error state
                 loadingOverlay.innerHTML = `
                     <div style="color: #dc3545; text-align: center;">
                         <i class="bx bx-error-circle" style="font-size: 24px;"></i>
                         <div class="loading-text" style="color: #dc3545;">Tải lên thất bại!</div>
                     </div>
                 `;
-                
                 setTimeout(() => {
                     loadingOverlay.classList.remove('show');
                     setTimeout(() => {
@@ -1237,53 +1060,36 @@
                         }
                     }, 300);
                 }, 2000);
-                
-                showToast({message: "Lỗi khi tải lên ảnh bìa: " + error.message, type: "error"});
-            } finally {
-                // Clean up classes
+                showToast({
+                    message: "Lỗi khi tải lên ảnh bìa: " + error.message,
+                    type: "error"
+                });
+            } finally { // Clean up classes
                 if (backgroundImg) {
                     backgroundImg.classList.remove('uploading');
                 }
                 coverContainer.classList.remove('pulse-update');
             }
-        }        // Handle form submission with PATCH method        document.getElementById('formAccountSettings').addEventListener('submit', async function(e) {
+        } // Handle form submission with PATCH method
+        document.getElementById('formAccountSettings').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
-            // Validate username before submitting
-            const usernameInput = document.getElementById('username');
-            const currentUsername = usernameInput.value.trim();
-            const originalUsername = usernameInput.getAttribute('data-original');
-            
-            // If username changed and is not valid, prevent submission
-            if (currentUsername !== originalUsername && !isUsernameValid) {
-                showToast({message: "Vui lòng chọn tên người dùng hợp lệ trước khi lưu.", type: "error"});
-                usernameInput.focus();
-                return;
-            }
-            
             const formData = new FormData(this);
             const data = {};
-            
             // Convert FormData to regular object
             for (let [key, value] of formData.entries()) {
                 data[key] = value;
             }
-            
             const submitButton = this.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
-            
-            try {
-                // Enhanced loading state
+            try { // Enhanced loading state
                 submitButton.innerHTML = `
                     <div class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></div>
                     Đang lưu thay đổi...
                 `;
                 submitButton.disabled = true;
                 submitButton.classList.add('form-submit-loading');
-                
                 // Add pulse effect to form
                 this.classList.add('pulse-update');
-                
                 const response = await fetch(this.action, {
                     method: 'PATCH',
                     headers: {
@@ -1291,19 +1097,14 @@
                     },
                     body: JSON.stringify(data)
                 });
-                
                 const result = await response.json();
-                
-                if (response.ok) {
-                    // Success state
+                if (response.ok) { // Success state
                     submitButton.innerHTML = `
                         <i class="bx bx-check-circle me-2" style="color: #28a745;"></i>
                         Đã lưu thành công!
                     `;
                     submitButton.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-                    
                     showToast({message: "Cập nhật thông tin thành công!", type: "success"});
-                    
                     // Reload page after 2 seconds to show updated data
                     setTimeout(() => {
                         window.location.reload();
@@ -1314,7 +1115,6 @@
             } catch (error) {
                 console.error('Error updating profile:', error);
                 showToast({message: "Lỗi kết nối. Vui lòng thử lại!", type: "error"});
-                
                 // Error state
                 submitButton.innerHTML = `
                     <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
@@ -1322,51 +1122,44 @@
                 `;
                 submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
                 submitButton.disabled = false;
-                
                 // Reset to original state after 3 seconds
                 setTimeout(() => {
                     submitButton.innerHTML = originalText;
                     submitButton.style.background = '';
                     submitButton.classList.remove('form-submit-loading');
-                }, 3000);            } finally {
-                // Remove pulse effect
+                }, 3000);
+            } finally { // Remove pulse effect
                 this.classList.remove('pulse-update');
             }
         });
-
         // Handle change email form submission
-        document.getElementById('formChangeMail').addEventListener('submit', async function(e) {
+        document.getElementById('formChangeMail').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
             const emailInput = document.getElementById('email-pre');
             const otpInput = document.getElementById('otp-input');
             const emailFeedback = document.getElementById('email-feedback');
-            
             const email = emailInput.value.trim();
             const otp = otpInput.value.trim();
-            
             // Validate inputs
-            if (!email || !otp) {
+            if (! email || ! otp) {
                 emailFeedback.textContent = 'Vui lòng điền đầy đủ thông tin';
                 emailFeedback.style.display = 'block';
                 emailFeedback.className = 'mt-2 text-danger small';
                 return;
             }
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (! emailRegex.test(email)) {
                 emailFeedback.textContent = 'Email không hợp lệ';
                 emailFeedback.style.display = 'block';
                 emailFeedback.className = 'mt-2 text-danger small';
                 return;
             }
-            
             const submitButton = document.querySelector('button[form="formChangeMail"][type="submit"]');
-            if (!submitButton) {
+            if (! submitButton) {
                 console.error('Submit button not found for formChangeMail');
                 return;
             }
             const originalText = submitButton.innerHTML;
-            
             try {
                 submitButton.innerHTML = `
                     <div class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></div>
@@ -1374,26 +1167,22 @@
                 `;
                 submitButton.disabled = true;
                 emailFeedback.style.display = 'none';
-                
                 const response = await fetch('{{ baseUrl }}/profile/change-mail', {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, otp })
+                    body: JSON.stringify(
+                    {email, otp})
                 });
-                
                 const data = await response.json();
-                
                 if (data.success) {
                     submitButton.innerHTML = `
                         <i class="bx bx-check-circle me-2" style="color: #28a745;"></i>
                         Thành công!
                     `;
                     submitButton.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-                    
                     showToast({message: "Đổi email thành công!", type: "success"});
-                    
                     // Close modal and reload page after 2 seconds
                     setTimeout(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('changeMailModal'));
@@ -1404,7 +1193,6 @@
                     emailFeedback.textContent = data.message || 'Đổi email thất bại';
                     emailFeedback.style.display = 'block';
                     emailFeedback.className = 'mt-2 text-danger small';
-                    
                     submitButton.innerHTML = `
                         <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
                         Thử lại
@@ -1417,7 +1205,6 @@
                 emailFeedback.textContent = 'Lỗi kết nối. Vui lòng thử lại!';
                 emailFeedback.style.display = 'block';
                 emailFeedback.className = 'mt-2 text-danger small';
-                
                 submitButton.innerHTML = `
                     <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
                     Thử lại
@@ -1425,75 +1212,70 @@
                 submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
                 submitButton.disabled = false;
             }
-              // Reset button after 3 seconds if not successful
-            if (!submitButton.innerHTML.includes('Thành công')) {
+            // Reset button after 3 seconds if not successful
+            if (! submitButton.innerHTML.includes('Thành công')) {
                 setTimeout(() => {
                     submitButton.innerHTML = originalText;
                     submitButton.style.background = '';
                 }, 3000);
             }
         });
-
         // Handle change password form submission
-        document.getElementById('formChangePass').addEventListener('submit', async function(e) {
+        document.getElementById('formChangePass').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
-            const currentPassword = document.getElementById('currentPassword').value.trim();
-            const newPassword = document.getElementById('newPassword').value.trim();
-            const confirmPassword = document.getElementById('confirmPassword').value.trim();
-            
+            const currentPassword = document
+                .getElementById('currentPassword')
+                .value
+                .trim();
+            const newPassword = document
+                .getElementById('newPassword')
+                .value
+                .trim();
+            const confirmPassword = document
+                .getElementById('confirmPassword')
+                .value
+                .trim();
             // Validate inputs
-            if (!currentPassword || !newPassword || !confirmPassword) {
+            if (! currentPassword || ! newPassword || ! confirmPassword) {
                 showToast({message: "Vui lòng điền đầy đủ thông tin", type: "error"});
                 return;
             }
-            
             if (newPassword !== confirmPassword) {
                 showToast({message: "Mật khẩu mới và xác nhận mật khẩu không khớp", type: "error"});
                 return;
             }
-            
             if (newPassword.length < 6) {
                 showToast({message: "Mật khẩu mới phải có ít nhất 6 ký tự", type: "error"});
                 return;
             }
-            
             const submitButton = document.querySelector('button[form="formChangePass"][type="submit"]');
-            if (!submitButton) {
+            if (! submitButton) {
                 console.error('Submit button not found for formChangePass');
                 return;
             }
             const originalText = submitButton.innerHTML;
-            
             try {
                 submitButton.innerHTML = `
                     <div class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></div>
                     Đang lưu thay đổi...
                 `;
                 submitButton.disabled = true;
-                
                 const response = await fetch('{{ baseUrl }}/profile/change-password', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        currentPassword,
-                        newPassword,
-                    })
+                    body: JSON.stringify(
+                    {currentPassword, newPassword})
                 });
-                
                 const data = await response.json();
-                
                 if (data.success || response.ok) {
                     submitButton.innerHTML = `
                         <i class="bx bx-check-circle me-2" style="color: #28a745;"></i>
                         Thành công!
                     `;
                     submitButton.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-                    
                     showToast({message: "Đổi mật khẩu thành công!", type: "success"});
-                    
                     // Close modal after success
                     setTimeout(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('changePassModal'));
@@ -1507,13 +1289,14 @@
                     `;
                     submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
                     submitButton.disabled = false;
-                    
-                    showToast({message: data.message || "Đổi mật khẩu thất bại", type: "error"});
+                    showToast({
+                        message: data.message || "Đổi mật khẩu thất bại",
+                        type: "error"
+                    });
                 }
             } catch (error) {
                 console.error('Error changing password:', error);
                 showToast({message: "Lỗi kết nối. Vui lòng thử lại!", type: "error"});
-                
                 submitButton.innerHTML = `
                     <i class="bx bx-error-circle me-2" style="color: #dc3545;"></i>
                     Thử lại
@@ -1521,149 +1304,13 @@
                 submitButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
                 submitButton.disabled = false;
             }
-            
             // Reset button after 3 seconds if not successful
-            if (!submitButton.innerHTML.includes('Thành công')) {
+            if (! submitButton.innerHTML.includes('Thành công')) {
                 setTimeout(() => {
                     submitButton.innerHTML = originalText;
                     submitButton.style.background = '';
                 }, 3000);
-            }        });
-
-        // Username validation functionality
-        let usernameCheckTimeout;
-        let lastCheckedUsername = '';
-        let isUsernameValid = false;        function validateUsernameFormat(username) {
-            // Username should be at least 8 characters, no spaces (according to backend)
-            if (!username || username.length < 8) {
-                return false;
             }
-            if (username.includes(' ')) {
-                return false;
-            }
-            return true;
-        }
-
-        async function checkUsernameAvailability(username) {
-            try {
-                const response = await fetch('{{ baseUrl }}/profile/check-username', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username: username })
-                });
-                
-                const result = await response.json();
-                
-                // Backend returns {valid: true, message: '...'} on success
-                // or throws error (BadRequestException) on failure
-                if (response.ok && result.valid) {
-                    return { success: true, message: result.message };
-                } else {
-                    return { success: false, message: result.message || 'Tên người dùng không hợp lệ' };
-                }
-            } catch (error) {
-                console.error('Error checking username:', error);
-                return { success: false, message: 'Lỗi kết nối. Vui lòng thử lại.' };
-            }
-        }
-
-        function updateUsernameUI(state, message = '', icon = '') {
-            const usernameInput = document.getElementById('username');
-            const usernameFeedback = document.getElementById('usernameFeedback');
-            const usernameIcon = document.getElementById('usernameIcon');
-            
-            // Reset classes
-            usernameInput.classList.remove('username-checking', 'username-valid', 'username-invalid');
-            usernameFeedback.classList.remove('success', 'error', 'checking');
-            usernameIcon.classList.remove('checking', 'valid', 'invalid', 'bx-loader-alt', 'bx-check', 'bx-x');
-            
-            switch (state) {
-                case 'checking':
-                    usernameInput.classList.add('username-checking');
-                    usernameFeedback.classList.add('checking');
-                    usernameIcon.classList.add('checking', 'bx-loader-alt');
-                    usernameIcon.style.display = 'block';
-                    break;
-                case 'valid':
-                    usernameInput.classList.add('username-valid');
-                    usernameFeedback.classList.add('success');
-                    usernameIcon.classList.add('valid', 'bx-check');
-                    usernameIcon.style.display = 'block';
-                    isUsernameValid = true;
-                    break;
-                case 'invalid':
-                    usernameInput.classList.add('username-invalid');
-                    usernameFeedback.classList.add('error');
-                    usernameIcon.classList.add('invalid', 'bx-x');
-                    usernameIcon.style.display = 'block';
-                    isUsernameValid = false;
-                    break;
-                case 'hide':
-                    usernameIcon.style.display = 'none';
-                    usernameFeedback.style.display = 'none';
-                    isUsernameValid = false;
-                    return;
-            }
-            
-            if (message) {
-                usernameFeedback.textContent = message;
-                usernameFeedback.style.display = 'block';
-            }
-        }
-
-        // Add event listener for username input
-        document.getElementById('username').addEventListener('input', function(e) {
-            const username = e.target.value.trim();
-            const originalUsername = e.target.getAttribute('data-original');
-            
-            // Clear previous timeout
-            if (usernameCheckTimeout) {
-                clearTimeout(usernameCheckTimeout);
-            }
-            
-            // If username is same as original, hide validation
-            if (username === originalUsername) {
-                updateUsernameUI('hide');
-                isUsernameValid = true;
-                return;
-            }
-            
-            // If username is empty, hide validation
-            if (!username) {
-                updateUsernameUI('hide');
-                return;
-            }
-              // Validate format first
-            if (!validateUsernameFormat(username)) {
-                updateUsernameUI('invalid', 'Tên người dùng phải có ít nhất 8 ký tự và không có khoảng trắng.');
-                return;
-            }
-            
-            // Show checking state
-            updateUsernameUI('checking', 'Đang kiểm tra tên người dùng...');
-            
-            // Set timeout to check availability
-            usernameCheckTimeout = setTimeout(async () => {
-                // Skip if this username was already checked
-                if (username === lastCheckedUsername) {
-                    return;
-                }
-                
-                lastCheckedUsername = username;
-                
-                try {
-                    const result = await checkUsernameAvailability(username);
-                    
-                    if (result.success) {
-                        updateUsernameUI('valid', 'Tên người dùng khả dụng!');
-                    } else {
-                        updateUsernameUI('invalid', result.message || 'Tên người dùng đã được sử dụng.');
-                    }
-                } catch (error) {
-                    updateUsernameUI('invalid', 'Lỗi khi kiểm tra tên người dùng. Vui lòng thử lại.');
-                }
-            }, 500); // Wait 500ms after user stops typing
-        });    </script>
+        });
+    </script>
 {% endblock %}
