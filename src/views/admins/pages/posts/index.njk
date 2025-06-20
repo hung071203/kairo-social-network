@@ -160,8 +160,7 @@
                                     <div class="dropdown">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bx bx-dots-vertical-rounded"></i>
-                                        </button>
-                                        <div class="dropdown-menu">
+                                        </button>                                        <div class="dropdown-menu">
                                             <a class="dropdown-item" href="javascript:void(0);" onclick="viewPostDetail('{{ item._id }}');">
                                                 <i class="bx bx-show me-1"></i>
                                                 Xem Chi Tiết
@@ -170,12 +169,14 @@
                                                 <i class="bx bx-comment me-1"></i>
                                                 Xem Bình Luận
                                             </a>
-                                            {% if user.role == 'ADMIN' or user.role == 'MOD' %}
-                                                <div class="dropdown-divider"></div>
+                                            <div class="dropdown-divider"></div>
+                                            {% if user.role == 'USER' %}
                                                 <a class="dropdown-item text-warning" href="javascript:void(0);" onclick="reportPost('{{ item._id }}', '{{ item.author.name }}');">
                                                     <i class="bx bx-flag me-1"></i>
                                                     Báo Cáo Vi Phạm
                                                 </a>
+                                            {% endif %}
+                                            {% if user.role == 'ADMIN' or user.role == 'MOD' %}
                                                 <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deletePost('{{ item._id }}', '{{ item.author.name }}');">
                                                     <i class="bx bx-trash me-1"></i>
                                                     Xóa Bài Viết
