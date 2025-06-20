@@ -50,27 +50,11 @@ export class PostManagementService {
     if (!isValidObjectId(id)) {
       throw new Error('ID bài viết không hợp lệ');
     }
-
-    const post = await this.postRepository.findAll(
-      { _id: id },
-      {
-        populate: [{ path: 'author', select: 'name username email avatar' }],
-      }
-    );
-
-    // Handle both paginated and array results
-    let foundPost;
-    if (Array.isArray(post)) {
-      foundPost = post[0];
-    } else {
-      foundPost = post.docs && post.docs[0];
-    }
-
-    if (!foundPost) {
-      throw new Error('Không tìm thấy bài viết');
-    }
-
-    return foundPost;
+    const post = await this.postRepository
+      .getModel()
+      .findOne({ _id: id })
+      .populate('author', 'name username email avatar');
+    return post || null;
   }
 
   async getPostComments(postId: string) {
@@ -82,9 +66,9 @@ export class PostManagementService {
     const post = await this.postRepository.findOne({ _id: postId });
     if (!post) {
       throw new Error('Không tìm thấy bài viết');
-    }    // Get comments for this post
+    } // Get comments for this post
     const comments = await this.commentRepository.findAll(
-      { post: postId },
+      { post: new Types.ObjectId(postId) },
       {
         page: 1,
         limit: 50,
@@ -109,7 +93,7 @@ export class PostManagementService {
     const post = await this.postRepository.findOne({ _id: id });
     if (!post) {
       throw new Error('Không tìm thấy bài viết');
-    }    // Delete the post
+    } // Delete the post
     await this.postRepository.delete(id);
 
     // Note: Comments should be deleted via cascade or separate cleanup job
@@ -117,7 +101,10 @@ export class PostManagementService {
     return { message: 'Xóa bài viết thành công' };
   }
 
-  async reportPost(postId: string, reportData: { reason: string; description?: string }) {
+  async reportPost(
+    postId: string,
+    reportData: { reason: string; description?: string },
+  ) {
     if (!isValidObjectId(postId)) {
       throw new Error('ID bài viết không hợp lệ');
     }
@@ -125,7 +112,7 @@ export class PostManagementService {
     const post = await this.postRepository.findOne({ _id: postId });
     if (!post) {
       throw new Error('Không tìm thấy bài viết');
-    }    // Create report
+    } // Create report
     const report = await this.reportRepository.create({
       target: new Types.ObjectId(postId),
       type: ReportType.POST,
