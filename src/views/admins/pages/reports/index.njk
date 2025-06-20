@@ -1,0 +1,688 @@
+{% extends 'admins/layouts/app.njk' %}
+{% set title = 'Quản lý báo cáo' %}
+{% set auth = false %}
+{% block content %}
+    <div class="card-header border-bottom">
+        <h5 class="card-header">Quản lý báo cáo</h5>
+    </div>
+    <br/>
+    
+    <!-- Search and Filter Section -->
+    <div class="d-flex justify-content-start gap-3 mb-3">
+        <!-- Search by reporter -->
+        <div class="input-group" style="max-width: 300px;">
+            <input type="text" class="form-control" id="searchReporter" placeholder="Tìm kiếm người báo cáo...">
+            <button class="btn btn-outline-primary" onclick="submitReporterSearch()">
+                <i class="bx bx-search"></i>
+                Tìm kiếm
+            </button>
+        </div>
+        
+        <!-- Filter by report type -->
+        <div class="input-group" style="max-width: 300px;">
+            <select class="form-select" id="reportType" onchange="submitTypeFilter()">
+                <option value="">Tất cả loại báo cáo</option>
+                <option value="spam">Spam</option>
+                <option value="harassment">Quấy rối</option>
+                <option value="inappropriate">Nội dung không phù hợp</option>
+                <option value="violence">Bạo lực</option>
+                <option value="hate_speech">Phát ngôn thù địch</option>
+                <option value="misinformation">Thông tin sai lệch</option>
+                <option value="other">Khác</option>
+            </select>
+        </div>
+        
+        <!-- Filter by status -->
+        <div class="input-group" style="max-width: 300px;">
+            <select class="form-select" id="reportStatus" onchange="submitStatusFilter()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="pending">Chờ xử lý</option>
+                <option value="reviewed">Đã xem xét</option>
+                <option value="resolved">Đã giải quyết</option>
+                <option value="dismissed">Bỏ qua</option>
+            </select>
+        </div>
+        
+        <!-- Clear filters -->
+        {% if query.reporter or query.type or query.status %}
+            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                <i class="bx bx-x"></i>
+                Xóa bộ lọc
+            </button>
+        {% endif %}
+    </div>
+
+    <script>
+        // Get query parameters from URL
+        function getQueryParam(param) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(param) || "";
+        }
+        
+        // Set values from URL
+        document.getElementById("searchReporter").value = getQueryParam("reporter");
+        document.getElementById("reportType").value = getQueryParam("type");
+        document.getElementById("reportStatus").value = getQueryParam("status");
+        
+        function submitReporterSearch() {
+            let input = document.getElementById("searchReporter").value.trim();
+            let url = new URL(window.location.href);
+            
+            if (input) {
+                url.searchParams.set("reporter", input);
+            } else {
+                url.searchParams.delete("reporter");
+            }
+            window.location.href = url.toString();
+        }
+        
+        function submitTypeFilter() {
+            let typeSelect = document.getElementById("reportType").value;
+            let url = new URL(window.location.href);
+            
+            if (typeSelect) {
+                url.searchParams.set("type", typeSelect);
+            } else {
+                url.searchParams.delete("type");
+            }
+            window.location.href = url.toString();
+        }
+        
+        function submitStatusFilter() {
+            let statusSelect = document.getElementById("reportStatus").value;
+            let url = new URL(window.location.href);
+            
+            if (statusSelect) {
+                url.searchParams.set("status", statusSelect);
+            } else {
+                url.searchParams.delete("status");
+            }
+            window.location.href = url.toString();
+        }
+        
+        function clearFilters() {
+            let url = new URL(window.location.href);
+            url.searchParams.delete("reporter");
+            url.searchParams.delete("type");
+            url.searchParams.delete("status");
+            window.location.href = url.toString();
+        }
+        
+        // Add enter key listener for search
+        document.getElementById("searchReporter").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                submitReporterSearch();
+            }
+        });
+    </script>
+    
+    <!-- Filter notification banner -->
+    {% if query.reporter or query.type or query.status %}
+        <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
+            <div>
+                <i class="bx bx-info-circle me-2"></i>
+                <strong>Đang lọc:</strong>
+                {% if query.reporter %}
+                    Người báo cáo: "<em>{{ query.reporter }}</em>"
+                {% endif %}
+                {% if query.type %}
+                    Loại: "<em>{{ query.type }}</em>"
+                {% endif %}
+                {% if query.status %}
+                    Trạng thái: "<em>{{ query.status }}</em>"
+                {% endif %}
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">
+                <i class="bx bx-x me-1"></i>Xóa bộ lọc
+            </button>
+        </div>
+    {% endif %}
+    
+    <div class="table-responsive text-nowrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Người báo cáo</th>
+                    <th>Nội dung bị báo cáo</th>
+                    <th>Loại báo cáo</th>
+                    <th>Lý do</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày báo cáo</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                {% set index = (data.page - 1) * data.limit + 1 %}
+                {% if data.docs and data.docs.length > 0 %}
+                    {% for item in data.docs %}
+                        <tr>
+                            <td>{{ index }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.reporter.avatar %}
+                                        <img src="{{ item.reporter.avatar }}" 
+                                             class="rounded-circle me-2" 
+                                             width="30" height="30" 
+                                             alt="Avatar">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 30px; height: 30px; font-size: 12px; color: white;">
+                                            {{ item.reporter.name.charAt(0).toUpperCase() }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ item.reporter.name }}</strong><br>
+                                        <small class="text-muted">@{{ item.reporter.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="max-width: 200px;">
+                                    {% if item.reportedPost %}
+                                        <div class="text-truncate">
+                                            <strong>Bài viết:</strong> {{ item.reportedPost.content | truncate(50) }}
+                                        </div>
+                                        <small class="text-muted">
+                                            Tác giả: {{ item.reportedPost.author.name }}
+                                        </small>
+                                    {% elif item.reportedComment %}
+                                        <div class="text-truncate">
+                                            <strong>Bình luận:</strong> {{ item.reportedComment.content | truncate(50) }}
+                                        </div>
+                                        <small class="text-muted">
+                                            Tác giả: {{ item.reportedComment.author.name }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">Nội dung đã bị xóa</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% set typeClass = 'badge bg-secondary' %}
+                                {% if item.type == 'spam' %}
+                                    {% set typeClass = 'badge bg-warning' %}
+                                {% elif item.type == 'harassment' %}
+                                    {% set typeClass = 'badge bg-danger' %}
+                                {% elif item.type == 'inappropriate' %}
+                                    {% set typeClass = 'badge bg-warning' %}
+                                {% elif item.type == 'violence' %}
+                                    {% set typeClass = 'badge bg-danger' %}
+                                {% elif item.type == 'hate_speech' %}
+                                    {% set typeClass = 'badge bg-danger' %}
+                                {% elif item.type == 'misinformation' %}
+                                    {% set typeClass = 'badge bg-info' %}
+                                {% endif %}
+                                <span class="{{ typeClass }}">{{ item.type }}</span>
+                            </td>
+                            <td>
+                                <div style="max-width: 150px;" class="text-truncate" 
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     title="{{ item.reason }}">
+                                    {{ item.reason | truncate(30) }}
+                                </div>
+                            </td>
+                            <td>
+                                {% set statusClass = 'badge bg-secondary' %}
+                                {% if item.status == 'pending' %}
+                                    {% set statusClass = 'badge bg-warning' %}
+                                {% elif item.status == 'reviewed' %}
+                                    {% set statusClass = 'badge bg-info' %}
+                                {% elif item.status == 'resolved' %}
+                                    {% set statusClass = 'badge bg-success' %}
+                                {% elif item.status == 'dismissed' %}
+                                    {% set statusClass = 'badge bg-secondary' %}
+                                {% endif %}
+                                <span class="{{ statusClass }}">
+                                    {% if item.status == 'pending' %}Chờ xử lý
+                                    {% elif item.status == 'reviewed' %}Đã xem xét
+                                    {% elif item.status == 'resolved' %}Đã giải quyết
+                                    {% elif item.status == 'dismissed' %}Bỏ qua
+                                    {% else %}{{ item.status }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ item.createdAt | date('DD/MM/YYYY HH:mm') }}</small>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" 
+                                            data-bs-toggle="dropdown">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="javascript:void(0);" 
+                                           onclick="viewReportDetail('{{ item._id }}')">
+                                            <i class="bx bx-detail me-1"></i> Xem chi tiết
+                                        </a>
+                                        {% if item.reportedPost %}
+                                            <a class="dropdown-item" href="javascript:void(0);" 
+                                               onclick="viewReportedPost('{{ item.reportedPost._id }}')">
+                                                <i class="bx bx-show me-1"></i> Xem bài viết
+                                            </a>
+                                        {% endif %}
+                                        {% if item.status == 'pending' %}
+                                            <a class="dropdown-item" href="javascript:void(0);" 
+                                               onclick="updateReportStatus('{{ item._id }}', 'reviewed')">
+                                                <i class="bx bx-check me-1"></i> Đánh dấu đã xem
+                                            </a>
+                                            <a class="dropdown-item" href="javascript:void(0);" 
+                                               onclick="updateReportStatus('{{ item._id }}', 'resolved')">
+                                                <i class="bx bx-check-circle me-1"></i> Giải quyết
+                                            </a>
+                                            <a class="dropdown-item" href="javascript:void(0);" 
+                                               onclick="updateReportStatus('{{ item._id }}', 'dismissed')">
+                                                <i class="bx bx-x me-1"></i> Bỏ qua
+                                            </a>
+                                        {% endif %}
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item text-danger" href="javascript:void(0);" 
+                                           onclick="deleteReport('{{ item._id }}')">
+                                            <i class="bx bx-trash me-1"></i> Xóa báo cáo
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% set index = index + 1 %}
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bx bx-info-circle me-2"></i>
+                            Không có báo cáo nào được tìm thấy
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% include '../../layouts/_pagination.njk' %}
+    
+    <!-- Report Detail Modal -->
+    <div class="modal fade" id="reportDetailModal" tabindex="-1" aria-labelledby="reportDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportDetailModalLabel">Chi Tiết Báo Cáo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reportDetailContent">
+                        <!-- Report detail content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reported Post Modal -->
+    <div class="modal fade" id="reportedPostModal" tabindex="-1" aria-labelledby="reportedPostModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportedPostModalLabel">Bài Viết Bị Báo Cáo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reportedPostContent">
+                        <!-- Reported post content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Update Confirmation Modal -->
+    <div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusUpdateModalLabel">Cập Nhật Trạng Thái</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="statusUpdateMessage">Bạn có chắc chắn muốn cập nhật trạng thái báo cáo này?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmStatusUpdate()">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Report Confirmation Modal -->
+    <div class="modal fade" id="deleteReportModal" tabindex="-1" aria-labelledby="deleteReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteReportModalLabel">Xác Nhận Xóa Báo Cáo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn xóa báo cáo này không?</p>
+                    <p class="text-danger"><strong>Hành động này không thể hoàn tác!</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDeleteReport()">Xóa Báo Cáo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success/Error Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div id="notificationContent">
+                        <!-- Notification content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentReportId = null;
+        let currentReportStatus = null;
+        
+        // View report detail
+        function viewReportDetail(reportId) {
+            currentReportId = reportId;
+            // Load report detail via AJAX
+            fetch(`{{ baseUrl }}/report-management/detail/${reportId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('reportDetailContent').innerHTML = formatReportDetail(data.report);
+                        new bootstrap.Modal(document.getElementById('reportDetailModal')).show();
+                    } else {
+                        showNotification('error', 'Có lỗi xảy ra khi tải chi tiết báo cáo');
+                    }
+                })
+                .catch(error => {
+                    showNotification('error', 'Có lỗi xảy ra khi tải chi tiết báo cáo');
+                });
+        }
+        
+        // View reported post
+        function viewReportedPost(postId) {
+            // Load reported post via AJAX
+            fetch(`{{ baseUrl }}/report-management/post/${postId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('reportedPostContent').innerHTML = formatReportedPost(data.post);
+                        new bootstrap.Modal(document.getElementById('reportedPostModal')).show();
+                    } else {
+                        showNotification('error', 'Có lỗi xảy ra khi tải bài viết bị báo cáo');
+                    }
+                })
+                .catch(error => {
+                    showNotification('error', 'Có lỗi xảy ra khi tải bài viết bị báo cáo');
+                });
+        }
+        
+        // Update report status
+        function updateReportStatus(reportId, newStatus) {
+            currentReportId = reportId;
+            currentReportStatus = newStatus;
+            
+            let statusText = '';
+            switch(newStatus) {
+                case 'reviewed': statusText = 'đã xem xét'; break;
+                case 'resolved': statusText = 'đã giải quyết'; break;
+                case 'dismissed': statusText = 'bỏ qua'; break;
+                default: statusText = newStatus;
+            }
+            
+            document.getElementById('statusUpdateMessage').textContent = 
+                `Bạn có chắc chắn muốn đánh dấu báo cáo này là "${statusText}"?`;
+            new bootstrap.Modal(document.getElementById('statusUpdateModal')).show();
+        }
+        
+        function confirmStatusUpdate() {
+            if (!currentReportId || !currentReportStatus) return;
+            
+            fetch(`{{ baseUrl }}/report-management/status/${currentReportId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: currentReportStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', 'Cập nhật trạng thái báo cáo thành công');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('error', data.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
+                }
+            })
+            .catch(error => {
+                showNotification('error', 'Có lỗi xảy ra khi cập nhật trạng thái');
+            })
+            .finally(() => {
+                bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal')).hide();
+            });
+        }
+        
+        // Delete report
+        function deleteReport(reportId) {
+            currentReportId = reportId;
+            new bootstrap.Modal(document.getElementById('deleteReportModal')).show();
+        }
+        
+        function confirmDeleteReport() {
+            if (!currentReportId) return;
+            
+            fetch(`{{ baseUrl }}/report-management/delete/${currentReportId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', 'Xóa báo cáo thành công');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('error', data.message || 'Có lỗi xảy ra khi xóa báo cáo');
+                }
+            })
+            .catch(error => {
+                showNotification('error', 'Có lỗi xảy ra khi xóa báo cáo');
+            })
+            .finally(() => {
+                bootstrap.Modal.getInstance(document.getElementById('deleteReportModal')).hide();
+            });
+        }
+        
+        // Format report detail
+        function formatReportDetail(report) {
+            const statusText = {
+                'pending': 'Chờ xử lý',
+                'reviewed': 'Đã xem xét', 
+                'resolved': 'Đã giải quyết',
+                'dismissed': 'Bỏ qua'
+            };
+            
+            const typeText = {
+                'spam': 'Spam',
+                'harassment': 'Quấy rối',
+                'inappropriate': 'Nội dung không phù hợp',
+                'violence': 'Bạo lực',
+                'hate_speech': 'Phát ngôn thù địch',
+                'misinformation': 'Thông tin sai lệch',
+                'other': 'Khác'
+            };
+            
+            return `
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Thông tin người báo cáo:</h6>
+                                <div class="d-flex align-items-center mb-3">
+                                    ${report.reporter.avatar ? 
+                                        `<img src="${report.reporter.avatar}" class="rounded-circle me-3" width="50" height="50" alt="Avatar">` :
+                                        `<div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; color: white;">
+                                            ${report.reporter.name.charAt(0).toUpperCase()}
+                                        </div>`
+                                    }
+                                    <div>
+                                        <strong>${report.reporter.name}</strong><br>
+                                        <small class="text-muted">@${report.reporter.username}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Thông tin báo cáo:</h6>
+                                <p><strong>Loại:</strong> ${typeText[report.type] || report.type}</p>
+                                <p><strong>Trạng thái:</strong> <span class="badge bg-secondary">${statusText[report.status] || report.status}</span></p>
+                                <p><strong>Ngày báo cáo:</strong> ${new Date(report.createdAt).toLocaleString('vi-VN')}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>Lý do báo cáo:</h6>
+                        <p class="mb-3">${report.reason}</p>
+                        ${report.description ? `
+                            <h6>Mô tả chi tiết:</h6>
+                            <p class="mb-3">${report.description}</p>
+                        ` : ''}
+                        <hr>
+                        ${report.reportedPost ? `
+                            <h6>Nội dung bị báo cáo (Bài viết):</h6>
+                            <div class="border rounded p-3 bg-light">
+                                <div class="d-flex align-items-center mb-2">
+                                    ${report.reportedPost.author.avatar ? 
+                                        `<img src="${report.reportedPost.author.avatar}" class="rounded-circle me-2" width="30" height="30" alt="Avatar">` :
+                                        `<div class="rounded-circle bg-secondary me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; font-size: 12px; color: white;">
+                                            ${report.reportedPost.author.name.charAt(0).toUpperCase()}
+                                        </div>`
+                                    }
+                                    <div>
+                                        <strong>${report.reportedPost.author.name}</strong>
+                                        <small class="text-muted">(@${report.reportedPost.author.username})</small>
+                                    </div>
+                                </div>
+                                <p class="mb-0">${report.reportedPost.content}</p>
+                                ${report.reportedPost.mediaUrls && report.reportedPost.mediaUrls.length > 0 ? `
+                                    <div class="mt-2">
+                                        <small class="text-muted">Có ${report.reportedPost.mediaUrls.length} tệp media đính kèm</small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        ${report.reportedComment ? `
+                            <h6>Nội dung bị báo cáo (Bình luận):</h6>
+                            <div class="border rounded p-3 bg-light">
+                                <div class="d-flex align-items-center mb-2">
+                                    ${report.reportedComment.author.avatar ? 
+                                        `<img src="${report.reportedComment.author.avatar}" class="rounded-circle me-2" width="30" height="30" alt="Avatar">` :
+                                        `<div class="rounded-circle bg-secondary me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; font-size: 12px; color: white;">
+                                            ${report.reportedComment.author.name.charAt(0).toUpperCase()}
+                                        </div>`
+                                    }
+                                    <div>
+                                        <strong>${report.reportedComment.author.name}</strong>
+                                        <small class="text-muted">(@${report.reportedComment.author.username})</small>
+                                    </div>
+                                </div>
+                                <p class="mb-0">${report.reportedComment.content}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Format reported post
+        function formatReportedPost(post) {
+            return `
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            ${post.author.avatar ? 
+                                `<img src="${post.author.avatar}" class="rounded-circle me-3" width="50" height="50" alt="Avatar">` :
+                                `<div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; color: white;">
+                                    ${post.author.name.charAt(0).toUpperCase()}
+                                </div>`
+                            }
+                            <div>
+                                <h6 class="mb-0">${post.author.name}</h6>
+                                <small class="text-muted">@${post.author.username} • ${new Date(post.createdAt).toLocaleString('vi-VN')}</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <p>${post.content}</p>
+                        </div>
+                        ${post.mediaUrls && post.mediaUrls.length > 0 ? `
+                            <div class="mb-3">
+                                <h6>Media đính kèm:</h6>
+                                <div class="row">
+                                    ${post.mediaUrls.map(url => `
+                                        <div class="col-md-4 mb-2">
+                                            ${url.includes('.mp4') || url.includes('.mov') || url.includes('.avi') ? 
+                                                `<video controls class="img-fluid rounded" style="max-height: 200px;">
+                                                    <source src="${url}" type="video/mp4">
+                                                </video>` :
+                                                `<img src="${url}" class="img-fluid rounded" style="max-height: 200px;" alt="Media">`
+                                            }
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        <hr>
+                        <div class="d-flex justify-content-between text-muted">
+                            <span><i class="bx bx-heart"></i> ${post.likesCount || 0} lượt thích</span>
+                            <span><i class="bx bx-comment"></i> ${post.commentsCount || 0} bình luận</span>
+                            <span><i class="bx bx-share"></i> ${post.sharesCount || 0} chia sẻ</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Show notification
+        function showNotification(type, message) {
+            const iconClass = type === 'success' ? 'bx-check-circle text-success' : 'bx-error-circle text-danger';
+            const content = `
+                <div class="mb-3">
+                    <i class="bx ${iconClass}" style="font-size: 3rem;"></i>
+                </div>
+                <p class="mb-0">${message}</p>
+            `;
+            
+            document.getElementById('notificationContent').innerHTML = content;
+            const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+            modal.show();
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                modal.hide();
+            }, 3000);
+        }
+        
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}
