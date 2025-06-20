@@ -18,8 +18,11 @@ export class Report extends Document {
   @Prop({ type: String, required: true })
   reason: string;
 
-  @Prop({ type: Boolean, default: false })
-  isResolved: boolean;
+  @Prop({ type: Types.ObjectId, ref: User.name }) // ✅ người xử lý báo cáo
+  responder?: Types.ObjectId;
+
+  @Prop({ type: String }) // ✅ nội dung phản hồi
+  responseContent?: string;
 }
 
 export const ReportSchema = SchemaFactory.createForClass(Report);
