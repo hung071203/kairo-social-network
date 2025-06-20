@@ -155,27 +155,4 @@ export class PostManagementService {
 
     return { message: 'Xóa bài viết thành công' };
   }
-
-  async reportPost(
-    postId: string,
-    reportData: { reason: string; description?: string },
-  ) {
-    if (!isValidObjectId(postId)) {
-      throw new Error('ID bài viết không hợp lệ');
-    }
-
-    const post = await this.postRepository.findOne({ _id: postId });
-    if (!post) {
-      throw new Error('Không tìm thấy bài viết');
-    } // Create report
-    const report = await this.reportRepository.create({
-      target: new Types.ObjectId(postId),
-      type: ReportType.POST,
-      reason: reportData.reason,
-      reporter: new Types.ObjectId('000000000000000000000000'), // Default admin ID, should be replaced with actual admin user ID
-      isResolved: false,
-    });
-
-    return report;
-  }
 }

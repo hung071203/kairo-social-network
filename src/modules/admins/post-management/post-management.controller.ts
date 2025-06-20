@@ -82,19 +82,4 @@ export class PostManagementController {
     }
   }
 
-  @Post('report/:id')
-  async reportPost(
-    @Param('id') id: string,
-    @Body() reportData: { reason: string; description?: string },
-  ) {
-    try {
-      await this.postManagementService.reportPost(id, reportData);
-      return {
-        success: true,
-        message: 'Báo cáo đã được gửi thành công',
-      };
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
-  }
 }
