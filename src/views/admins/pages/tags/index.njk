@@ -107,18 +107,15 @@
                                     <div class="dropdown">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bx bx-dots-vertical-rounded"></i>
-                                        </button>
-                                        <div class="dropdown-menu">
+                                        </button>                                        <div class="dropdown-menu">
                                             <a class="dropdown-item" href="javascript:void(0);" onclick="editTag('{{ item._id }}');">
                                                 <i class="bx bx-edit me-1"></i>
                                                 Chỉnh Sửa
                                             </a>
-                                            {% if user.role == 'ADMIN' %}
-                                                <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteTag('{{ item._id }}', '{{ item.name }}');">
-                                                    <i class="bx bx-trash me-1"></i>
-                                                    Xóa Thẻ
-                                                </a>
-                                            {% endif %}
+                                            <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteTag('{{ item._id }}', '{{ item.name }}');">
+                                                <i class="bx bx-trash me-1"></i>
+                                                Xóa Thẻ
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
