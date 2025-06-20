@@ -114,7 +114,7 @@
                                     {{ item.reason | truncate(30) }}
                                 </div>
                             </td>                            <td>
-                                {% if item.isResolved %}
+                                {% if item.responder %}
                                     <span class="badge bg-label-success me-1">Đã xử lý</span>
                                 {% else %}
                                     <span class="badge bg-label-warning me-1">Chờ xử lý</span>
@@ -138,7 +138,7 @@
                                                onclick="viewReportedContent('{{ item.target }}', '{{ item.type }}')">
                                                 <i class="bx bx-show me-1"></i> Xem nội dung
                                             </a>
-                                        {% endif %}                                        {% if not item.isResolved %}
+                                        {% endif %}                                        {% if not item.responder %}
                                             <a class="dropdown-item" href="javascript:void(0);" 
                                                onclick="resolveReport('{{ item._id }}')">
                                                 <i class="bx bx-check-circle me-1"></i> Đánh dấu đã xử lý
@@ -400,7 +400,7 @@
             const reporterName = report.reporter?.name || 'Không xác định';
             const reporterUsername = report.reporter?.username || 'unknown';
             const responderName = report.responder?.name || null;
-            const statusText = report.isResolved ? 'Đã xử lý' : 'Chờ xử lý';
+            const statusText = report.responder ? 'Đã xử lý' : 'Chờ xử lý';
             const typeText = typeLabels[report.type] || report.type;
             
             var html = '<div class="card">';
@@ -432,7 +432,7 @@
             html += '<p><strong>ID báo cáo:</strong> <code>' + report._id + '</code></p>';
             html += '<p><strong>Loại:</strong> ' + typeText + '</p>';
             html += '<p><strong>Trạng thái:</strong> ';
-            html += '<span class="badge ' + (report.isResolved ? 'bg-label-success' : 'bg-label-warning') + ' me-1">';
+            html += '<span class="badge ' + (report.responder ? 'bg-label-success' : 'bg-label-warning') + ' me-1">';
             html += statusText;
             html += '</span>';
             html += '</p>';
