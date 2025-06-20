@@ -1,16 +1,22 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PaginationDto } from 'src/common/decorators';
 import { PostRepositoryInterface } from 'src/database/interface/post.interface';
+import { CommentRepositoryInterface } from 'src/database/interface/comment.interface';
+import { ReportRepositoryInterface } from 'src/database/interface/report.interface';
 import { FilterPostManagementDto } from './dto/post.dto';
-import { isValidObjectId } from 'mongoose';
+import { ReportType } from 'src/common/enums';
+import { isValidObjectId, Types } from 'mongoose';
 
 @Injectable()
 export class PostManagementService {
   constructor(
     @Inject('PostRepositoryInterface')
     private readonly postRepository: PostRepositoryInterface,
+    @Inject('CommentRepositoryInterface')
+    private readonly commentRepository: CommentRepositoryInterface,
+    @Inject('ReportRepositoryInterface')
+    private readonly reportRepository: ReportRepositoryInterface,
   ) {}
-
   async getPosts(dto: FilterPostManagementDto, pagination: PaginationDto) {
     const form: any = {};
 
@@ -29,8 +35,105 @@ export class PostManagementService {
       }
     }
 
-    const result = await this.postRepository.findAll(form, pagination);
+    // Add population for author information
+    const options = {
+      ...pagination,
+      populate: [{ path: 'author', select: 'name username email avatar' }],
+      sort: { createdAt: -1 }, // Sort by newest first
+    };
+
+    const result = await this.postRepository.findAll(form, options);
 
     return result;
+  }
+  async getPostById(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new Error('ID bài viết không hợp lệ');
+    }
+
+    const post = await this.postRepository.findAll(
+      { _id: id },
+      {
+        populate: [{ path: 'author', select: 'name username email avatar' }],
+      }
+    );
+
+    // Handle both paginated and array results
+    let foundPost;
+    if (Array.isArray(post)) {
+      foundPost = post[0];
+    } else {
+      foundPost = post.docs && post.docs[0];
+    }
+
+    if (!foundPost) {
+      throw new Error('Không tìm thấy bài viết');
+    }
+
+    return foundPost;
+  }
+
+  async getPostComments(postId: string) {
+    if (!isValidObjectId(postId)) {
+      throw new Error('ID bài viết không hợp lệ');
+    }
+
+    // Check if post exists
+    const post = await this.postRepository.findOne({ _id: postId });
+    if (!post) {
+      throw new Error('Không tìm thấy bài viết');
+    }    // Get comments for this post
+    const comments = await this.commentRepository.findAll(
+      { post: postId },
+      {
+        page: 1,
+        limit: 50,
+        populate: [{ path: 'author', select: 'name username avatar' }],
+        sort: { createdAt: -1 },
+      },
+    );
+
+    // Handle both paginated and non-paginated results
+    if (Array.isArray(comments)) {
+      return comments;
+    } else {
+      return comments.docs || [];
+    }
+  }
+
+  async deletePost(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new Error('ID bài viết không hợp lệ');
+    }
+
+    const post = await this.postRepository.findOne({ _id: id });
+    if (!post) {
+      throw new Error('Không tìm thấy bài viết');
+    }    // Delete the post
+    await this.postRepository.delete(id);
+
+    // Note: Comments should be deleted via cascade or separate cleanup job
+
+    return { message: 'Xóa bài viết thành công' };
+  }
+
+  async reportPost(postId: string, reportData: { reason: string; description?: string }) {
+    if (!isValidObjectId(postId)) {
+      throw new Error('ID bài viết không hợp lệ');
+    }
+
+    const post = await this.postRepository.findOne({ _id: postId });
+    if (!post) {
+      throw new Error('Không tìm thấy bài viết');
+    }    // Create report
+    const report = await this.reportRepository.create({
+      target: new Types.ObjectId(postId),
+      type: ReportType.POST,
+      reason: reportData.reason,
+      reporter: new Types.ObjectId('000000000000000000000000'), // Default admin ID, should be replaced with actual admin user ID
+      isResolved: false,
+    });
+
+    return report;
   }
 }

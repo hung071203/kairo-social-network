@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Render, UseFilters, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Render, UseFilters, UseGuards, Param, Delete, Post, Body } from '@nestjs/common';
 import { PostManagementService } from './post-management.service';
 import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
@@ -27,6 +27,89 @@ export class PostManagementController {
       };
     } catch (error) {
       throw new Error(error.message);
+    }
+  }
+
+  @Get('detail/:id')
+  async getPostDetail(@Param('id') id: string) {
+    try {
+      const post = await this.postManagementService.getPostById(id);
+      return {
+        success: true,
+        data: post,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  @Get('media/:id')
+  async getPostMedia(@Param('id') id: string) {
+    try {
+      const post = await this.postManagementService.getPostById(id);
+      return {
+        success: true,
+        data: post.mediaUrls,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  @Get('comments/:id')
+  async getPostComments(@Param('id') id: string) {
+    try {
+      const comments = await this.postManagementService.getPostComments(id);
+      return {
+        success: true,
+        data: comments,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  @Delete('delete/:id')
+  async deletePost(@Param('id') id: string) {
+    try {
+      await this.postManagementService.deletePost(id);
+      return {
+        success: true,
+        message: 'Xóa bài viết thành công',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  @Post('report/:id')
+  async reportPost(
+    @Param('id') id: string,
+    @Body() reportData: { reason: string; description?: string },
+  ) {
+    try {
+      await this.postManagementService.reportPost(id, reportData);
+      return {
+        success: true,
+        message: 'Báo cáo đã được gửi thành công',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
     }
   }
 }

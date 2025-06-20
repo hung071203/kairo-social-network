@@ -1,0 +1,608 @@
+{% extends 'admins/layouts/app.njk' %}
+{% set title = 'Quản lý bài viết' %}
+{% set auth = false %}
+{% block content %}
+    <div class="card-header border-bottom">
+        <h5 class="card-header">Quản lý bài viết</h5>
+    </div>
+    <br/>
+    <!-- Button Tìm kiếm -->
+    <div class="d-flex justify-content-between mb-3">
+        <!-- Ô tìm kiếm + Nút tìm kiếm -->
+        <div class="input-group w-25">
+            <input type="text" class="form-control" id="searchPost" placeholder="Tìm kiếm bài viết...">
+            <button class="btn btn-outline-primary" onclick="submitSearch()">
+                <i class="bx bx-search"></i>
+                Tìm kiếm
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Lấy giá trị của query "search" từ URL và gán vào input
+        function getSearchQuery() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("search") || "";
+        }
+        document.getElementById("searchPost").value = getSearchQuery();
+        
+        function submitSearch() {
+            let input = document
+                .getElementById("searchPost")
+                .value
+                .trim();
+            let url = new URL(window.location.href);
+            if (input) {
+                url.searchParams.set("search", input); // Thêm hoặc cập nhật query "search"
+            } else {
+                url.searchParams.delete("search"); // Xóa query nếu input rỗng
+            }
+            window.location.href = url.toString(); // Load lại trang với query mới
+        }
+        
+        document.getElementById("searchPost").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                submitSearch();
+            }
+        });
+    </script>
+    
+    <div class="table-responsive text-nowrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tác giả</th>
+                    <th>Nội dung</th>
+                    <th>Media</th>
+                    <th>Loại bài viết</th>
+                    <th
+                        class="sortable"
+                        onclick="setQueryParams({sort: 'createdAt', order: '{% if query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                        Ngày tạo
+                        <i class="fas fa-sort{% if query.sort == 'createdAt' and query.order == 'asc' %}-up{% elif query.sort == 'createdAt' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
+                    </th>
+                    <th>Tương tác</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                {% set index = (data.page - 1) * data.limit + 1 %}
+                {% if data.docs and data.docs.length > 0 %}
+                    {% for item in data.docs %}
+                        <tr>
+                            <td>{{ index }}</td>
+                            {% set index = index + 1 %}
+                            <td>
+                                <div class="d-flex justify-content-start align-items-center user-name">
+                                    <div class="avatar-wrapper">
+                                        <div class="avatar avatar-sm me-4">
+                                            {% if item.author.avatar %}
+                                                <img src="{{ item.author.avatar }}" alt="{{ item.author.name or 'User' }}" class="rounded-circle">
+                                            {% else %}
+                                                <span class="avatar-initial rounded-circle bg-label-primary">
+                                                    {{ (item.author.name or item.author.username or 'U')[0] | upper }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-medium text-heading">{{ item.author.name or 'Không có tên' }}</span>
+                                        <small class="text-muted">{{ item.author.username or 'unknown' }}</small>
+                                    </div>
+                                </div>
+                            </td>                            <td>
+                                <div class="post-content" style="max-width: 300px;">
+                                    {% if item.content.length > 100 %}
+                                        <span title="{{ item.content }}" data-bs-toggle="tooltip">
+                                            {{ item.content | truncate(100) }}
+                                        </span>
+                                    {% else %}
+                                        {{ item.content }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if item.mediaUrls and item.mediaUrls.length > 0 %}
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-label-info me-1">
+                                            <i class="bx bx-image me-1"></i>
+                                            {{ item.mediaUrls.length }} file(s)
+                                        </span>
+                                        <button 
+                                            class="btn btn-sm btn-outline-primary" 
+                                            onclick="viewPostMedia('{{ item._id }}')"
+                                            title="Xem media">
+                                            <i class="bx bx-show"></i>
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">Không có</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.type == 'PUBLIC' %}
+                                    <span class="badge bg-label-success me-1">
+                                        <i class="bx bx-globe me-1"></i>Công khai
+                                    </span>
+                                {% elif item.type == 'FOLLOWERS' %}
+                                    <span class="badge bg-label-primary me-1">
+                                        <i class="bx bx-user-check me-1"></i>Người theo dõi
+                                    </span>
+                                {% elif item.type == 'FRIENDS' %}
+                                    <span class="badge bg-label-warning me-1">
+                                        <i class="bx bx-user-circle me-1"></i>Bạn bè
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-label-secondary me-1">
+                                        <i class="bx bx-lock me-1"></i>Riêng tư
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ item.createdAt | formatDate('YYYY-MM-DD HH:mm:ss') }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <small class="text-muted">
+                                        <i class="bx bx-heart text-danger"></i> {{ item.likes.length or 0 }} lượt thích
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bx bx-comment text-primary"></i> {{ item.commentsCount or 0 }} bình luận
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bx bx-share text-success"></i> {{ item.sharesCount or 0 }} chia sẻ
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="dropdown">
+                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bx bx-dots-vertical-rounded"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="javascript:void(0);" onclick="viewPostDetail('{{ item._id }}');">
+                                                <i class="bx bx-show me-1"></i>
+                                                Xem Chi Tiết
+                                            </a>
+                                            <a class="dropdown-item" href="javascript:void(0);" onclick="viewPostComments('{{ item._id }}');">
+                                                <i class="bx bx-comment me-1"></i>
+                                                Xem Bình Luận
+                                            </a>
+                                            {% if user.role == 'ADMIN' or user.role == 'MOD' %}
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item text-warning" href="javascript:void(0);" onclick="reportPost('{{ item._id }}', '{{ item.author.name }}');">
+                                                    <i class="bx bx-flag me-1"></i>
+                                                    Báo Cáo Vi Phạm
+                                                </a>
+                                                <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deletePost('{{ item._id }}', '{{ item.author.name }}');">
+                                                    <i class="bx bx-trash me-1"></i>
+                                                    Xóa Bài Viết
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="empty-state">
+                                <i class="bx bx-file-blank display-4 text-muted mb-2"></i>
+                                <p class="text-muted">Không có bài viết nào được tìm thấy</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% include '../../layouts/_pagination.njk' %}
+    
+    <!-- Post Detail Modal -->
+    <div class="modal fade" id="postDetailModal" tabindex="-1" aria-labelledby="postDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="postDetailModalLabel">Chi Tiết Bài Viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="postDetailContent">
+                        <!-- Post detail content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Post Media Modal -->
+    <div class="modal fade" id="postMediaModal" tabindex="-1" aria-labelledby="postMediaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="postMediaModalLabel">Media Bài Viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="postMediaContent">
+                        <!-- Post media content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Post Comments Modal -->
+    <div class="modal fade" id="postCommentsModal" tabindex="-1" aria-labelledby="postCommentsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="postCommentsModalLabel">Bình Luận Bài Viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="postCommentsContent">
+                        <!-- Post comments content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Post Confirmation Modal -->
+    <div class="modal fade" id="deletePostModal" tabindex="-1" aria-labelledby="deletePostModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deletePostModalLabel">Xác Nhận Xóa Bài Viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
+                    <p class="text-danger"><strong>Hành động này không thể hoàn tác!</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDeletePost()">Xóa Bài Viết</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Post Modal -->
+    <div class="modal fade" id="reportPostModal" tabindex="-1" aria-labelledby="reportPostModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportPostModalLabel">Báo Cáo Vi Phạm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reportPostForm">
+                        <div class="mb-3">
+                            <label for="reportReason" class="form-label">Lý do báo cáo</label>
+                            <select class="form-select" id="reportReason" required>
+                                <option value="">Chọn lý do...</option>
+                                <option value="spam">Spam</option>
+                                <option value="inappropriate">Nội dung không phù hợp</option>
+                                <option value="violence">Bạo lực</option>
+                                <option value="harassment">Quấy rối</option>
+                                <option value="fake_news">Tin giả</option>
+                                <option value="copyright">Vi phạm bản quyền</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reportDescription" class="form-label">Mô tả chi tiết</label>
+                            <textarea class="form-control" id="reportDescription" rows="3" placeholder="Mô tả chi tiết về vi phạm..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-warning" onclick="submitPostReport()">Gửi Báo Cáo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success/Error Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div id="notificationContent">
+                        <!-- Notification content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentPostId = null;
+        let currentPostAuthor = null;
+        
+        // Utility functions for URL parameters
+        function setQueryParams(params) {
+            let url = new URL(window.location.href);
+            Object.keys(params).forEach(key => {
+                url.searchParams.set(key, params[key]);
+            });
+            window.location.href = url.toString();
+        }
+        
+        // View post detail
+        function viewPostDetail(postId) {
+            currentPostId = postId;
+            // Load post detail via AJAX
+            fetch(`{{ baseUrl }}/post-management/detail/${postId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('postDetailContent').innerHTML = formatPostDetail(data.data);
+                        new bootstrap.Modal(document.getElementById('postDetailModal')).show();
+                    } else {
+                        showNotification('error', data.message || 'Không thể tải chi tiết bài viết');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'Có lỗi xảy ra khi tải chi tiết bài viết');
+                });
+        }
+        
+        // View post media
+        function viewPostMedia(postId) {
+            currentPostId = postId;
+            // Load post media via AJAX
+            fetch(`{{ baseUrl }}/post-management/media/${postId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('postMediaContent').innerHTML = formatPostMedia(data.data);
+                        new bootstrap.Modal(document.getElementById('postMediaModal')).show();
+                    } else {
+                        showNotification('error', data.message || 'Không thể tải media bài viết');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'Có lỗi xảy ra khi tải media bài viết');
+                });
+        }
+        
+        // View post comments
+        function viewPostComments(postId) {
+            currentPostId = postId;
+            // Load post comments via AJAX
+            fetch(`{{ baseUrl }}/post-management/comments/${postId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('postCommentsContent').innerHTML = formatPostComments(data.data);
+                        new bootstrap.Modal(document.getElementById('postCommentsModal')).show();
+                    } else {
+                        showNotification('error', data.message || 'Không thể tải bình luận bài viết');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'Có lỗi xảy ra khi tải bình luận bài viết');
+                });
+        }
+        
+        // Delete post
+        function deletePost(postId, authorName) {
+            currentPostId = postId;
+            currentPostAuthor = authorName;
+            document.getElementById('deletePostModalLabel').textContent = `Xóa bài viết của ${authorName}`;
+            new bootstrap.Modal(document.getElementById('deletePostModal')).show();
+        }
+        
+        function confirmDeletePost() {
+            if (!currentPostId) return;
+            
+            fetch(`{{ baseUrl }}/post-management/delete/${currentPostId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                bootstrap.Modal.getInstance(document.getElementById('deletePostModal')).hide();
+                if (data.success) {
+                    showNotification('success', 'Xóa bài viết thành công');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('error', data.message || 'Không thể xóa bài viết');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                bootstrap.Modal.getInstance(document.getElementById('deletePostModal')).hide();
+                showNotification('error', 'Có lỗi xảy ra khi xóa bài viết');
+            });
+        }
+        
+        // Report post
+        function reportPost(postId, authorName) {
+            currentPostId = postId;
+            currentPostAuthor = authorName;
+            document.getElementById('reportPostModalLabel').textContent = `Báo cáo bài viết của ${authorName}`;
+            new bootstrap.Modal(document.getElementById('reportPostModal')).show();
+        }
+        
+        function submitPostReport() {
+            const reason = document.getElementById('reportReason').value;
+            const description = document.getElementById('reportDescription').value;
+            
+            if (!reason) {
+                showNotification('error', 'Vui lòng chọn lý do báo cáo');
+                return;
+            }
+            
+            if (!currentPostId) return;
+            
+            fetch(`{{ baseUrl }}/post-management/report/${currentPostId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    reason: reason,
+                    description: description
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                bootstrap.Modal.getInstance(document.getElementById('reportPostModal')).hide();
+                if (data.success) {
+                    showNotification('success', 'Báo cáo đã được gửi thành công');
+                    // Reset form
+                    document.getElementById('reportPostForm').reset();
+                } else {
+                    showNotification('error', data.message || 'Không thể gửi báo cáo');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                bootstrap.Modal.getInstance(document.getElementById('reportPostModal')).hide();
+                showNotification('error', 'Có lỗi xảy ra khi gửi báo cáo');
+            });
+        }
+        
+        // Utility functions for formatting
+        function formatPostDetail(post) {
+            return `
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar avatar-sm me-3">
+                                ${post.author.avatar ? 
+                                    `<img src="${post.author.avatar}" alt="${post.author.name}" class="rounded-circle">` :
+                                    `<span class="avatar-initial rounded-circle bg-label-primary">${(post.author.name || 'U')[0].toUpperCase()}</span>`
+                                }
+                            </div>
+                            <div>
+                                <h6 class="mb-0">${post.author.name || 'Không có tên'}</h6>
+                                <small class="text-muted">@${post.author.username || 'unknown'}</small>
+                            </div>
+                        </div>
+                        <p>${post.content}</p>
+                        ${post.mediaUrls && post.mediaUrls.length > 0 ? `
+                            <div class="mt-3">
+                                <h6>Media Files:</h6>
+                                <div class="row">
+                                    ${post.mediaUrls.map(media => `
+                                        <div class="col-md-6 mb-2">
+                                            ${media.mimeType.startsWith('image/') ? 
+                                                `<img src="${media.url}" class="img-fluid rounded" alt="Post media">` :
+                                                `<video src="${media.url}" class="img-fluid rounded" controls></video>`
+                                            }
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="mt-3 d-flex justify-content-between text-muted">
+                            <span><i class="bx bx-heart"></i> ${post.likes.length} lượt thích</span>
+                            <span><i class="bx bx-comment"></i> ${post.commentsCount} bình luận</span>
+                            <span><i class="bx bx-share"></i> ${post.sharesCount} chia sẻ</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function formatPostMedia(mediaUrls) {
+            if (!mediaUrls || mediaUrls.length === 0) {
+                return '<p class="text-muted">Bài viết này không có media nào.</p>';
+            }
+            
+            return `
+                <div class="row">
+                    ${mediaUrls.map((media, index) => `
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    ${media.mimeType.startsWith('image/') ? 
+                                        `<img src="${media.url}" class="img-fluid rounded mb-2" alt="Media ${index + 1}">` :
+                                        `<video src="${media.url}" class="img-fluid rounded mb-2" controls></video>`
+                                    }
+                                    <p class="small text-muted mb-0">Loại: ${media.mimeType}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function formatPostComments(comments) {
+            if (!comments || comments.length === 0) {
+                return '<p class="text-muted">Bài viết này chưa có bình luận nào.</p>';
+            }
+            
+            return `
+                <div class="comments-list">
+                    ${comments.map(comment => `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start">
+                                    <div class="avatar avatar-sm me-3">
+                                        ${comment.author.avatar ? 
+                                            `<img src="${comment.author.avatar}" alt="${comment.author.name}" class="rounded-circle">` :
+                                            `<span class="avatar-initial rounded-circle bg-label-secondary">${(comment.author.name || 'U')[0].toUpperCase()}</span>`
+                                        }
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">${comment.author.name || 'Không có tên'}</h6>
+                                        <p class="mb-1">${comment.content}</p>
+                                        <small class="text-muted">${new Date(comment.createdAt).toLocaleString('vi-VN')}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Show notification
+        function showNotification(type, message) {
+            const iconClass = type === 'success' ? 'bx-check-circle text-success' : 'bx-error-circle text-danger';
+            const content = `
+                <div class="py-3">
+                    <i class="bx ${iconClass} display-6 mb-2"></i>
+                    <p class="mb-0">${message}</p>
+                </div>
+            `;
+            
+            document.getElementById('notificationContent').innerHTML = content;
+            const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+            modal.show();
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                modal.hide();
+            }, 3000);
+        }
+        
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}
