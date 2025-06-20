@@ -39,7 +39,6 @@ export class PostManagementService {
     const options = {
       ...pagination,
       populate: [{ path: 'author', select: 'name username email avatar' }],
-      sort: { createdAt: -1 }, // Sort by newest first
     };
 
     const result = await this.postRepository.findAll(form, options);

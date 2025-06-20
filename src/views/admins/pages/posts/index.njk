@@ -51,14 +51,18 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Tác giả</th>
+                    <th>ID</th>                    <th>Tác giả</th>
                     <th>Nội dung</th>
                     <th>Media</th>
-                    <th>Loại bài viết</th>
                     <th
                         class="sortable"
-                        onclick="setQueryParams({sort: 'createdAt', order: '{% if query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                        onclick="setQueryParams({sort: 'type', order: '{% if query.sort == 'type' and query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                        Loại bài viết
+                        <i class="fas fa-sort{% if query.sort == 'type' and query.order == 'asc' %}-up{% elif query.sort == 'type' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
+                    </th>
+                    <th
+                        class="sortable"
+                        onclick="setQueryParams({sort: 'createdAt', order: '{% if query.sort == 'createdAt' and query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
                         Ngày tạo
                         <i class="fas fa-sort{% if query.sort == 'createdAt' and query.order == 'asc' %}-up{% elif query.sort == 'createdAt' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
                     </th>
