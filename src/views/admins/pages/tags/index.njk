@@ -1,0 +1,503 @@
+{% extends 'admins/layouts/app.njk' %}
+{% set title = 'Quản lý thẻ' %}
+{% set auth = false %}
+{% block content %}
+    <div class="card-header border-bottom">
+        <h5 class="card-header">Quản lý thẻ</h5>
+    </div>
+    <br/>    <!-- Button Tìm kiếm -->
+    <div class="d-flex justify-content-start mb-3">
+        <!-- Ô tìm kiếm + Nút tìm kiếm -->
+        <div class="input-group w-25">
+            <input type="text" class="form-control" id="searchTag" placeholder="Tìm kiếm thẻ...">
+            <button class="btn btn-outline-primary" onclick="submitSearch()">
+                <i class="bx bx-search"></i>
+                Tìm kiếm
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Lấy giá trị của query "search" từ URL và gán vào input
+        function getSearchQuery() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("search") || "";
+        }
+        document.getElementById("searchTag").value = getSearchQuery();
+        
+        function submitSearch() {
+            let input = document
+                .getElementById("searchTag")
+                .value
+                .trim();
+            let url = new URL(window.location.href);
+            if (input) {
+                url.searchParams.set("search", input); // Thêm hoặc cập nhật query "search"
+            } else {
+                url.searchParams.delete("search"); // Xóa query nếu input rỗng
+            }
+            window.location.href = url.toString(); // Load lại trang với query mới
+        }
+        
+        document.getElementById("searchTag").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                submitSearch();
+            }
+        });
+    </script>
+    
+    <div class="table-responsive text-nowrap">
+        <table class="table">            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th
+                        class="sortable"
+                        onclick="setQueryParams({sort: 'name', order: '{% if query.sort == 'name' and query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                        Tên thẻ
+                        <i class="fas fa-sort{% if query.sort == 'name' and query.order == 'asc' %}-up{% elif query.sort == 'name' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
+                    </th>
+                    <th
+                        class="sortable"
+                        onclick="setQueryParams({sort: 'postsCount', order: '{% if query.sort == 'postsCount' and query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                        Số bài viết
+                        <i class="fas fa-sort{% if query.sort == 'postsCount' and query.order == 'asc' %}-up{% elif query.sort == 'postsCount' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
+                    </th>
+                    <th
+                        class="sortable"
+                        onclick="setQueryParams({sort: 'createdAt', order: '{% if query.sort == 'createdAt' and query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                        Ngày tạo
+                        <i class="fas fa-sort{% if query.sort == 'createdAt' and query.order == 'asc' %}-up{% elif query.sort == 'createdAt' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
+                    </th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                {% set index = (tags.page - 1) * tags.limit + 1 %}
+                {% if tags.docs and tags.docs.length > 0 %}
+                    {% for item in tags.docs %}                        <tr>
+                            <td>{{ index }}</td>
+                            {% set index = index + 1 %}
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-label-primary me-2" style="font-size: 0.85rem;">
+                                        #{{ item.name }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-label-info me-1">
+                                        <i class="bx bx-file me-1"></i>
+                                        {{ item.postsCount or 0 }} bài viết
+                                    </span>
+                                    {% if item.postsCount > 0 %}
+                                        <button 
+                                            class="btn btn-sm btn-outline-primary ms-2" 
+                                            onclick="viewTagPosts('{{ item._id }}')"
+                                            title="Xem bài viết">
+                                            <i class="bx bx-show"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ item.createdAt | formatDate('YYYY-MM-DD HH:mm:ss') }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="dropdown">
+                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bx bx-dots-vertical-rounded"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="javascript:void(0);" onclick="editTag('{{ item._id }}');">
+                                                <i class="bx bx-edit me-1"></i>
+                                                Chỉnh Sửa
+                                            </a>
+                                            {% if user.role == 'ADMIN' %}
+                                                <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteTag('{{ item._id }}', '{{ item.name }}');">
+                                                    <i class="bx bx-trash me-1"></i>
+                                                    Xóa Thẻ
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="empty-state">
+                                <i class="bx bx-tag display-4 text-muted mb-2"></i>
+                                <p class="text-muted">Không có thẻ nào được tìm thấy</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% include '../../layouts/_pagination.njk' %}
+      <!-- Create/Edit Tag Modal -->
+    <div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tagModalLabel">Chỉnh sửa thẻ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="tagForm">
+                        <div class="mb-3">
+                            <label for="tagName" class="form-label">Tên thẻ <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">#</span>
+                                <input type="text" class="form-control" id="tagName" placeholder="Nhập tên thẻ..." required>
+                            </div>
+                            <div class="form-text">Tên thẻ phải duy nhất và không chứa khoảng trắng</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="submitTag()">
+                        <span id="submitBtnText">Cập nhật</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tag Detail Modal -->
+    <div class="modal fade" id="tagDetailModal" tabindex="-1" aria-labelledby="tagDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tagDetailModalLabel">Chi Tiết Thẻ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="tagDetailContent">
+                        <!-- Tag detail content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tag Posts Modal -->
+    <div class="modal fade" id="tagPostsModal" tabindex="-1" aria-labelledby="tagPostsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tagPostsModalLabel">Bài Viết Có Thẻ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div id="tagPostsContent">
+                        <!-- Tag posts content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Tag Confirmation Modal -->
+    <div class="modal fade" id="deleteTagModal" tabindex="-1" aria-labelledby="deleteTagModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteTagModalLabel">Xác Nhận Xóa Thẻ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn xóa thẻ này không?</p>
+                    <p class="text-danger"><strong>Hành động này không thể hoàn tác!</strong></p>
+                    <p class="text-warning"><small>Lưu ý: Việc xóa thẻ sẽ gỡ bỏ thẻ khỏi tất cả các bài viết đã sử dụng thẻ này.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDeleteTag()">Xóa Thẻ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success/Error Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div id="notificationContent">
+                        <!-- Notification content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTagId = null;
+        let isEditMode = false;
+        
+        // Utility functions for URL parameters
+        function setQueryParams(params) {
+            let url = new URL(window.location.href);
+            Object.keys(params).forEach(key => {
+                url.searchParams.set(key, params[key]);
+            });
+            window.location.href = url.toString();
+        }
+          // Show create tag modal
+        function showCreateTagModal() {
+            // Function removed - no longer creating new tags
+        }
+        
+        // View tag detail
+        function viewTagDetail(tagId) {
+            // Function removed - view detail removed from actions
+        }
+          // Edit tag
+        function editTag(tagId) {
+            currentTagId = tagId;
+            fetch(`{{ baseUrl }}/tag-management/detail/${tagId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        isEditMode = true;
+                        const tag = data.data;
+                        document.getElementById('tagModalLabel').textContent = 'Chỉnh sửa thẻ';
+                        document.getElementById('submitBtnText').textContent = 'Cập nhật';
+                        document.getElementById('tagName').value = tag.name;
+                        new bootstrap.Modal(document.getElementById('tagModal')).show();
+                    } else {
+                        showNotification('error', 'Không thể tải thông tin thẻ');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'Có lỗi xảy ra khi tải thông tin thẻ');
+                });
+        }
+          // Submit tag (update only)
+        function submitTag() {
+            const name = document.getElementById('tagName').value.trim();
+            
+            if (!name) {
+                showNotification('error', 'Vui lòng nhập tên thẻ');
+                return;
+            }
+            
+            // Remove # if user added it
+            const cleanName = name.replace(/^#/, '');
+            
+            const tagData = {
+                name: cleanName
+            };
+            
+            const url = `{{ baseUrl }}/tag-management/update/${currentTagId}`;
+            
+            fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(tagData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('tagModal')).hide();
+                    showNotification('success', 'Cập nhật thẻ thành công');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('error', data.message || 'Có lỗi xảy ra');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'Có lỗi xảy ra khi xử lý yêu cầu');
+            });
+        }
+        
+        // View tag posts
+        function viewTagPosts(tagId) {
+            currentTagId = tagId;
+            fetch(`{{ baseUrl }}/tag-management/posts/${tagId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        document.getElementById('tagPostsContent').innerHTML = formatTagPosts(data.data);
+                        new bootstrap.Modal(document.getElementById('tagPostsModal')).show();
+                    } else {
+                        showNotification('error', 'Không thể tải danh sách bài viết');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'Có lỗi xảy ra khi tải danh sách bài viết');
+                });
+        }
+          // Toggle tag status - function removed
+        function toggleTagStatus(tagId, status) {
+            // Function removed - status management removed
+        }
+        
+        // Delete tag
+        function deleteTag(tagId, tagName) {
+            currentTagId = tagId;
+            document.getElementById('deleteTagModalLabel').textContent = `Xóa thẻ #${tagName}`;
+            new bootstrap.Modal(document.getElementById('deleteTagModal')).show();
+        }
+        
+        function confirmDeleteTag() {
+            if (!currentTagId) return;
+            
+            fetch(`{{ baseUrl }}/tag-management/delete/${currentTagId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteTagModal')).hide();
+                    showNotification('success', 'Xóa thẻ thành công');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('error', data.message || 'Có lỗi xảy ra khi xóa thẻ');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'Có lỗi xảy ra khi xóa thẻ');
+            });
+        }
+        
+        // Format tag detail
+        function formatTagDetail(tag) {
+            return `
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Tên thẻ</h6>
+                                <p class="mb-3">
+                                    <span class="badge bg-label-primary" style="font-size: 1rem;">#${tag.name}</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Trạng thái</h6>
+                                <p class="mb-3">
+                                    ${tag.isActive ? 
+                                        '<span class="badge bg-label-success"><i class="bx bx-check me-1"></i>Đang hoạt động</span>' : 
+                                        '<span class="badge bg-label-secondary"><i class="bx bx-x me-1"></i>Ngừng hoạt động</span>'
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted">Mô tả</h6>
+                                <p class="mb-3">${tag.description || 'Không có mô tả'}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Số bài viết</h6>
+                                <p class="mb-3">
+                                    <span class="badge bg-label-info">${tag.postsCount || 0} bài viết</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Ngày tạo</h6>
+                                <p class="mb-3">${new Date(tag.createdAt).toLocaleString('vi-VN')}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Format tag posts
+        function formatTagPosts(posts) {
+            if (!posts || posts.length === 0) {
+                return '<p class="text-muted text-center py-4">Chưa có bài viết nào sử dụng thẻ này.</p>';
+            }
+            
+            return `
+                <div class="posts-list">
+                    ${posts.map(post => `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar avatar-sm me-2">
+                                            ${post.author.avatar ? 
+                                                `<img src="${post.author.avatar}" alt="${post.author.name}" class="rounded-circle">` :
+                                                `<span class="avatar-initial rounded-circle bg-label-primary">${(post.author.name || 'U')[0].toUpperCase()}</span>`
+                                            }
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">${post.author.name || 'Không có tên'}</h6>
+                                            <small class="text-muted">@${post.author.username || 'unknown'}</small>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">${new Date(post.createdAt).toLocaleString('vi-VN')}</small>
+                                </div>
+                                <p class="mb-2">${post.content}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex gap-3">
+                                        <small class="text-muted">
+                                            <i class="bx bx-heart text-danger"></i> ${post.likes?.length || 0}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="bx bx-comment text-primary"></i> ${post.commentsCount || 0}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="bx bx-share text-success"></i> ${post.sharesCount || 0}
+                                        </small>
+                                    </div>
+                                    <a href="/post-management/detail/${post._id}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="bx bx-show me-1"></i>Xem chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Show notification
+        function showNotification(type, message) {
+            const iconClass = type === 'success' ? 'bx-check-circle text-success' : 'bx-error-circle text-danger';
+            const content = `
+                <div class="py-3">
+                    <i class="bx ${iconClass} display-6 mb-2"></i>
+                    <p class="mb-0">${message}</p>
+                </div>
+            `;
+            
+            document.getElementById('notificationContent').innerHTML = content;
+            const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+            modal.show();
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                modal.hide();
+            }, 3000);
+        }
+        
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

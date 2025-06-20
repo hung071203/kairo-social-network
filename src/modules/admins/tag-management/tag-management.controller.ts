@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Render, UseFilters, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Query, Render, UseFilters, UseGuards } from '@nestjs/common';
 import { TagManagementService } from './tag-management.service';
 import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
@@ -19,14 +19,17 @@ export class TagManagementController {
   ) {
     try {
       const tags = await this.tagManagementService.getAllTags(query, pagination);
+      console.log('tags', tags);
+      
       return {
         title: 'Quản lý thẻ',
         content: 'admins/pages/tags/index.njk',
         tags,
+        data: tags,
         query, // Pass query params to template for sorting
       };
     } catch (error) {
-      throw new Error(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 }
