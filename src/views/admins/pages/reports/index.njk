@@ -198,11 +198,11 @@
                                 </div>
                             </td>                            <td>
                                 {% if item.type == 'USER' %}
-                                    <span class="badge bg-info">Báo cáo người dùng</span>
+                                    <span class="badge bg-label-info me-1">Báo cáo người dùng</span>
                                 {% elif item.type == 'POST' %}
-                                    <span class="badge bg-warning">Báo cáo bài viết</span>
+                                    <span class="badge bg-label-warning me-1">Báo cáo bài viết</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">{{ item.type }}</span>
+                                    <span class="badge bg-label-secondary me-1">{{ item.type }}</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -214,9 +214,9 @@
                                 </div>
                             </td>                            <td>
                                 {% if item.responder %}
-                                    <span class="badge bg-success">Đã xử lý</span>
+                                    <span class="badge bg-label-success me-1">Đã xử lý</span>
                                 {% else %}
-                                    <span class="badge bg-warning">Chờ xử lý</span>
+                                    <span class="badge bg-label-warning me-1">Chờ xử lý</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -501,9 +501,8 @@
                             </div>
                             <div class="col-md-6">
                                 <h6>Thông tin báo cáo:</h6>
-                                <p><strong>Loại:</strong> ${typeText[report.type] || report.type}</p>
-                                <p><strong>Trạng thái:</strong> 
-                                    <span class="badge ${report.responder ? 'bg-success' : 'bg-warning'}">
+                                <p><strong>Loại:</strong> ${typeText[report.type] || report.type}</p>                                <p><strong>Trạng thái:</strong> 
+                                    <span class="badge ${report.responder ? 'bg-label-success' : 'bg-label-warning'} me-1">
                                         ${report.responder ? 'Đã xử lý' : 'Chờ xử lý'}
                                     </span>
                                 </p>
