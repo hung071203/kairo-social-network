@@ -87,6 +87,33 @@ async function bootstrap() {
       .replace('ss', ss);
   });
 
+  // Add date filter as alias for formatDate
+  env.addFilter('date', (value: any, format = 'DD/MM/YYYY HH:mm:ss') => {
+    const timestamp = !value || value === 'now' ? Date.now() : Number(value);
+    const date = new Date(timestamp);
+
+    if (isNaN(date.getTime())) return '';
+
+    // ✅ Trả về string
+    const pad = (n: number): string => (n < 10 ? '0' + n : n.toString());
+
+    const DD = pad(date.getDate());
+    const MM = pad(date.getMonth() + 1);
+    const YYYY = date.getFullYear().toString(); // ✅ ép về string
+
+    const HH = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    const ss = pad(date.getSeconds());
+
+    return format
+      .replace('DD', DD)
+      .replace('MM', MM)
+      .replace('YYYY', YYYY)
+      .replace('HH', HH)
+      .replace('mm', mm)
+      .replace('ss', ss);
+  });
+
   // Thêm filter để kiểm tra xem thời gian có trong tương lai không
   env.addFilter('isFuture', (value: any) => {
     if (!value) return false;

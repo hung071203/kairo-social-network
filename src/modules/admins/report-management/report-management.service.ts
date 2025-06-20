@@ -42,11 +42,12 @@ export class ReportManagementService {
       } else {
         form.responder = { $exists: false }; // Báo cáo chưa được xử lý
       }
-    }
-
-    return this.reportRepository.findAll(form, {
+    }    return this.reportRepository.findAll(form, {
       ...pagination,
-      populate: [{ path: 'reporter', select: 'name username email avatar' }],
+      populate: [
+        { path: 'reporter', select: 'name username email avatar' },
+        { path: 'responder', select: 'name username email avatar' }
+      ],
     });
   }
 }
