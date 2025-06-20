@@ -35,7 +35,7 @@
             </select>
         </div>
           <!-- Clear filters -->
-        {% if query.search or query.type or (query.isResolved !== undefined and query.isResolved !== null and query.isResolved !== '') %}
+        {% if query.search or query.type or (query.responder !== undefined and query.responder !== null and query.responder !== '') %}
             <button class="btn btn-outline-secondary" onclick="clearFilters()">
                 <i class="bx bx-x"></i>
                 Xóa bộ lọc
@@ -442,12 +442,37 @@
                 html += '<p><strong>Cập nhật lần cuối:</strong> ' + new Date(report.updatedAt).toLocaleString('vi-VN') + '</p>';
             }
             
+            html += '</div>';
+            html += '</div>';
+            
+            // Thông tin người phản hồi (nếu có)
             if (responderName) {
-                html += '<p><strong>Người xử lý:</strong> ' + responderName + '</p>';
+                html += '<hr>';
+                html += '<div class="row">';
+                html += '<div class="col-md-12">';
+                html += '<h6>Thông tin người xử lý:</h6>';
+                html += '<div class="d-flex align-items-center mb-3">';
+                
+                if (report.responder?.avatar) {
+                    html += '<img src="' + report.responder.avatar + '" class="rounded-circle me-3" width="40" height="40" alt="Avatar">';
+                } else {
+                    html += '<div class="rounded-circle bg-primary me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; color: white; font-size: 16px;">';
+                    html += responderName.charAt(0).toUpperCase();
+                    html += '</div>';
+                }
+                
+                html += '<div>';
+                html += '<strong>' + responderName + '</strong><br>';
+                html += '<small class="text-muted">@' + (report.responder?.username || 'unknown') + '</small>';
+                if (report.responder?.email) {
+                    html += '<br><small class="text-muted">' + report.responder.email + '</small>';
+                }
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
             }
             
-            html += '</div>';
-            html += '</div>';
             html += '<hr>';
             html += '<h6>Lý do báo cáo:</h6>';
             html += '<p class="mb-3">' + (report.reason || 'Không có lý do cụ thể') + '</p>';
@@ -455,7 +480,9 @@
             if (report.responseContent) {
                 html += '<hr>';
                 html += '<h6>Phản hồi xử lý:</h6>';
-                html += '<p class="mb-3">' + report.responseContent + '</p>';
+                html += '<div class="alert alert-info">';
+                html += '<p class="mb-0">' + report.responseContent + '</p>';
+                html += '</div>';
             }
             
             html += '<hr>';
