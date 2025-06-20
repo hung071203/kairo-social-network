@@ -363,23 +363,16 @@
                     showNotification('error', 'Có lỗi xảy ra khi tải chi tiết báo cáo');
                 });
         }
-        
-        // View reported content
+          // View reported content
         function viewReportedContent(targetId, reportType) {
-            // Load reported content via AJAX
-            fetch('{{ baseUrl }}/report-management/content/' + targetId + '?type=' + reportType)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('reportedPostContent').innerHTML = formatReportedContent(data.content, reportType);
-                        new bootstrap.Modal(document.getElementById('reportedPostModal')).show();
-                    } else {
-                        showNotification('error', 'Có lỗi xảy ra khi tải nội dung bị báo cáo');
-                    }
-                })
-                .catch(error => {
-                    showNotification('error', 'Có lỗi xảy ra khi tải nội dung bị báo cáo');
-                });
+            // Redirect to appropriate management page based on report type
+            if (reportType === 'POST') {
+                window.location.href = '{{ baseUrl }}/post-management?search=' + encodeURIComponent(targetId);
+            } else if (reportType === 'USER') {
+                window.location.href = '{{ baseUrl }}/user-management?search=' + encodeURIComponent(targetId);
+            } else {
+                showNotification('error', 'Loại báo cáo không được hỗ trợ');
+            }
         }
         
         // Resolve report
