@@ -19,7 +19,6 @@ export class TagManagementController {
   ) {
     try {
       const tags = await this.tagManagementService.getAllTags(query, pagination);
-      console.log('tags', tags);
       
       return {
         title: 'Quản lý thẻ',
