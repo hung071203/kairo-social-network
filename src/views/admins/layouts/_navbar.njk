@@ -17,12 +17,12 @@
         <li class="menu-item {% if path == '/dashboard' %}active{% endif %}">
             <a href="{{ baseUrl }}/dashboard" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-smile"></i>
-                <div class="text-truncate" data-i18n="Dashboards">Dashboards</div>
+                <div class="text-truncate" data-i18n="Dashboards">Bảng điều khiển</div>
             </a>
         </li>
         <!-- Apps & Pages -->
         <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">Users</span>
+            <span class="menu-header-text">Người dùng</span>
         </li>
         <li class="menu-item {% if path == '/profile' %}active{% endif %}">
             <a href="{{ baseUrl }}/profile" class="menu-link">
@@ -41,25 +41,13 @@
             </a>
         </li>
         <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">IPs</span>
+            <span class="menu-header-text">Bài đăng</span>
         </li>
-        <li class="menu-item {% if path == '/ips' %}active{% endif %}">
-            <a href="{{ baseUrl }}/ips" class="menu-link">
+        <li class="menu-item {% if path == '/post-management' %}active{% endif %}">
+            <a href="{{ baseUrl }}/post-management" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-package"></i>
                 <div class="text-truncate" data-i18n="Dashboards">
-                    Quản lý IPs
-                </div>
-            </a>
-        </li>
-        <!-- Apps & Pages -->
-        <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">APIs</span>
-        </li>
-        <li class="menu-item {% if path == '/overview' %}active{% endif %}">
-            <a href="{{ baseUrl }}/api/docs" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
-                <div class="text-truncate" data-i18n="Dashboards">
-                    API Documentation
+                    Quản lý bài đăng
                 </div>
             </a>
         </li>
