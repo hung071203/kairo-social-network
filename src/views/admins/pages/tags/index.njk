@@ -58,9 +58,9 @@
                     </th>
                     <th
                         class="sortable"
-                        onclick="setQueryParams({sort: 'postsCount', order: '{% if query.sort == 'postsCount' and query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
+                        onclick="setQueryParams({sort: 'postCount', order: '{% if query.sort == 'postCount' and query.order == 'asc' %}desc{% else %}asc{% endif %}'});">
                         Số bài viết
-                        <i class="fas fa-sort{% if query.sort == 'postsCount' and query.order == 'asc' %}-up{% elif query.sort == 'postsCount' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
+                        <i class="fas fa-sort{% if query.sort == 'postCount' and query.order == 'asc' %}-up{% elif query.sort == 'postCount' and query.order == 'desc' %}-down{% else %}{% endif %}"></i>
                     </th>
                     <th
                         class="sortable"
@@ -87,9 +87,9 @@
                             <td>                                <div class="d-flex align-items-center">
                                     <span class="badge bg-label-info me-1">
                                         <i class="bx bx-file me-1"></i>
-                                        {{ item.postsCount or 0 }} bài viết
+                                        {{ item.postCount or 0 }} bài viết
                                     </span>
-                                    {% if item.postsCount > 0 %}
+                                    {% if item.postCount > 0 %}
                                         <button 
                                             class="btn btn-sm btn-outline-primary ms-2" 
                                             onclick="viewTagPosts('{{ item._id }}')"
@@ -406,7 +406,7 @@
                             <div class="col-md-6">
                                 <h6 class="text-muted">Số bài viết</h6>
                                 <p class="mb-3">
-                                    <span class="badge bg-label-info">${tag.postsCount || 0} bài viết</span>
+                                    <span class="badge bg-label-info">${tag.postCount || 0} bài viết</span>
                                 </p>
                             </div>
                             <div class="col-md-6">
