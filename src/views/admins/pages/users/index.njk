@@ -5,52 +5,113 @@
     <div class="card-header border-bottom">
         <h5 class="card-header">Quản lý người dùng</h5>
     </div>
-    <br/>
-    <!-- Button Thêm mới -->
-    <div
-        class="d-flex justify-content-between mb-3">
+    <br/>    <!-- Button Thêm mới và Filter Section -->
+    <div class="d-flex justify-content-start gap-3 mb-3">
+        <!-- Search and Filter Section -->
         <!-- Ô tìm kiếm + Nút tìm kiếm -->
-        <div class="input-group w-25">
+        <div class="input-group" style="max-width: 400px;">
             <input type="text" class="form-control" id="searchUser" placeholder="Tìm kiếm người dùng...">
-                <button class="btn btn-outline-primary" onclick="submitSearch()">
-                    <i class="bx bx-search"></i>
-                    Tìm kiếm
-                </button>
-            </div>
-            {% if user.role == 'ADMIN' %}
-                <button class="btn btn-secondary add-new btn-primary" onclick="openAddUser()">
-                    <span>
-                        <i class="bx bx-plus bx-sm me-0 me-sm-2"></i>
-                        <span class="d-none d-sm-inline-block">Thêm Mới Người Dùng</span>
-                    </span>
-                </button>
-            {% endif %}
+            <button class="btn btn-outline-primary" onclick="submitSearch()">
+                <i class="bx bx-search"></i>
+                Tìm kiếm
+            </button>
         </div>
-        <script>
-            // Lấy giá trị của query "search" từ URL và gán vào input
-            function getSearchQuery() {
+        
+        <!-- Filter by role -->
+        <div class="input-group" style="max-width: 200px;">
+            <select class="form-select" id="roleFilter" onchange="submitRoleFilter()">
+                <option value="">Tất cả vai trò</option>
+                <option value="USER">Người dùng</option>
+                <option value="MOD">Moderator</option>
+                <option value="ADMIN">Admin</option>
+            </select>
+        </div>
+        
+        <!-- Clear filters -->
+        {% if query.search or query.role %}
+            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                <i class="bx bx-x"></i>
+                Xóa bộ lọc
+            </button>
+        {% endif %}
+        
+        {% if user.role == 'ADMIN' %}
+            <button class="btn btn-secondary add-new btn-primary" onclick="openAddUser()">
+                <span>
+                    <i class="bx bx-plus bx-sm me-0 me-sm-2"></i>
+                    <span class="d-none d-sm-inline-block">Thêm Mới Người Dùng</span>
+                </span>
+            </button>
+        {% endif %}
+    </div>
+    <script>
+            // Get query parameters from URL
+            function getQueryParam(param) {
                 const params = new URLSearchParams(window.location.search);
-                return params.get("search") || "";
+                return params.get(param) || "";
             }
-            document.getElementById("searchUser").value = getSearchQuery();
+            
+            // Set values from URL when page loads
+            function initializeFilters() {
+                document.getElementById("searchUser").value = getQueryParam("search");
+                document.getElementById("roleFilter").value = getQueryParam("role");
+            }
+            
+            // Initialize when DOM is loaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeFilters);
+            } else {
+                initializeFilters();
+            }
+            
             function submitSearch() {
-                let input = document
-                    .getElementById("searchUser")
-                    .value
-                    .trim();
+                let input = document.getElementById("searchUser").value.trim();
                 let url = new URL(window.location.href);
+                
                 if (input) {
-                    url.searchParams.set("search", input); // Thêm hoặc cập nhật query "search"
+                    url.searchParams.set("search", input);
                 } else {
-                    url.searchParams.delete("search"); // Xóa query nếu input rỗng
+                    url.searchParams.delete("search");
                 }
-                window.location.href = url.toString(); // Load lại trang với query mới
+                window.location.href = url.toString();
             }
-            document.getElementById("searchUser").addEventListener("keydown", function (event) {
-                if (event.key === "Enter") {
-                    submitSearch();
+            
+            function submitRoleFilter() {
+                let roleSelect = document.getElementById("roleFilter").value;
+                let url = new URL(window.location.href);
+                
+                if (roleSelect) {
+                    url.searchParams.set("role", roleSelect);
+                } else {
+                    url.searchParams.delete("role");
                 }
-            });
+                window.location.href = url.toString();
+            }
+            
+            function clearFilters() {
+                let url = new URL(window.location.href);
+                url.searchParams.delete("search");
+                url.searchParams.delete("role");
+                window.location.href = url.toString();
+            }
+            
+            // Add enter key listener for search when DOM is ready
+            function initializeEventListeners() {
+                const searchInput = document.getElementById("searchUser");
+                if (searchInput) {
+                    searchInput.addEventListener("keydown", function (event) {
+                        if (event.key === "Enter") {
+                            submitSearch();
+                        }
+                    });
+                }
+            }
+            
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeEventListeners);
+            } else {
+                initializeEventListeners();
+            }
         </script>
         <div class="table-responsive text-nowrap">
             <table class="table">
