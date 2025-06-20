@@ -69,10 +69,7 @@ export class ReportManagementService {
       throw new Error('Không tìm thấy báo cáo');
     }
 
-    return {
-      success: true,
-      report,
-    };
+    return report;
   }
 
   async resolveReport(
@@ -96,15 +93,11 @@ export class ReportManagementService {
     if (report.responder) {
       throw new Error('Báo cáo này đã được xử lý');
     }
-    const updatedReport = await this.reportRepository.update(reportId, {
+    await this.reportRepository.update(reportId, {
       responder: new Types.ObjectId(responderId),
       responseContent: responseContent || 'Đã xử lý báo cáo',
     });
 
-    return {
-      success: true,
-      message: 'Đánh dấu báo cáo đã xử lý thành công',
-      data: updatedReport,
-    };
+    return true;
   }
 }
