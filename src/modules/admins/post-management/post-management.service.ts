@@ -56,7 +56,6 @@ export class PostManagementService {
       .populate('author', 'name username email avatar');
     return post || null;
   }
-
   async getPostComments(postId: string) {
     if (!isValidObjectId(postId)) {
       throw new Error('ID bài viết không hợp lệ');
@@ -66,23 +65,73 @@ export class PostManagementService {
     const post = await this.postRepository.findOne({ _id: postId });
     if (!post) {
       throw new Error('Không tìm thấy bài viết');
-    } // Get comments for this post
+    }
+
+    // Get all comments for this post
     const comments = await this.commentRepository.findAll(
       { post: new Types.ObjectId(postId) },
       {
         page: 1,
-        limit: 50,
+        limit: 100, // Increased limit to get more comments
         populate: [{ path: 'author', select: 'name username avatar' }],
-        sort: { createdAt: -1 },
+        sort: { createdAt: 1 }, // Sort by oldest first to maintain thread order
       },
     );
 
     // Handle both paginated and non-paginated results
+    let commentsList = [];
     if (Array.isArray(comments)) {
-      return comments;
+      commentsList = comments;
     } else {
-      return comments.docs || [];
+      commentsList = comments.docs || [];
     }
+
+    // Organize comments into threaded structure
+    const parentComments = [];
+    const replyComments = [];
+
+    // Separate parent comments and replies
+    commentsList.forEach(comment => {
+      if (!comment.parentComment) {
+        parentComments.push(comment);
+      } else {
+        replyComments.push(comment);
+      }
+    });
+
+    // Build the threaded comment structure
+    const threadedComments = [];
+    
+    parentComments.forEach(parentComment => {
+      // Add parent comment first
+      threadedComments.push({
+        ...parentComment,
+        isReply: false,
+        level: 0
+      });
+
+      // Find and add all replies to this parent comment
+      const replies = replyComments.filter(reply => {
+        // Check if this reply belongs to current parent (directly or indirectly)
+        return reply.parentComment && 
+               (reply.parentComment.toString() === parentComment._id.toString() ||
+                replyComments.some(r => r._id.toString() === reply.parentComment.toString() && 
+                                       r.parentComment && r.parentComment.toString() === parentComment._id.toString()));
+      });      // Sort replies by creation time
+      replies.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+      // Add all replies with indentation
+      replies.forEach(reply => {
+        threadedComments.push({
+          ...reply,
+          isReply: true,
+          level: 1,
+          parentCommentAuthor: parentComment.author?.name || 'Unknown'
+        });
+      });
+    });
+
+    return threadedComments;
   }
 
   async deletePost(id: string) {

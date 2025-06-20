@@ -551,33 +551,48 @@
                 </div>
             `;
         }
-        
-        function formatPostComments(comments) {
+          function formatPostComments(comments) {
             if (!comments || comments.length === 0) {
                 return '<p class="text-muted">Bài viết này chưa có bình luận nào.</p>';
             }
             
             return `
                 <div class="comments-list">
-                    ${comments.map(comment => `
-                        <div class="card mb-2">
-                            <div class="card-body">
+                    ${comments.map(comment => {
+                        // Safely access comment author data
+                        const author = comment.author || {};
+                        const authorName = author.name || 'Không có tên';
+                        const authorAvatar = author.avatar || null;
+                        const commentContent = comment.content || 'Không có nội dung';
+                        const createdAt = comment.createdAt ? new Date(comment.createdAt).toLocaleString('vi-VN') : 'Không rõ thời gian';
+                        const isReply = comment.isReply || false;
+                        const parentAuthor = comment.parentCommentAuthor || '';
+                        
+                        return `
+                        <div class="card mb-2 ${isReply ? 'ms-4' : ''}" style="${isReply ? 'border-left: 3px solid #007bff;' : ''}">
+                            <div class="card-body ${isReply ? 'py-2' : ''}">
                                 <div class="d-flex align-items-start">
                                     <div class="avatar avatar-sm me-3">
-                                        ${comment.author.avatar ? 
-                                            `<img src="${comment.author.avatar}" alt="${comment.author.name}" class="rounded-circle">` :
-                                            `<span class="avatar-initial rounded-circle bg-label-secondary">${(comment.author.name || 'U')[0].toUpperCase()}</span>`
+                                        ${authorAvatar ? 
+                                            `<img src="${authorAvatar}" alt="${authorName}" class="rounded-circle">` :
+                                            `<span class="avatar-initial rounded-circle ${isReply ? 'bg-label-info' : 'bg-label-secondary'}">${authorName[0].toUpperCase()}</span>`
                                         }
                                     </div>
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-1">${comment.author.name || 'Không có tên'}</h6>
-                                        <p class="mb-1">${comment.content}</p>
-                                        <small class="text-muted">${new Date(comment.createdAt).toLocaleString('vi-VN')}</small>
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h6 class="mb-0 me-2">${authorName}</h6>
+                                            ${isReply ? `<small class="text-muted">trả lời <strong>${parentAuthor}</strong></small>` : ''}
+                                        </div>
+                                        <p class="mb-1">${commentContent}</p>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <small class="text-muted">${createdAt}</small>
+                                            ${!isReply ? `<small class="text-primary" style="cursor: pointer;">Trả lời</small>` : ''}                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
         }
