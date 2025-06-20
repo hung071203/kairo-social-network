@@ -44,6 +44,9 @@ export class ReportManagementService {
       }
     }
 
-    return this.reportRepository.findAll(form, pagination);
+    return this.reportRepository.findAll(form, {
+      ...pagination,
+      populate: [{ path: 'reporter', select: 'name username email avatar' }],
+    });
   }
 }
