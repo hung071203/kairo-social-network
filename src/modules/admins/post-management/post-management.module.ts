@@ -8,6 +8,7 @@ import { Report, ReportSchema } from 'src/schemas/reports.schema';
 import { PostRepository } from 'src/database/repository/post.repository';
 import { CommentRepository } from 'src/database/repository/comment.repository';
 import { ReportRepository } from 'src/database/repository/report.repository';
+import { TagsModule } from 'src/modules/users/tags/tags.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ReportRepository } from 'src/database/repository/report.repository';
         schema: ReportSchema,
       },
     ]),
+    TagsModule,
   ],
   controllers: [PostManagementController],
   providers: [

@@ -6,6 +6,7 @@ import { ReportRepositoryInterface } from 'src/database/interface/report.interfa
 import { FilterPostManagementDto } from './dto/post.dto';
 import { ReportType } from 'src/common/enums';
 import { isValidObjectId, Types } from 'mongoose';
+import { TagsService } from 'src/modules/users/tags/tags.service';
 
 @Injectable()
 export class PostManagementService {
@@ -16,6 +17,7 @@ export class PostManagementService {
     private readonly commentRepository: CommentRepositoryInterface,
     @Inject('ReportRepositoryInterface')
     private readonly reportRepository: ReportRepositoryInterface,
+    private readonly tagsService: TagsService,
   ) {}
   async getPosts(dto: FilterPostManagementDto, pagination: PaginationDto) {
     const form: any = {};
@@ -111,7 +113,6 @@ export class PostManagementService {
       };
     }
   }
-
   async deletePost(id: string) {
     if (!isValidObjectId(id)) {
       throw new Error('ID bài viết không hợp lệ');
@@ -120,7 +121,15 @@ export class PostManagementService {
     const post = await this.postRepository.findOne({ _id: id });
     if (!post) {
       throw new Error('Không tìm thấy bài viết');
-    } // Delete the post
+    }
+
+    // Giảm postCount của các tags liên quan
+    if (post.tags && post.tags.length > 0) {
+      const tagIds = post.tags.map(tag => tag.toString());
+      await this.tagsService.decrementTagsPostCount(tagIds);
+    }
+
+    // Delete the post
     await this.postRepository.delete(id);
 
     // Note: Comments should be deleted via cascade or separate cleanup job

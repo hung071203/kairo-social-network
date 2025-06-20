@@ -28,4 +28,20 @@ export class TagsService {
       }),
     );
   }
+
+  // Giảm postCount khi xóa post
+  async decrementTagsPostCount(tagIds: string[]) {
+    if (!tagIds || tagIds.length === 0) return;
+
+    return Promise.all(
+      tagIds.map(async (tagId) => {
+        const tag = await this.tagRepository.findOneById(tagId);
+        if (tag && tag.postCount > 0) {
+          await this.tagRepository.update(tagId, {
+            postCount: tag.postCount - 1,
+          });
+        }
+      }),
+    );
+  }
 }

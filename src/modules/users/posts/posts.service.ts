@@ -301,7 +301,6 @@ export class PostsService {
     const minute = parts.find((p) => p.type === 'minute').value;
     return `${day} ${month} lúc ${hour}:${minute}`;
   }
-
   async deletePost(userId: string, postId: string) {
     const post = await this.postRepository.findOne({
       _id: new Types.ObjectId(postId),
@@ -310,6 +309,13 @@ export class PostsService {
     if (!post) {
       throw new Error('Không tìm thấy bài viết');
     }
+
+    // Giảm postCount của các tags liên quan
+    if (post.tags && post.tags.length > 0) {
+      const tagIds = post.tags.map(tag => tag.toString());
+      await this.tagsService.decrementTagsPostCount(tagIds);
+    }
+
     await this.postRepository.delete(postId);
   }
 
