@@ -18,8 +18,7 @@ export class PostManagementService {
     @Inject('ReportRepositoryInterface')
     private readonly reportRepository: ReportRepositoryInterface,
     private readonly tagsService: TagsService,
-  ) {}
-  async getPosts(dto: FilterPostManagementDto, pagination: PaginationDto) {
+  ) {}  async getPosts(dto: FilterPostManagementDto, pagination: PaginationDto) {
     const form: any = {};
 
     if (dto.search && dto.search.trim()) {
@@ -35,12 +34,32 @@ export class PostManagementService {
 
         form.$or = [{ content: { $regex: escapedSearch, $options: 'i' } }];
       }
+    }    // Filter by tag name if provided
+    if (dto.tagName && dto.tagName.trim()) {
+      try {
+        // Find the tag by name first
+        const tag = await this.tagsService.getRepository().findOne({ name: dto.tagName.trim() });
+        if (tag) {
+          // Add tag filter to posts
+          form.tags = tag._id;
+        } else {
+          // If tag doesn't exist, return empty result
+          form._id = new Types.ObjectId(); // Non-existent ID to return empty
+        }
+      } catch (error) {
+        console.error('Error finding tag:', error);
+        // If error finding tag, return empty result
+        form._id = new Types.ObjectId(); // Non-existent ID to return empty
+      }
     }
 
     // Add population for author information
     const options = {
       ...pagination,
-      populate: [{ path: 'author', select: 'name username email avatar' }],
+      populate: [
+        { path: 'author', select: 'name username email avatar' },
+        { path: 'tags', select: 'name' }
+      ],
     };
 
     const result = await this.postRepository.findAll(form, options);

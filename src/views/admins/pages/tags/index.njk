@@ -76,12 +76,14 @@
                 {% if tags.docs and tags.docs.length > 0 %}
                     {% for item in tags.docs %}                        <tr>
                             <td>{{ index }}</td>
-                            {% set index = index + 1 %}
-                            <td>
+                            {% set index = index + 1 %}                            <td>
                                 <div class="d-flex align-items-center">
-                                    <span class="badge bg-label-primary me-2" style="font-size: 0.85rem;">
-                                        #{{ item.name }}
-                                    </span>
+                                    <a href="/post-management?tagName={{ item.name }}" class="text-decoration-none">
+                                        <span class="badge bg-label-primary me-2" style="font-size: 0.85rem; cursor: pointer;" 
+                                              title="Xem các bài viết có thẻ #{{ item.name }}">
+                                            #{{ item.name }}
+                                        </span>
+                                    </a>
                                 </div>
                             </td>
                             <td>                                <div class="d-flex align-items-center">

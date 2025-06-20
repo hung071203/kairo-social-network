@@ -4,4 +4,7 @@ import { PaginationDto } from 'src/common/decorators';
 export class FilterPostManagementDto extends PaginationDto {
   @IsOptional()
   search?: string;
+
+  @IsOptional()
+  tagName?: string;
 }

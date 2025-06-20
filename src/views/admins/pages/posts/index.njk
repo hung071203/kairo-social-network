@@ -5,26 +5,50 @@
     <div class="card-header border-bottom">
         <h5 class="card-header">Quản lý bài viết</h5>
     </div>
-    <br/>
-    <!-- Button Tìm kiếm -->
-    <div class="d-flex justify-content-between mb-3">
-        <!-- Ô tìm kiếm + Nút tìm kiếm -->
-        <div class="input-group w-25">
+    <br/>    <!-- Button Tìm kiếm -->
+    <div class="d-flex justify-content-start gap-3 mb-3">
+        <!-- Ô tìm kiếm bài viết -->
+        <div class="input-group" style="max-width: 300px;">
             <input type="text" class="form-control" id="searchPost" placeholder="Tìm kiếm bài viết...">
             <button class="btn btn-outline-primary" onclick="submitSearch()">
                 <i class="bx bx-search"></i>
                 Tìm kiếm
             </button>
         </div>
+        
+        <!-- Ô tìm kiếm theo tag -->
+        <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text">#</span>
+            <input type="text" class="form-control" id="searchTag" placeholder="Tìm theo thẻ...">
+            <button class="btn btn-outline-success" onclick="submitTagSearch()">
+                <i class="bx bx-tag"></i>
+                Lọc theo thẻ
+            </button>
+        </div>
+        
+        <!-- Nút xóa filter -->
+        {% if query.search or query.tagName %}
+            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                <i class="bx bx-x"></i>
+                Xóa bộ lọc
+            </button>
+        {% endif %}
     </div>
-    
-    <script>
-        // Lấy giá trị của query "search" từ URL và gán vào input
+      <script>
+        // Lấy giá trị của query từ URL và gán vào input
         function getSearchQuery() {
             const params = new URLSearchParams(window.location.search);
             return params.get("search") || "";
         }
+        
+        function getTagQuery() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("tagName") || "";
+        }
+        
+        // Set values from URL
         document.getElementById("searchPost").value = getSearchQuery();
+        document.getElementById("searchTag").value = getTagQuery();
         
         function submitSearch() {
             let input = document
@@ -32,20 +56,77 @@
                 .value
                 .trim();
             let url = new URL(window.location.href);
+            
+            // Clear tag filter when searching by content
+            url.searchParams.delete("tagName");
+            
             if (input) {
-                url.searchParams.set("search", input); // Thêm hoặc cập nhật query "search"
+                url.searchParams.set("search", input);
             } else {
-                url.searchParams.delete("search"); // Xóa query nếu input rỗng
+                url.searchParams.delete("search");
             }
-            window.location.href = url.toString(); // Load lại trang với query mới
+            window.location.href = url.toString();
         }
         
+        function submitTagSearch() {
+            let tagInput = document
+                .getElementById("searchTag")
+                .value
+                .trim();
+            let url = new URL(window.location.href);
+            
+            // Clear content search when filtering by tag
+            url.searchParams.delete("search");
+            
+            // Remove # if user added it
+            const cleanTag = tagInput.replace(/^#/, '');
+            
+            if (cleanTag) {
+                url.searchParams.set("tagName", cleanTag);
+            } else {
+                url.searchParams.delete("tagName");
+            }
+            window.location.href = url.toString();
+        }
+        
+        function clearFilters() {
+            let url = new URL(window.location.href);
+            url.searchParams.delete("search");
+            url.searchParams.delete("tagName");
+            window.location.href = url.toString();
+        }
+        
+        // Add enter key listeners
         document.getElementById("searchPost").addEventListener("keydown", function (event) {
             if (event.key === "Enter") {
                 submitSearch();
             }
         });
+        
+        document.getElementById("searchTag").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                submitTagSearch();
+            }        });
     </script>
+    
+    <!-- Filter notification banner -->
+    {% if query.search or query.tagName %}
+        <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
+            <div>
+                <i class="bx bx-info-circle me-2"></i>
+                <strong>Đang lọc:</strong>
+                {% if query.search %}
+                    Tìm kiếm bài viết: "<em>{{ query.search }}</em>"
+                {% endif %}
+                {% if query.tagName %}
+                    Thẻ: "<em>#{{ query.tagName }}</em>"
+                {% endif %}
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">
+                <i class="bx bx-x me-1"></i>Xóa bộ lọc
+            </button>
+        </div>
+    {% endif %}
     
     <div class="table-responsive text-nowrap">
         <table class="table">
