@@ -2,7 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ReportRepositoryInterface } from 'src/database/interface/report.interface';
 import { FilterReportManagementDto } from './dto/report.dto';
 import { PaginationDto } from 'src/common/decorators';
-import { isValidObjectId } from 'mongoose';
+import { isValidObjectId, Types } from 'mongoose';
+import { UserRepositoryInterface } from 'src/database/interface/user.interface';
+import { PostRepositoryInterface } from 'src/database/interface/post.interface';
 
 @Injectable()
 export class ReportManagementService {
@@ -42,12 +44,67 @@ export class ReportManagementService {
       } else {
         form.responder = { $exists: false }; // Báo cáo chưa được xử lý
       }
-    }    return this.reportRepository.findAll(form, {
+    }
+    return this.reportRepository.findAll(form, {
       ...pagination,
       populate: [
         { path: 'reporter', select: 'name username email avatar' },
-        { path: 'responder', select: 'name username email avatar' }
+        { path: 'responder', select: 'name username email avatar' },
       ],
     });
+  }
+  async getReportDetail(reportId: string) {
+    if (!isValidObjectId(reportId)) {
+      throw new Error('ID báo cáo không hợp lệ');
+    }
+
+    const report = await this.reportRepository
+      .getModel()
+      .findById(reportId)
+      .populate('reporter', 'name username email avatar')
+      .populate('responder', 'name username email avatar')
+      .exec();
+
+    if (!report) {
+      throw new Error('Không tìm thấy báo cáo');
+    }
+
+    return {
+      success: true,
+      report,
+    };
+  }
+
+  async resolveReport(
+    reportId: string,
+    responderId: string,
+    responseContent?: string,
+  ) {
+    if (!isValidObjectId(reportId)) {
+      throw new Error('ID báo cáo không hợp lệ');
+    }
+
+    if (!isValidObjectId(responderId)) {
+      throw new Error('ID người xử lý không hợp lệ');
+    }
+
+    const report = await this.reportRepository.findOne({ _id: reportId });
+    if (!report) {
+      throw new Error('Không tìm thấy báo cáo');
+    }
+
+    if (report.responder) {
+      throw new Error('Báo cáo này đã được xử lý');
+    }
+    const updatedReport = await this.reportRepository.update(reportId, {
+      responder: new Types.ObjectId(responderId),
+      responseContent: responseContent || 'Đã xử lý báo cáo',
+    });
+
+    return {
+      success: true,
+      message: 'Đánh dấu báo cáo đã xử lý thành công',
+      data: updatedReport,
+    };
   }
 }

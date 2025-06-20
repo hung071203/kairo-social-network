@@ -1,15 +1,14 @@
-import { BadRequestException, Controller, Get, Query, Render, UseFilters, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Query, Render, UseFilters, UseGuards } from '@nestjs/common';
 import { ReportManagementService } from './report-management.service';
 import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
-import { Pagination, PaginationDto } from 'src/common/decorators';
+import { Pagination, PaginationDto, GetUser } from 'src/common/decorators';
 import { FilterReportManagementDto } from './dto/report.dto';
 
 @Controller('report-management')
 @UseGuards(ModeratorsAuthGuard)
 export class ReportManagementController {
   constructor(private readonly reportManagementService: ReportManagementService) {}
-
   @Get()
   @Render('admins/pages/reports/index.njk')
   @UseFilters(WebExceptionFilter)
@@ -25,6 +24,28 @@ export class ReportManagementController {
         data,
         query, // Pass query params to template for sorting
       };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Get('detail/:id')
+  async getReportDetail(@Param('id') id: string) {
+    try {
+      return await this.reportManagementService.getReportDetail(id);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Patch('resolve/:id')
+  async resolveReport(
+    @Param('id') id: string, 
+    @Body() body: { responseContent?: string },
+    @GetUser() user: any
+  ) {
+    try {
+      return await this.reportManagementService.resolveReport(id, user._id, body.responseContent);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

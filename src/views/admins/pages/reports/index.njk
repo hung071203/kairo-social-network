@@ -40,73 +40,9 @@
             <button class="btn btn-outline-secondary" onclick="clearFilters()">
                 <i class="bx bx-x"></i>
                 Xóa bộ lọc
-            </button>
-        {% endif %}
+            </button>        {% endif %}
     </div>
 
-    <script>
-        // Get query parameters from URL
-        function getQueryParam(param) {
-            const params = new URLSearchParams(window.location.search);
-            return params.get(param) || "";
-        }
-        
-        // Set values from URL
-        document.getElementById("searchReason").value = getQueryParam("search");
-        document.getElementById("reportType").value = getQueryParam("type");
-        document.getElementById("reportResolved").value = getQueryParam("isResolved");
-        
-        function submitReasonSearch() {
-            let input = document.getElementById("searchReason").value.trim();
-            let url = new URL(window.location.href);
-            
-            if (input) {
-                url.searchParams.set("search", input);
-            } else {
-                url.searchParams.delete("search");
-            }
-            window.location.href = url.toString();
-        }
-        
-        function submitTypeFilter() {
-            let typeSelect = document.getElementById("reportType").value;
-            let url = new URL(window.location.href);
-            
-            if (typeSelect) {
-                url.searchParams.set("type", typeSelect);
-            } else {
-                url.searchParams.delete("type");
-            }
-            window.location.href = url.toString();
-        }
-        
-        function submitResolvedFilter() {
-            let resolvedSelect = document.getElementById("reportResolved").value;
-            let url = new URL(window.location.href);
-            
-            if (resolvedSelect) {
-                url.searchParams.set("isResolved", resolvedSelect);
-            } else {
-                url.searchParams.delete("isResolved");
-            }
-            window.location.href = url.toString();
-        }
-        
-        function clearFilters() {
-            let url = new URL(window.location.href);
-            url.searchParams.delete("search");
-            url.searchParams.delete("type");
-            url.searchParams.delete("isResolved");
-            window.location.href = url.toString();
-        }
-        
-        // Add enter key listener for search
-        document.getElementById("searchReason").addEventListener("keydown", function (event) {
-            if (event.key === "Enter") {
-                submitReasonSearch();
-            }
-        });
-    </script>
       <!-- Filter notification banner -->
     {% if query.search or query.type or query.isResolved %}
         <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
@@ -242,13 +178,7 @@
                                             <a class="dropdown-item" href="javascript:void(0);" 
                                                onclick="resolveReport('{{ item._id }}')">
                                                 <i class="bx bx-check-circle me-1"></i> Đánh dấu đã xử lý
-                                            </a>
-                                        {% endif %}
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item text-danger" href="javascript:void(0);" 
-                                           onclick="deleteReport('{{ item._id }}')">
-                                            <i class="bx bx-trash me-1"></i> Xóa báo cáo
-                                        </a>
+                                            </a>                                        {% endif %}
                                     </div>
                                 </div>
                             </td>
@@ -264,8 +194,7 @@
                     </tr>
                 {% endif %}
             </tbody>
-        </table>
-    </div>
+        </table>    </div>
     
     {% include '../../layouts/_pagination.njk' %}
     
@@ -302,45 +231,30 @@
             </div>
         </div>
     </div>
-    
-    <!-- Status Update Confirmation Modal -->
+      <!-- Status Update Confirmation Modal -->
     <div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="statusUpdateModalLabel">Cập Nhật Trạng Thái</h5>
+                    <h5 class="modal-title" id="statusUpdateModalLabel">Xử Lý Báo Cáo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="statusUpdateMessage">Bạn có chắc chắn muốn cập nhật trạng thái báo cáo này?</p>
+                    <p>Vui lòng nhập lý do phản hồi cho báo cáo này:</p>
+                    <div class="mb-3">
+                        <label for="responseContent" class="form-label">Lý do phản hồi</label>
+                        <textarea class="form-control" id="responseContent" rows="4" 
+                                  placeholder="Nhập lý do xử lý báo cáo..."></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" onclick="confirmStatusUpdate()">Xác nhận</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmStatusUpdate()">Xác nhận xử lý</button>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Delete Report Confirmation Modal -->
-    <div class="modal fade" id="deleteReportModal" tabindex="-1" aria-labelledby="deleteReportModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteReportModalLabel">Xác Nhận Xóa Báo Cáo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Bạn có chắc chắn muốn xóa báo cáo này không?</p>
-                    <p class="text-danger"><strong>Hành động này không thể hoàn tác!</strong></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-danger" onclick="confirmDeleteReport()">Xóa Báo Cáo</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    </div>    
+    <!-- Delete Report Confirmation Modal - REMOVED -->
     
     <!-- Success/Error Notification Modal -->
     <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
@@ -353,14 +267,89 @@
                 </div>
             </div>
         </div>
-    </div>    <script>
-        let currentReportId = null;
+    </div>
+
+    <script>
+        // ===== SEARCH AND FILTER FUNCTIONS =====
         
-        // View report detail
+        // Get query parameters from URL
+        function getQueryParam(param) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(param) || "";
+        }
+        
+        // Set values from URL when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById("searchReason").value = getQueryParam("search");
+            document.getElementById("reportType").value = getQueryParam("type");
+            document.getElementById("reportResolved").value = getQueryParam("isResolved");
+            
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Add enter key listener for search
+            document.getElementById("searchReason").addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    submitReasonSearch();
+                }
+            });
+        });
+        
+        function submitReasonSearch() {
+            let input = document.getElementById("searchReason").value.trim();
+            let url = new URL(window.location.href);
+            
+            if (input) {
+                url.searchParams.set("search", input);
+            } else {
+                url.searchParams.delete("search");
+            }
+            window.location.href = url.toString();
+        }
+        
+        function submitTypeFilter() {
+            let typeSelect = document.getElementById("reportType").value;
+            let url = new URL(window.location.href);
+            
+            if (typeSelect) {
+                url.searchParams.set("type", typeSelect);
+            } else {
+                url.searchParams.delete("type");
+            }
+            window.location.href = url.toString();
+        }
+        
+        function submitResolvedFilter() {
+            let resolvedSelect = document.getElementById("reportResolved").value;
+            let url = new URL(window.location.href);
+            
+            if (resolvedSelect) {
+                url.searchParams.set("isResolved", resolvedSelect);
+            } else {
+                url.searchParams.delete("isResolved");
+            }
+            window.location.href = url.toString();
+        }
+        
+        function clearFilters() {
+            let url = new URL(window.location.href);
+            url.searchParams.delete("search");
+            url.searchParams.delete("type");
+            url.searchParams.delete("isResolved");
+            window.location.href = url.toString();
+        }
+
+        // ===== REPORT MANAGEMENT FUNCTIONS =====
+        
+        let currentReportId = null;
+          // View report detail
         function viewReportDetail(reportId) {
             currentReportId = reportId;
             // Load report detail via AJAX
-            fetch(`{{ baseUrl }}/report-management/detail/${reportId}`)
+            fetch('{{ baseUrl }}/report-management/detail/' + reportId)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -378,7 +367,7 @@
         // View reported content
         function viewReportedContent(targetId, reportType) {
             // Load reported content via AJAX
-            fetch(`{{ baseUrl }}/report-management/content/${targetId}?type=${reportType}`)
+            fetch('{{ baseUrl }}/report-management/content/' + targetId + '?type=' + reportType)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -397,19 +386,30 @@
         function resolveReport(reportId) {
             currentReportId = reportId;
             
-            document.getElementById('statusUpdateMessage').textContent = 
-                'Bạn có chắc chắn muốn đánh dấu báo cáo này là "đã xử lý"?';
+            // Clear previous content
+            document.getElementById('responseContent').value = '';
             new bootstrap.Modal(document.getElementById('statusUpdateModal')).show();
         }
         
         function confirmStatusUpdate() {
             if (!currentReportId) return;
             
-            fetch(`{{ baseUrl }}/report-management/resolve/${currentReportId}`, {
+            const responseContent = document.getElementById('responseContent').value.trim();
+            
+            // Validate input
+            if (!responseContent) {
+                alert('Vui lòng nhập lý do phản hồi');
+                return;
+            }
+            
+            fetch('{{ baseUrl }}/report-management/resolve/' + currentReportId, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify({
+                    responseContent: responseContent
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -429,148 +429,177 @@
                 bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal')).hide();
             });
         }
-        
-        // Delete report
-        function deleteReport(reportId) {
-            currentReportId = reportId;
-            new bootstrap.Modal(document.getElementById('deleteReportModal')).show();
-        }
-        
-        function confirmDeleteReport() {
-            if (!currentReportId) return;
-            
-            fetch(`{{ baseUrl }}/report-management/delete/${currentReportId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification('success', 'Xóa báo cáo thành công');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    showNotification('error', data.message || 'Có lỗi xảy ra khi xóa báo cáo');
-                }
-            })
-            .catch(error => {
-                showNotification('error', 'Có lỗi xảy ra khi xóa báo cáo');
-            })
-            .finally(() => {
-                bootstrap.Modal.getInstance(document.getElementById('deleteReportModal')).hide();
-            });
-        }
-        
-        // Format report detail
+          // Format report detail
         function formatReportDetail(report) {
-            const typeText = {
-                'SPAM': 'Spam',
-                'HARASSMENT': 'Quấy rối',
-                'INAPPROPRIATE_CONTENT': 'Nội dung không phù hợp',
-                'VIOLENCE': 'Bạo lực',
-                'HATE_SPEECH': 'Phát ngôn thù địch',
-                'MISINFORMATION': 'Thông tin sai lệch',
-                'OTHER': 'Khác'
+            const typeLabels = {
+                'USER': 'Báo cáo người dùng',
+                'POST': 'Báo cáo bài viết'
             };
             
             const reporterName = report.reporter?.name || 'Không xác định';
             const reporterUsername = report.reporter?.username || 'unknown';
             const responderName = report.responder?.name || null;
+            const statusText = report.responder ? 'Đã xử lý' : 'Chờ xử lý';
+            const typeText = typeLabels[report.type] || report.type;
             
-            return `
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Thông tin người báo cáo:</h6>
-                                <div class="d-flex align-items-center mb-3">
-                                    ${report.reporter?.avatar ? 
-                                        `<img src="${report.reporter.avatar}" class="rounded-circle me-3" width="50" height="50" alt="Avatar">` :
-                                        `<div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; color: white;">
-                                            ${reporterName.charAt(0).toUpperCase()}
-                                        </div>`
-                                    }
-                                    <div>
-                                        <strong>${reporterName}</strong><br>
-                                        <small class="text-muted">@${reporterUsername}</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Thông tin báo cáo:</h6>
-                                <p><strong>Loại:</strong> ${typeText[report.type] || report.type}</p>                                <p><strong>Trạng thái:</strong> 
-                                    <span class="badge ${report.responder ? 'bg-label-success' : 'bg-label-warning'} me-1">
-                                        ${report.responder ? 'Đã xử lý' : 'Chờ xử lý'}
-                                    </span>
-                                </p>
-                                <p><strong>Ngày báo cáo:</strong> ${new Date(report.createdAt).toLocaleString('vi-VN')}</p>
-                                ${responderName ? `<p><strong>Người xử lý:</strong> ${responderName}</p>` : ''}
-                            </div>
-                        </div>
-                        <hr>
-                        <h6>Lý do báo cáo:</h6>
-                        <p class="mb-3">${report.reason}</p>
-                        ${report.responseContent ? `
-                            <hr>
-                            <h6>Phản hồi xử lý:</h6>
-                            <p class="mb-3">${report.responseContent}</p>
-                        ` : ''}
-                        <hr>
-                        <h6>ID đối tượng bị báo cáo:</h6>
-                        <p><code>${report.target}</code></p>
-                    </div>
-                </div>
-            `;
+            var html = '<div class="card">';
+            html += '<div class="card-body">';
+            html += '<div class="row">';
+            html += '<div class="col-md-6">';
+            html += '<h6>Thông tin người báo cáo:</h6>';
+            html += '<div class="d-flex align-items-center mb-3">';
+            
+            if (report.reporter?.avatar) {
+                html += '<img src="' + report.reporter.avatar + '" class="rounded-circle me-3" width="50" height="50" alt="Avatar">';
+            } else {
+                html += '<div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; color: white;">';
+                html += reporterName.charAt(0).toUpperCase();
+                html += '</div>';
+            }
+            
+            html += '<div>';
+            html += '<strong>' + reporterName + '</strong><br>';
+            html += '<small class="text-muted">@' + reporterUsername + '</small>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="col-md-6">';
+            html += '<h6>Thông tin báo cáo:</h6>';
+            html += '<p><strong>Loại:</strong> ' + typeText + '</p>';
+            html += '<p><strong>Trạng thái:</strong> ';
+            html += '<span class="badge ' + (report.responder ? 'bg-label-success' : 'bg-label-warning') + ' me-1">';
+            html += statusText;
+            html += '</span>';
+            html += '</p>';
+            html += '<p><strong>Ngày báo cáo:</strong> ' + new Date(report.createdAt).toLocaleString('vi-VN') + '</p>';
+            
+            if (responderName) {
+                html += '<p><strong>Người xử lý:</strong> ' + responderName + '</p>';
+            }
+            
+            html += '</div>';
+            html += '</div>';
+            html += '<hr>';
+            html += '<h6>Lý do báo cáo:</h6>';
+            html += '<p class="mb-3">' + report.reason + '</p>';
+            
+            if (report.responseContent) {
+                html += '<hr>';
+                html += '<h6>Phản hồi xử lý:</h6>';
+                html += '<p class="mb-3">' + report.responseContent + '</p>';
+            }
+            
+            html += '<hr>';
+            html += '<h6>ID đối tượng bị báo cáo:</h6>';
+            html += '<p><code>' + report.target + '</code></p>';
+            html += '</div>';
+            html += '</div>';
+            
+            return html;
         }
-        
-        // Format reported content
+          // Format reported content
         function formatReportedContent(content, type) {
-            return `
-                <div class="card">
-                    <div class="card-body">
-                        <h6>Loại nội dung: ${type}</h6>
-                        <hr>
-                        <div class="alert alert-info">
-                            <strong>ID:</strong> ${content._id || 'Không xác định'}<br>
-                            <strong>Nội dung:</strong> ${content.content || content.text || 'Không có nội dung'}
-                        </div>
-                        ${content.author ? `
-                            <div class="mb-3">
-                                <h6>Tác giả:</h6>
-                                <div class="d-flex align-items-center">
-                                    ${content.author.avatar ? 
-                                        `<img src="${content.author.avatar}" class="rounded-circle me-3" width="40" height="40" alt="Avatar">` :
-                                        `<div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; color: white;">
-                                            ${(content.author.name || '?').charAt(0).toUpperCase()}
-                                        </div>`
-                                    }
-                                    <div>
-                                        <strong>${content.author.name || 'Không xác định'}</strong><br>
-                                        <small class="text-muted">@${content.author.username || 'unknown'}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        ` : ''}
-                        ${content.createdAt ? `
-                            <p><strong>Ngày tạo:</strong> ${new Date(content.createdAt).toLocaleString('vi-VN')}</p>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
+            var html = '';
+            
+            if (type === 'USER') {
+                html += '<div class="card">';
+                html += '<div class="card-body">';
+                html += '<h6>Thông tin người dùng bị báo cáo:</h6>';
+                html += '<hr>';
+                html += '<div class="d-flex align-items-center mb-3">';
+                
+                if (content.avatar) {
+                    html += '<img src="' + content.avatar + '" class="rounded-circle me-3" width="60" height="60" alt="Avatar">';
+                } else {
+                    html += '<div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px; color: white;">';
+                    html += (content.name || 'U').charAt(0).toUpperCase();
+                    html += '</div>';
+                }
+                
+                html += '<div>';
+                html += '<h5>' + (content.name || 'Không xác định') + '</h5>';
+                html += '<p class="text-muted mb-1">@' + (content.username || 'unknown') + '</p>';
+                html += '<p class="text-muted">' + (content.email || 'Không có email') + '</p>';
+                html += '</div>';
+                html += '</div>';
+                
+                if (content.bio) {
+                    html += '<div class="mb-3">';
+                    html += '<strong>Tiểu sử:</strong>';
+                    html += '<p class="mt-2">' + content.bio + '</p>';
+                    html += '</div>';
+                }
+                
+                html += '<div class="alert alert-info">';
+                html += '<strong>ID người dùng:</strong> <code>' + content._id + '</code>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+            } else if (type === 'POST') {
+                html += '<div class="card">';
+                html += '<div class="card-body">';
+                html += '<h6>Bài viết bị báo cáo:</h6>';
+                html += '<hr>';
+                
+                if (content.author) {
+                    html += '<div class="d-flex align-items-center mb-3">';
+                    
+                    if (content.author.avatar) {
+                        html += '<img src="' + content.author.avatar + '" class="rounded-circle me-2" width="40" height="40" alt="Avatar">';
+                    } else {
+                        html += '<div class="rounded-circle bg-secondary me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-size: 16px; color: white;">';
+                        html += (content.author.name || 'U').charAt(0).toUpperCase();
+                        html += '</div>';
+                    }
+                    
+                    html += '<div>';
+                    html += '<strong>' + (content.author.name || 'Không xác định') + '</strong>';
+                    html += '<small class="text-muted d-block">@' + (content.author.username || 'unknown') + '</small>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                html += '<div class="mb-3">';
+                html += '<strong>Nội dung bài viết:</strong>';
+                html += '<div class="mt-2 p-3 bg-light rounded">';
+                html += (content.content || content.text || 'Không có nội dung');
+                html += '</div>';
+                html += '</div>';
+                
+                if (content.images && content.images.length > 0) {
+                    html += '<div class="mb-3">';
+                    html += '<strong>Hình ảnh đính kèm:</strong>';
+                    html += '<div class="mt-2">';
+                    content.images.forEach(function(img) {
+                        html += '<img src="' + img + '" class="img-thumbnail me-2" style="max-width: 100px; max-height: 100px;">';
+                    });
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                html += '<div class="alert alert-info">';
+                html += '<strong>ID bài viết:</strong> <code>' + content._id + '</code><br>';
+                html += '<strong>Ngày tạo:</strong> ' + (content.createdAt ? new Date(content.createdAt).toLocaleString('vi-VN') : 'Không xác định');
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            } else {
+                html += '<div class="alert alert-warning">';
+                html += '<strong>Loại nội dung không được hỗ trợ:</strong> ' + type;
+                html += '</div>';
+            }
+            
+            return html;
         }
-        
-        // Show notification
+          // Show notification
         function showNotification(type, message) {
             const iconClass = type === 'success' ? 'bx-check-circle text-success' : 'bx-error-circle text-danger';
-            const content = `
-                <div class="mb-3">
-                    <i class="bx ${iconClass}" style="font-size: 3rem;"></i>
-                </div>
-                <p class="mb-0">${message}</p>
-            `;
+            var content = '';
+            content += '<div class="mb-3">';
+            content += '<i class="bx ' + iconClass + '" style="font-size: 3rem;"></i>';
+            content += '</div>';
+            content += '<p class="mb-0">' + message + '</p>';
             
             document.getElementById('notificationContent').innerHTML = content;
             const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
@@ -581,13 +610,5 @@
                 modal.hide();
             }, 3000);
         }
-        
-        // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        });
     </script>
 {% endblock %}

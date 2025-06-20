@@ -4,6 +4,10 @@ import { ReportManagementController } from './report-management.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Report, ReportSchema } from 'src/schemas/reports.schema';
 import { ReportRepository } from 'src/database/repository/report.repository';
+import { User, UserSchema } from 'src/schemas/users.schema';
+import { Post, PostSchema } from 'src/schemas/posts.schema';
+import { UserRepository } from 'src/database/repository/user.repository';
+import { PostRepository } from 'src/database/repository/post.repository';
 
 @Module({
   imports: [
@@ -15,10 +19,11 @@ import { ReportRepository } from 'src/database/repository/report.repository';
     ]),
   ],
   controllers: [ReportManagementController],
-  providers: [ReportManagementService,
+  providers: [
+    ReportManagementService,
     {
       provide: 'ReportRepositoryInterface',
-      useClass: ReportRepository
+      useClass: ReportRepository,
     }
   ],
 })
