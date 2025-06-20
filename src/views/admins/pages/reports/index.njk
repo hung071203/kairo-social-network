@@ -344,8 +344,7 @@
 
         // ===== REPORT MANAGEMENT FUNCTIONS =====
         
-        let currentReportId = null;
-          // View report detail
+        let currentReportId = null;          // View report detail
         function viewReportDetail(reportId) {
             currentReportId = reportId;
             // Load report detail via AJAX
@@ -353,13 +352,15 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('reportDetailContent').innerHTML = formatReportDetail(data.report);
+                        // Pass the entire response to formatReportDetail
+                        document.getElementById('reportDetailContent').innerHTML = formatReportDetail(data);
                         new bootstrap.Modal(document.getElementById('reportDetailModal')).show();
                     } else {
-                        showNotification('error', 'Có lỗi xảy ra khi tải chi tiết báo cáo');
+                        showNotification('error', data.message || 'Có lỗi xảy ra khi tải chi tiết báo cáo');
                     }
                 })
                 .catch(error => {
+                    console.error('Error fetching report detail:', error);
                     showNotification('error', 'Có lỗi xảy ra khi tải chi tiết báo cáo');
                 });
         }
@@ -421,9 +422,11 @@
             .finally(() => {
                 bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal')).hide();
             });
-        }
-          // Format report detail
-        function formatReportDetail(report) {
+        }          // Format report detail
+        function formatReportDetail(data) {
+            // Handle both direct report object and API response format
+            const report = data.data || data;
+            
             const typeLabels = {
                 'USER': 'Báo cáo người dùng',
                 'POST': 'Báo cáo bài viết'
@@ -432,7 +435,7 @@
             const reporterName = report.reporter?.name || 'Không xác định';
             const reporterUsername = report.reporter?.username || 'unknown';
             const responderName = report.responder?.name || null;
-            const statusText = report.responder ? 'Đã xử lý' : 'Chờ xử lý';
+            const statusText = report.isResolved ? 'Đã xử lý' : 'Chờ xử lý';
             const typeText = typeLabels[report.type] || report.type;
             
             var html = '<div class="card">';
@@ -453,18 +456,26 @@
             html += '<div>';
             html += '<strong>' + reporterName + '</strong><br>';
             html += '<small class="text-muted">@' + reporterUsername + '</small>';
+            if (report.reporter?.email) {
+                html += '<br><small class="text-muted">' + report.reporter.email + '</small>';
+            }
             html += '</div>';
             html += '</div>';
             html += '</div>';
             html += '<div class="col-md-6">';
             html += '<h6>Thông tin báo cáo:</h6>';
+            html += '<p><strong>ID báo cáo:</strong> <code>' + report._id + '</code></p>';
             html += '<p><strong>Loại:</strong> ' + typeText + '</p>';
             html += '<p><strong>Trạng thái:</strong> ';
-            html += '<span class="badge ' + (report.responder ? 'bg-label-success' : 'bg-label-warning') + ' me-1">';
+            html += '<span class="badge ' + (report.isResolved ? 'bg-label-success' : 'bg-label-warning') + ' me-1">';
             html += statusText;
             html += '</span>';
             html += '</p>';
             html += '<p><strong>Ngày báo cáo:</strong> ' + new Date(report.createdAt).toLocaleString('vi-VN') + '</p>';
+            
+            if (report.updatedAt && report.updatedAt !== report.createdAt) {
+                html += '<p><strong>Cập nhật lần cuối:</strong> ' + new Date(report.updatedAt).toLocaleString('vi-VN') + '</p>';
+            }
             
             if (responderName) {
                 html += '<p><strong>Người xử lý:</strong> ' + responderName + '</p>';
@@ -474,7 +485,7 @@
             html += '</div>';
             html += '<hr>';
             html += '<h6>Lý do báo cáo:</h6>';
-            html += '<p class="mb-3">' + report.reason + '</p>';
+            html += '<p class="mb-3">' + (report.reason || 'Không có lý do cụ thể') + '</p>';
             
             if (report.responseContent) {
                 html += '<hr>';
