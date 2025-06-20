@@ -34,49 +34,14 @@
                 <option value="true">Đã xử lý</option>
             </select>
         </div>
-        
-        <!-- Clear filters -->
-        {% if query.search or query.type or query.isResolved %}
+          <!-- Clear filters -->
+        {% if query.search or query.type or (query.isResolved !== undefined and query.isResolved !== null and query.isResolved !== '') %}
             <button class="btn btn-outline-secondary" onclick="clearFilters()">
                 <i class="bx bx-x"></i>
                 Xóa bộ lọc
-            </button>        {% endif %}
-    </div>
-
-      <!-- Filter notification banner -->
-    {% if query.search or query.type or query.isResolved %}
-        <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
-            <div>
-                <i class="bx bx-info-circle me-2"></i>
-                <strong>Đang lọc:</strong>
-                {% if query.search %}
-                    Tìm kiếm: "<em>{{ query.search }}</em>"
-                {% endif %}                {% if query.type %}
-                    {% if query.type == 'USER' %}
-                        {% set typeLabel = 'Báo cáo người dùng' %}
-                    {% elif query.type == 'POST' %}
-                        {% set typeLabel = 'Báo cáo bài viết' %}
-                    {% else %}
-                        {% set typeLabel = query.type %}
-                    {% endif %}
-                    Loại: "<em>{{ typeLabel }}</em>"
-                {% endif %}
-                {% if query.isResolved %}
-                    {% if query.isResolved == 'true' %}
-                        {% set statusLabel = 'Đã xử lý' %}
-                    {% elif query.isResolved == 'false' %}
-                        {% set statusLabel = 'Chưa xử lý' %}
-                    {% else %}
-                        {% set statusLabel = query.isResolved %}
-                    {% endif %}
-                    Trạng thái: "<em>{{ statusLabel }}</em>"
-                {% endif %}
-            </div>
-            <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">
-                <i class="bx bx-x me-1"></i>Xóa bộ lọc
             </button>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>      <!-- Filter notification banner -->
     
     <div class="table-responsive text-nowrap">
         <table class="table">
@@ -149,7 +114,7 @@
                                     {{ item.reason | truncate(30) }}
                                 </div>
                             </td>                            <td>
-                                {% if item.responder %}
+                                {% if item.isResolved %}
                                     <span class="badge bg-label-success me-1">Đã xử lý</span>
                                 {% else %}
                                     <span class="badge bg-label-warning me-1">Chờ xử lý</span>
@@ -173,12 +138,12 @@
                                                onclick="viewReportedContent('{{ item.target }}', '{{ item.type }}')">
                                                 <i class="bx bx-show me-1"></i> Xem nội dung
                                             </a>
-                                        {% endif %}
-                                        {% if not item.responder %}
+                                        {% endif %}                                        {% if not item.isResolved %}
                                             <a class="dropdown-item" href="javascript:void(0);" 
                                                onclick="resolveReport('{{ item._id }}')">
                                                 <i class="bx bx-check-circle me-1"></i> Đánh dấu đã xử lý
-                                            </a>                                        {% endif %}
+                                            </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </td>
