@@ -59,6 +59,10 @@ export class UserManagementService {
       }
     }
 
+    if (dto.role) {
+      form.role = dto.role;
+    }
+
     const result = await this.userRepository.findAll(form, pagination);
 
     return result;
