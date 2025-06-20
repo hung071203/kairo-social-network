@@ -394,13 +394,13 @@
                         const errorMessage = (data.data && data.data.message) || data.message || 'Không thể tải media bài viết';
                         showNotification('error', errorMessage);
                     }
-                })
-                .catch(error => {
+                })                .catch(error => {
                     console.error('Error:', error);
                     showNotification('error', 'Có lỗi xảy ra khi tải media bài viết');
                 });
         }
-          // View post comments
+        
+        // View post comments
         function viewPostComments(postId) {
             currentPostId = postId;
             // Reset pagination state
@@ -580,6 +580,7 @@
             });
         }
         
+        
         // Utility functions for formatting
         function formatPostDetail(post) {
             return `
@@ -603,10 +604,10 @@
                                 <h6>Media Files:</h6>
                                 <div class="row">
                                     ${post.mediaUrls.map(media => `
-                                        <div class="col-md-6 mb-2">
+                                        <div class="${post.mediaUrls.length === 1 ? 'col-12' : 'col-md-6'} mb-2">
                                             ${media.mimeType.startsWith('image/') ? 
-                                                `<img src="${media.url}" class="img-fluid rounded" alt="Post media">` :
-                                                `<video src="${media.url}" class="img-fluid rounded" controls></video>`
+                                                `<img src="${media.url}" class="img-fluid rounded" alt="Post media" style="max-height: 400px; width: 100%; object-fit: contain;">` :
+                                                `<video src="${media.url}" class="img-fluid rounded" controls style="max-height: 400px; width: 100%;"></video>`
                                             }
                                         </div>
                                     `).join('')}
@@ -622,8 +623,7 @@
                 </div>
             `;
         }
-        
-        function formatPostMedia(mediaUrls) {
+          function formatPostMedia(mediaUrls) {
             if (!mediaUrls || mediaUrls.length === 0) {
                 return '<p class="text-muted">Bài viết này không có media nào.</p>';
             }
@@ -631,21 +631,22 @@
             return `
                 <div class="row">
                     ${mediaUrls.map((media, index) => `
-                        <div class="col-md-6 mb-3">
+                        <div class="${mediaUrls.length === 1 ? 'col-12' : 'col-md-6'} mb-3">
                             <div class="card">
                                 <div class="card-body text-center">
                                     ${media.mimeType.startsWith('image/') ? 
-                                        `<img src="${media.url}" class="img-fluid rounded mb-2" alt="Media ${index + 1}">` :
-                                        `<video src="${media.url}" class="img-fluid rounded mb-2" controls></video>`
+                                        `<img src="${media.url}" class="img-fluid rounded mb-2" alt="Media ${index + 1}" style="max-height: 400px; width: 100%; object-fit: contain;">` :
+                                        `<video src="${media.url}" class="img-fluid rounded mb-2" controls style="max-height: 400px; width: 100%;"></video>`
                                     }
                                     <p class="small text-muted mb-0">Loại: ${media.mimeType}</p>
                                 </div>
                             </div>
                         </div>
                     `).join('')}
-                </div>
-            `;
-        }          function formatPostComments(comments) {
+                </div>            `;
+        }
+        
+        function formatPostComments(comments) {
             if (!comments || comments.length === 0) {
                 return '<p class="text-muted text-center py-4">Bài viết này chưa có bình luận nào.</p>';
             }
@@ -694,10 +695,10 @@
                                 <small class="text-muted">${createdAt}</small>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div>                </div>
             </div>
-            `;        }
+            `;
+        }
         
         // Show notification
         function showNotification(type, message) {
