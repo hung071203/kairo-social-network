@@ -317,6 +317,48 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        
+        /* Username validation styles */
+        .form-control.is-valid {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+        }
+        .text-success {
+            color: #28a745 !important;
+        }
+        .text-danger {
+            color: #dc3545 !important;
+        }
+        .text-info {
+            color: #17a2b8 !important;
+        }
+        
+        /* Username input with icon feedback */
+        .username-container {
+            position: relative;
+        }
+        .username-status-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            z-index: 10;
+        }
+        .username-status-icon.valid {
+            color: #28a745;
+        }
+        .username-status-icon.invalid {
+            color: #dc3545;
+        }
+        .username-status-icon.loading {
+            color: #17a2b8;
+            animation: spin 1s linear infinite;
+        }
         @keyframes spin {
             0% {
                 transform: rotate(0deg);
@@ -498,8 +540,12 @@
                                     <label for="username" class="form-label">
                                         <i class="bx bx-at me-1"></i>
                                         Tên người dùng
-                                    </label>
-                                    <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}"/>
+                                    </label>                                    <div class="username-container">
+                                        <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}"/>
+                                        <i id="username-status-icon" class="bx username-status-icon" style="display: none;"></i>
+                                    </div>
+                                    <div id="username-feedback" class="upload-hint" style="display: none;"></div>
+                                    <div class="upload-hint">Tên người dùng phải có ít nhất 8 ký tự, không có khoảng trắng</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="email" class="form-label">
@@ -1310,6 +1356,151 @@
                     submitButton.innerHTML = originalText;
                     submitButton.style.background = '';
                 }, 3000);
+            }
+        });        // Username validation functionality
+        const usernameInput = document.getElementById('username');
+        const usernameFeedback = document.getElementById('username-feedback');
+        const usernameStatusIcon = document.getElementById('username-status-icon');
+        let usernameCheckTimeout;
+        let isUsernameValid = false;
+        const originalUsername = '{{ user.username }}';
+
+        usernameInput.addEventListener('input', function() {
+            clearTimeout(usernameCheckTimeout);
+            const username = usernameInput.value.trim();
+            
+            if (username.length === 0) {
+                hideUsernameValidation();
+                isUsernameValid = false;
+                return;
+            }
+
+            // If username is same as original, mark as valid
+            if (username === originalUsername) {
+                showUsernameSuccess('Tên người dùng hiện tại');
+                isUsernameValid = true;
+                return;
+            }
+
+            // Basic validation first
+            if (username.length < 8 || username.includes(' ')) {
+                showUsernameError('Tên người dùng phải có ít nhất 8 ký tự, không có khoảng trắng');
+                isUsernameValid = false;
+                return;
+            }
+
+            // Show loading state
+            showUsernameLoading('Đang kiểm tra...');
+
+            // Debounce API call
+            usernameCheckTimeout = setTimeout(async () => {
+                await checkUsername(username);
+            }, 500);
+        });
+
+        function hideUsernameValidation() {
+            usernameFeedback.style.display = 'none';
+            usernameStatusIcon.style.display = 'none';
+            usernameInput.classList.remove('is-valid', 'is-invalid');
+        }
+
+        function showUsernameLoading(message) {
+            usernameFeedback.style.display = 'block';
+            usernameFeedback.textContent = message;
+            usernameFeedback.className = 'upload-hint text-info';
+            
+            usernameStatusIcon.style.display = 'block';
+            usernameStatusIcon.className = 'bx bx-loader-alt username-status-icon loading';
+            
+            usernameInput.classList.remove('is-valid', 'is-invalid');
+        }
+
+        function showUsernameSuccess(message) {
+            usernameFeedback.style.display = 'block';
+            usernameFeedback.textContent = message;
+            usernameFeedback.className = 'upload-hint text-success';
+            
+            usernameStatusIcon.style.display = 'block';
+            usernameStatusIcon.className = 'bx bx-check username-status-icon valid';
+            
+            usernameInput.classList.remove('is-invalid');
+            usernameInput.classList.add('is-valid');
+            isUsernameValid = true;
+        }
+
+        function showUsernameError(message) {
+            usernameFeedback.style.display = 'block';
+            usernameFeedback.textContent = message;
+            usernameFeedback.className = 'upload-hint text-danger';
+            
+            usernameStatusIcon.style.display = 'block';
+            usernameStatusIcon.className = 'bx bx-x username-status-icon invalid';
+            
+            usernameInput.classList.remove('is-valid');
+            usernameInput.classList.add('is-invalid');
+            isUsernameValid = false;
+        }
+
+        async function checkUsername(username) {
+            try {
+                const response = await fetch('/profile/check-username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data?.data?.valid) {
+                    showUsernameSuccess(data.data.message || 'Tên người dùng có thể sử dụng');
+                } else {
+                    showUsernameError(data.message || 'Tên người dùng không hợp lệ');
+                }
+            } catch (error) {
+                console.error('Error checking username:', error);
+                showUsernameError('Lỗi khi kiểm tra tên người dùng');
+            }
+        }        // Enhanced form submission with username validation
+        document.getElementById('formAccountSettings').addEventListener('submit', function(e) {
+            const submitBtn = document.querySelector('button[type="submit"].data-submit');
+            const username = usernameInput.value.trim();
+            
+            // If username is different from original, validate it
+            if (username !== originalUsername && !isUsernameValid) {
+                e.preventDefault();
+                showUsernameError('Vui lòng kiểm tra tên người dùng hợp lệ trước khi lưu');
+                usernameInput.focus();
+                return false;
+            }
+
+            // Add loading state to submit button
+            if (submitBtn) {
+                submitBtn.classList.add('form-submit-loading');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin me-2"></i>Đang lưu...';
+            }
+        });
+
+        // Reset form functionality
+        document.querySelector('button[type="reset"]').addEventListener('click', function() {
+            hideUsernameValidation();
+            isUsernameValid = false;
+            // Reset submit button state
+            const submitBtn = document.querySelector('button[type="submit"].data-submit');
+            if (submitBtn) {
+                submitBtn.classList.remove('form-submit-loading');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bx bx-save me-2"></i>Lưu Thay Đổi';
+            }
+        });
+
+        // Initialize username validation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUsername = usernameInput.value.trim();
+            if (currentUsername === originalUsername) {
+                isUsernameValid = true;
             }
         });
     </script>
