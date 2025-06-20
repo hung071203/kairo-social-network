@@ -89,14 +89,6 @@
                                         <i class="bx bx-file me-1"></i>
                                         {{ item.postCount or 0 }} bài viết
                                     </span>
-                                    {% if item.postCount > 0 %}
-                                        <button 
-                                            class="btn btn-sm btn-outline-primary ms-2" 
-                                            onclick="viewTagPosts('{{ item._id }}')"
-                                            title="Xem bài viết">
-                                            <i class="bx bx-show"></i>
-                                        </button>
-                                    {% endif %}
                                 </div>
                             </td>
                             <td>
