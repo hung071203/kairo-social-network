@@ -92,10 +92,10 @@
                                     </div>
                                 </div>
                             </td>                            <td>
-                                <div class="post-content" style="max-width: 300px;">
-                                    {% if item.content.length > 100 %}
+                                <div class="post-content" style="max-width: 250px;">
+                                    {% if item.content.length > 20 %}
                                         <span title="{{ item.content }}" data-bs-toggle="tooltip">
-                                            {{ item.content | truncate(100) }}
+                                            {{ item.content | truncate(20) }}
                                         </span>
                                     {% else %}
                                         {{ item.content }}
