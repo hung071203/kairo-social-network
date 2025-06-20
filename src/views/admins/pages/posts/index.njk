@@ -690,24 +690,14 @@
                                 <h6 class="mb-0 me-2">${authorName}</h6>
                                 <small class="text-muted">@${authorUsername}</small>
                             </div>
-                            <p class="mb-1">${commentContent}</p>
-                            <div class="d-flex align-items-center justify-content-between">
+                            <p class="mb-1">${commentContent}</p>                            <div class="d-flex align-items-center justify-content-between">
                                 <small class="text-muted">${createdAt}</small>
-                                ${!isReply ? `<small class="text-primary" style="cursor: pointer;" onclick="replyToComment('${comment._id}', '${authorName}')">Trả lời</small>` : ''}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            `;
-        }
-        
-        // Reply to comment function (placeholder for future implementation)
-        function replyToComment(commentId, authorName) {
-            console.log('Reply to comment:', commentId, 'by', authorName);
-            // TODO: Implement reply functionality
-            showNotification('info', `Tính năng trả lời bình luận của ${authorName} sẽ được triển khai sau`);
-        }
+            `;        }
         
         // Show notification
         function showNotification(type, message) {
