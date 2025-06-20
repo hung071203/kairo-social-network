@@ -337,19 +337,19 @@
             });
             window.location.href = url.toString();
         }
-        
-        // View post detail
+          // View post detail
         function viewPostDetail(postId) {
             currentPostId = postId;
             // Load post detail via AJAX
             fetch(`{{ baseUrl }}/post-management/detail/${postId}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        document.getElementById('postDetailContent').innerHTML = formatPostDetail(data.data);
+                    if (data.success && data.data && data.data.success) {
+                        document.getElementById('postDetailContent').innerHTML = formatPostDetail(data.data.data);
                         new bootstrap.Modal(document.getElementById('postDetailModal')).show();
                     } else {
-                        showNotification('error', data.message || 'Không thể tải chi tiết bài viết');
+                        const errorMessage = (data.data && data.data.message) || data.message || 'Không thể tải chi tiết bài viết';
+                        showNotification('error', errorMessage);
                     }
                 })
                 .catch(error => {
@@ -365,11 +365,12 @@
             fetch(`{{ baseUrl }}/post-management/media/${postId}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        document.getElementById('postMediaContent').innerHTML = formatPostMedia(data.data);
+                    if (data.success && data.data && data.data.success) {
+                        document.getElementById('postMediaContent').innerHTML = formatPostMedia(data.data.data);
                         new bootstrap.Modal(document.getElementById('postMediaModal')).show();
                     } else {
-                        showNotification('error', data.message || 'Không thể tải media bài viết');
+                        const errorMessage = (data.data && data.data.message) || data.message || 'Không thể tải media bài viết';
+                        showNotification('error', errorMessage);
                     }
                 })
                 .catch(error => {
@@ -385,11 +386,12 @@
             fetch(`{{ baseUrl }}/post-management/comments/${postId}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        document.getElementById('postCommentsContent').innerHTML = formatPostComments(data.data);
+                    if (data.success && data.data && data.data.success) {
+                        document.getElementById('postCommentsContent').innerHTML = formatPostComments(data.data.data);
                         new bootstrap.Modal(document.getElementById('postCommentsModal')).show();
                     } else {
-                        showNotification('error', data.message || 'Không thể tải bình luận bài viết');
+                        const errorMessage = (data.data && data.data.message) || data.message || 'Không thể tải bình luận bài viết';
+                        showNotification('error', errorMessage);
                     }
                 })
                 .catch(error => {
@@ -405,8 +407,7 @@
             document.getElementById('deletePostModalLabel').textContent = `Xóa bài viết của ${authorName}`;
             new bootstrap.Modal(document.getElementById('deletePostModal')).show();
         }
-        
-        function confirmDeletePost() {
+          function confirmDeletePost() {
             if (!currentPostId) return;
             
             fetch(`{{ baseUrl }}/post-management/delete/${currentPostId}`, {
@@ -418,13 +419,15 @@
             .then(response => response.json())
             .then(data => {
                 bootstrap.Modal.getInstance(document.getElementById('deletePostModal')).hide();
-                if (data.success) {
-                    showNotification('success', 'Xóa bài viết thành công');
+                if (data.success && data.data && data.data.success) {
+                    const successMessage = (data.data && data.data.message) || data.message || 'Xóa bài viết thành công';
+                    showNotification('success', successMessage);
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
                 } else {
-                    showNotification('error', data.message || 'Không thể xóa bài viết');
+                    const errorMessage = (data.data && data.data.message) || data.message || 'Không thể xóa bài viết';
+                    showNotification('error', errorMessage);
                 }
             })
             .catch(error => {
@@ -441,8 +444,7 @@
             document.getElementById('reportPostModalLabel').textContent = `Báo cáo bài viết của ${authorName}`;
             new bootstrap.Modal(document.getElementById('reportPostModal')).show();
         }
-        
-        function submitPostReport() {
+          function submitPostReport() {
             const reason = document.getElementById('reportReason').value;
             const description = document.getElementById('reportDescription').value;
             
@@ -466,12 +468,14 @@
             .then(response => response.json())
             .then(data => {
                 bootstrap.Modal.getInstance(document.getElementById('reportPostModal')).hide();
-                if (data.success) {
-                    showNotification('success', 'Báo cáo đã được gửi thành công');
+                if (data.success && data.data && data.data.success) {
+                    const successMessage = (data.data && data.data.message) || data.message || 'Báo cáo đã được gửi thành công';
+                    showNotification('success', successMessage);
                     // Reset form
                     document.getElementById('reportPostForm').reset();
                 } else {
-                    showNotification('error', data.message || 'Không thể gửi báo cáo');
+                    const errorMessage = (data.data && data.data.message) || data.message || 'Không thể gửi báo cáo';
+                    showNotification('error', errorMessage);
                 }
             })
             .catch(error => {
