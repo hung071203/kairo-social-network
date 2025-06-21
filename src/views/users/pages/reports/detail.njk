@@ -21,22 +21,25 @@
             }
         }
     </script>
-    
-    <style>
+      <style>
+        /* Print styles */
         @media print {
             .no-print {
                 display: none !important;
             }
         }
         
+        /* Media preview effects */
         .media-preview {
-            transition: transform 0.2s ease;
+            transition: all 0.3s ease;
         }
         
         .media-preview:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
         
+        /* Loading animation */
         .loading-animation {
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -44,6 +47,43 @@
         
         .loading-animation.loaded {
             opacity: 1;
+        }
+        
+        /* Modal animations */
+        #imageModal {
+            backdrop-filter: blur(5px);
+        }
+        
+        #imageModal .bg-white {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Video play icon overlay */
+        .video-overlay {
+            background: linear-gradient(45deg, rgba(0,0,0,0.3), rgba(0,0,0,0.5));
+        }
+        
+        /* Responsive grid improvements */
+        @media (max-width: 640px) {
+            .grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Video controls styling */
+        video::-webkit-media-controls-panel {
+            background-color: rgba(0, 0, 0, 0.8);
         }
     </style>
 </head>
@@ -188,22 +228,58 @@
                             <div class="bg-gray-50 border-l-4 border-blue-500 p-5 rounded-r-lg">
                                 <p class="text-gray-800 leading-relaxed">{{ targetDetails.content }}</p>
                             </div>
-                        </div>
-
-                        {% if targetDetails.mediaUrls.length > 0 %}
+                        </div>                        {% if targetDetails.mediaUrls.length > 0 %}
                         <div class="mb-6">
                             <h6 class="font-bold text-blue-600 mb-3 flex items-center">
-                                <i class="fas fa-images mr-2"></i>Hình ảnh đính kèm:
+                                <i class="fas fa-photo-video mr-2"></i>Media đính kèm:
                             </h6>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {% for mediaUrl in targetDetails.mediaUrls %}
-                                <div class="cursor-pointer">
-                                    <img src="{{ mediaUrl }}" alt="Media" 
-                                         class="w-full h-32 object-cover rounded-lg media-preview shadow-md hover:shadow-lg" 
-                                         onclick="openImageModal('{{ mediaUrl }}')">
+                            {% if targetDetails.mediaUrls.length == 1 %}
+                                <!-- Single media - display larger -->
+                                <div class="max-w-2xl mx-auto">
+                                    {% set media = targetDetails.mediaUrls[0] %}
+                                    {% set mediaUrl = media.url if media.url else media %}
+                                    {% set mimeType = media.mimeType if media.mimeType else 'image' %}
+                                    
+                                    <div class="cursor-pointer rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+                                        {% if mimeType.startsWith('video/') %}
+                                            <video controls class="w-full max-h-96 object-cover media-preview"
+                                                   onclick="openMediaModal('{{ mediaUrl }}', 'video')">
+                                                <source src="{{ mediaUrl }}" type="{{ mimeType }}">
+                                                Trình duyệt của bạn không hỗ trợ video.
+                                            </video>
+                                        {% else %}
+                                            <img src="{{ mediaUrl }}" alt="Media" 
+                                                 class="w-full max-h-96 object-cover media-preview" 
+                                                 onclick="openMediaModal('{{ mediaUrl }}', 'image')">
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                {% endfor %}
-                            </div>
+                            {% else %}
+                                <!-- Multiple media - display in grid -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {% for media in targetDetails.mediaUrls %}
+                                    {% set mediaUrl = media.url if media.url else media %}
+                                    {% set mimeType = media.mimeType if media.mimeType else 'image' %}
+                                      <div class="cursor-pointer rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                                        {% if mimeType.startsWith('video/') %}
+                                            <div class="relative">
+                                                <video class="w-full h-32 object-cover media-preview"
+                                                       onclick="openMediaModal('{{ mediaUrl }}', 'video')">
+                                                    <source src="{{ mediaUrl }}" type="{{ mimeType }}">
+                                                </video>
+                                                <div class="absolute inset-0 flex items-center justify-center video-overlay">
+                                                    <i class="fas fa-play-circle text-white text-3xl drop-shadow-lg"></i>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <img src="{{ mediaUrl }}" alt="Media" 
+                                                 class="w-full h-32 object-cover media-preview" 
+                                                 onclick="openMediaModal('{{ mediaUrl }}', 'image')">
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         {% endif %}
 
@@ -406,36 +482,82 @@
                 </div>
             </div>
         </div>
-        {% endif %}    </div>
-
-    <!-- Image Modal -->
+        {% endif %}    </div>    <!-- Media Modal -->
     <div id="imageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-75">
-        <div class="max-w-4xl mx-auto p-4">
+        <div class="max-w-5xl mx-auto p-4 w-full">
             <div class="bg-white rounded-lg overflow-hidden">
                 <div class="flex justify-between items-center p-4 border-b">
-                    <h5 class="text-lg font-semibold">Xem ảnh</h5>
+                    <h5 class="text-lg font-semibold">Xem Media</h5>
                     <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <div class="p-4 text-center">
-                    <img id="modalImage" src="" alt="Image" class="max-w-full max-h-96 mx-auto">
+                    <div id="modalMediaContent" class="flex justify-center items-center min-h-96">
+                        <!-- Media content will be dynamically inserted here -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <script>
-        // Function to open image modal
-        function openImageModal(imageUrl) {
-            document.getElementById('modalImage').src = imageUrl;
-            document.getElementById('imageModal').classList.remove('hidden');
-            document.getElementById('imageModal').classList.add('flex');        }
-
-        // Function to close image modal
+    </div>    <script>        // Function to open media modal
+        function openMediaModal(mediaSrc, mediaType) {
+            const modal = document.getElementById('imageModal');
+            const modalContent = document.getElementById('modalMediaContent');
+            
+            // Show modal with loading state
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modalContent.innerHTML = '<div class="flex items-center justify-center min-h-96"><i class="fas fa-spinner fa-spin text-4xl text-gray-400"></i></div>';
+            
+            if (mediaType === 'video') {
+                // Create video element
+                const video = document.createElement('video');
+                video.controls = true;
+                video.className = 'max-w-full max-h-96 object-contain';
+                video.src = mediaSrc;
+                
+                video.onloadeddata = function() {
+                    modalContent.innerHTML = '';
+                    modalContent.appendChild(video);
+                };
+                
+                video.onerror = function() {
+                    modalContent.innerHTML = '<div class="flex items-center justify-center min-h-96 text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Không thể tải video</div>';
+                };
+            } else {
+                // Create image element
+                const img = document.createElement('img');
+                img.className = 'max-w-full max-h-96 object-contain';
+                img.src = mediaSrc;
+                
+                img.onload = function() {
+                    modalContent.innerHTML = '';
+                    modalContent.appendChild(img);
+                };
+                
+                img.onerror = function() {
+                    modalContent.innerHTML = '<div class="flex items-center justify-center min-h-96 text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Không thể tải hình ảnh</div>';
+                };
+            }
+        }        // Function to close media modal
         function closeImageModal() {
-            document.getElementById('imageModal').classList.add('hidden');
-            document.getElementById('imageModal').classList.remove('flex');
+            const modal = document.getElementById('imageModal');
+            const modalContent = document.getElementById('modalMediaContent');
+            
+            // Stop any playing video
+            const video = modalContent.querySelector('video');
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+            
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            // Clear content after animation
+            setTimeout(() => {
+                modalContent.innerHTML = '';
+            }, 300);
         }
 
         // Close modal when clicking outside
