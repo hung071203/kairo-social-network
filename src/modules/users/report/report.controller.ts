@@ -41,7 +41,6 @@ export class ReportController {
         id,
         user._id.toString(),
       );
-      console.log('report', report);
       
       return {
         title: 'Chi tiết báo cáo',
