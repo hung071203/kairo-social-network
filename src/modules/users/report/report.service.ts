@@ -87,8 +87,12 @@ export class ReportService {
         .exec();
     }
 
+    if (!targetDetails) {
+      throw new Error('Không tìm thấy thông tin mục tiêu báo cáo');
+    }
+
     return {
-      ...report.toObject(),
+      report,
       targetDetails,
     }
   }
