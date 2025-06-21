@@ -32,7 +32,7 @@ export class ReportController {
   }
 
   @Get('detail/:id')
-  @Render('admins/pages/reports/detail.njk')
+  @Render('users/pages/reports/detail.njk')
   @UseFilters(WebExceptionFilter)
   async getReportDetail(@Param('id') id: string, @GetUser() user: User) {
     // Implementation for getting report details
