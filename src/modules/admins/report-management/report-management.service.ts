@@ -25,7 +25,6 @@ export class ReportManagementService {
       // Nếu là ObjectId hợp lệ → tìm chính xác theo _id
       if (isValidObjectId(searchTerm)) {
         form._id = searchTerm;
-        console.log('Searching by ObjectId');
       } else {
         // Escape special regex characters
         const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
