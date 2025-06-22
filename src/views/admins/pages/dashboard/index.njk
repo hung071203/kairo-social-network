@@ -205,10 +205,12 @@
             <div class="card h-100 shadow-lg">                <div class="card-body">
                     <h5 class="card-title mb-4 text-center">Top 10 Người Dùng Hoạt Động</h5>                    <div
                         id="user-list" class="list-group" style="max-height: 600px; overflow-y: auto; overflow-x: hidden;">
-                        {% if topActiveUsers and topActiveUsers.length > 0 %}                            {% for user in topActiveUsers %}
-                                <div class="list-group-item d-flex align-items-center py-3 border-0" style="padding-left: 8px; padding-right: 8px;">
-                                    <div class="avatar me-2 flex-shrink-0">
-                                        <img src="{{ user.avatar }}" alt="Avatar" class="w-px-35 h-px-35 rounded-circle">
+                        {% if topActiveUsers and topActiveUsers.length > 0 %}                            {% for user in topActiveUsers %}                                <div class="list-group-item d-flex align-items-center py-3 border-0" style="padding-left: 8px; padding-right: 8px;">
+                                    <div class="avatar me-2 flex-shrink-0" style="cursor: pointer;" onclick="navigateToUserManagement('{{ user._id }}')">
+                                        <img src="{{ user.avatar }}" alt="Avatar" class="w-px-35 h-px-35 rounded-circle" 
+                                             data-bs-toggle="tooltip" 
+                                             data-bs-placement="top" 
+                                             title="Click để quản lý người dùng này">
                                     </div>
                                     <div class="flex-grow-1" style="min-width: 0; overflow: hidden;">
                                         <div class="d-flex justify-content-between align-items-start">                                            <div class="me-2" style="min-width: 0; flex: 1;">
@@ -337,7 +339,15 @@
                     document.getElementById('userGrowthChart').innerHTML = 
                         '<div class="text-center py-4"><p class="text-muted">Không thể tải biểu đồ</p></div>';
                 });
-        }        function initPostGrowthChart() {
+        }
+
+        // Function to navigate to user management page
+        function navigateToUserManagement(userId) {
+            if (userId) {
+                // Redirect to user management page with the specific user ID
+                window.location.href = '{{ baseUrl }}/user-management?search=' + userId;
+            }
+        }function initPostGrowthChart() {
             fetch('{{ baseUrl }}/dashboard/api/post-growth')
                 .then(response => response.json())
                 .then(response => {
