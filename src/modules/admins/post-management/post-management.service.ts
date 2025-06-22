@@ -7,6 +7,7 @@ import { FilterPostManagementDto } from './dto/post.dto';
 import { ReportType } from 'src/common/enums';
 import { isValidObjectId, Types } from 'mongoose';
 import { TagsService } from 'src/modules/users/tags/tags.service';
+import { NotificationService } from 'src/modules/users/notification/notification.service';
 
 @Injectable()
 export class PostManagementService {
@@ -18,7 +19,10 @@ export class PostManagementService {
     @Inject('ReportRepositoryInterface')
     private readonly reportRepository: ReportRepositoryInterface,
     private readonly tagsService: TagsService,
-  ) {}  async getPosts(dto: FilterPostManagementDto, pagination: PaginationDto) {
+    private readonly notificationService: NotificationService, // Assuming you have a NotificationService for notifications
+  ) {}
+  
+  async getPosts(dto: FilterPostManagementDto, pagination: PaginationDto) {
     const form: any = {};
 
     if (dto.search && dto.search.trim()) {
@@ -34,11 +38,13 @@ export class PostManagementService {
 
         form.$or = [{ content: { $regex: escapedSearch, $options: 'i' } }];
       }
-    }    // Filter by tag name if provided
+    } // Filter by tag name if provided
     if (dto.tagName && dto.tagName.trim()) {
       try {
         // Find the tag by name first
-        const tag = await this.tagsService.getRepository().findOne({ name: dto.tagName.trim() });
+        const tag = await this.tagsService
+          .getRepository()
+          .findOne({ name: dto.tagName.trim() });
         if (tag) {
           // Add tag filter to posts
           form.tags = tag._id;
@@ -58,7 +64,7 @@ export class PostManagementService {
       ...pagination,
       populate: [
         { path: 'author', select: 'name username email avatar' },
-        { path: 'tags', select: 'name' }
+        { path: 'tags', select: 'name' },
       ],
     };
 
@@ -75,7 +81,8 @@ export class PostManagementService {
       .findOne({ _id: id })
       .populate('author', 'name username email avatar');
     return post || null;
-  }  async getPostComments(postId: string, pagination?: PaginationDto) {
+  }
+  async getPostComments(postId: string, pagination?: PaginationDto) {
     if (!isValidObjectId(postId)) {
       throw new Error('ID bài viết không hợp lệ');
     }
@@ -96,11 +103,11 @@ export class PostManagementService {
         ...paginationOptions,
         populate: [
           { path: 'author', select: 'name username avatar' },
-          { 
-            path: 'parentComment', 
+          {
+            path: 'parentComment',
             select: 'author content',
-            populate: { path: 'author', select: 'name username' }
-          }
+            populate: { path: 'author', select: 'name username' },
+          },
         ],
         sort: { createdAt: -1 }, // Sort by newest first for better UX
       },
@@ -115,8 +122,8 @@ export class PostManagementService {
     }
 
     // Add additional info for replies
-    const processedComments = comments.map(comment => ({
-      ...comment.toObject ? comment.toObject() : comment,
+    const processedComments = comments.map((comment) => ({
+      ...(comment.toObject ? comment.toObject() : comment),
       isReply: !!comment.parentComment,
       parentCommentAuthor: comment.parentComment?.author?.name || null,
       parentCommentContent: comment.parentComment?.content || null,
@@ -128,7 +135,7 @@ export class PostManagementService {
     } else {
       return {
         ...result,
-        docs: processedComments
+        docs: processedComments,
       };
     }
   }
@@ -144,7 +151,7 @@ export class PostManagementService {
 
     // Giảm postCount của các tags liên quan
     if (post.tags && post.tags.length > 0) {
-      const tagIds = post.tags.map(tag => tag.toString());
+      const tagIds = post.tags.map((tag) => tag.toString());
       await this.tagsService.decrementTagsPostCount(tagIds);
     }
 
