@@ -606,24 +606,6 @@ document.addEventListener('DOMContentLoaded', function() {
       timeout = setTimeout(later, wait);
     };
   }
-
-  function showToast(message, type = 'info') {
-    // Simple toast notification
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
-    toast.innerHTML = `
-      ${message}
-      <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-      if (toast.parentElement) {
-        toast.remove();
-      }
-    }, 5000);
-  }  // Global functions for onclick handlers
   window.handleNotificationClick = function(id, redirectUrl, type, isUnread = false) {
     // Mark as read if it's a personal notification and unread
     if (type === 'personal' && isUnread) {
