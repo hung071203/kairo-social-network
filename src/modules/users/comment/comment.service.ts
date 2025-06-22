@@ -45,7 +45,7 @@ export class CommentService {
           $inc: { commentsCount: 1 },
         },
       );    // Gửi thông báo cho chủ bài viết (không gửi cho chính mình)
-    if (post.author.toString() !== userId || post.commentsCount < 10) {
+    if (post.author.toString() !== userId && post.commentsCount < 10) {
       try {
         await this.notificationService.create(post.author.toString(), {
           title: 'Bình luận mới',
@@ -56,6 +56,23 @@ export class CommentService {
       } catch (error) {
         // Log lỗi nhưng không throw để không ảnh hưởng việc tạo comment
         console.error('Lỗi khi gửi thông báo comment:', error);
+      }
+    }
+
+    if(parentComment) {
+      // Gửi thông báo cho người dùng đã bình luận trước đó
+      try {
+        const parentCommentDoc = await this.commentRepository.getModel().findById(parentComment).populate('author', '_id name avatar');
+        if (parentCommentDoc && parentCommentDoc.author._id.toString() !== userId) {
+          await this.notificationService.create(parentCommentDoc.author._id.toString(), {
+            title: 'Trả lời bình luận',
+            type: NotificationType.COMMENT,
+            message: `Có người đã trả lời bình luận của bạn`,
+            redirectUrl: `/posts/detail/${postId}`,
+          });
+        }
+      } catch (error) {
+        console.error('Lỗi khi gửi thông báo trả lời bình luận:', error);
       }
     }
 

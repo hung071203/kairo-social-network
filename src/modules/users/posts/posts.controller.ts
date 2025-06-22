@@ -69,7 +69,11 @@ export class PostsController {
     @Pagination() pagination: PaginationDto,
   ) {
     try {
-      return await this.postsService.getPosts(user._id as string, dto, pagination);
+      return await this.postsService.getPosts(
+        user._id as string,
+        dto,
+        pagination,
+      );
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -97,7 +101,7 @@ export class PostsController {
 
   @Get('detail/:id')
   @UseFilters(WebExceptionFilter)
-@Render('users/pages/posts/detail')
+  @Render('users/pages/posts/detail')
   async getPostDetail(@GetUser() user: User, @Param('id') id: string) {
     try {
       const data = await this.postsService.getPostDetail(
@@ -118,7 +122,11 @@ export class PostsController {
     @Body('type') type: PostTypeEnum,
   ) {
     try {
-      return await this.postsService.updateTypePost(user._id as string, id, type);
+      return await this.postsService.updateTypePost(
+        user._id as string,
+        id,
+        type,
+      );
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -151,5 +159,4 @@ export class PostsController {
       throw new BadRequestException(error.message);
     }
   }
-
 }

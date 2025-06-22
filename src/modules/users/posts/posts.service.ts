@@ -185,7 +185,7 @@ export class PostsService {
       
       // Gửi thông báo cho chủ bài viết (không gửi cho chính mình)
       const authorId = post.author.toString();
-      if (authorId !== userId || post.likes.length <=10) {
+      if (authorId !== userId && post.likes.length <=10) {
         try {
           await this.notificationService.create(authorId, {
             title: 'Lượt thích mới',
@@ -213,7 +213,7 @@ export class PostsService {
 
     // Gửi thông báo cho chủ bài viết (không gửi cho chính mình)
     const authorId = post.author.toString();
-    if (authorId !== userId || updatedPost.sharesCount <= 10) {
+    if (authorId !== userId && updatedPost.sharesCount <= 10) {
       try {
         await this.notificationService.create(authorId, {
           title: 'Bài viết được chia sẻ',
