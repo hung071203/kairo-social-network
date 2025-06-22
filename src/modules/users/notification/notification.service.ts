@@ -46,7 +46,7 @@ export class NotificationService {
   }
 
   async create(userId: string, dto: CreateNotiDto) {
-    const form = new Notification();
+    const form: any = {};
 
     form.type = dto.type;
     form.user = new Types.ObjectId(userId);
@@ -57,7 +57,7 @@ export class NotificationService {
     form.systemNotification = dto.systemNotification
       ? new Types.ObjectId(dto.systemNotification)
       : null;
-
+    
     const noti = await this.notificationRepository.create(form);
     this.notiGateway.sendNotification(noti)
     return noti;

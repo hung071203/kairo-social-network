@@ -33,7 +33,7 @@ export class NotiManagementService {
     const userRepo = this.userManagementService.getRepository();
 
     const users = await userRepo.getModel().find({
-      _id: { $in: dto.recipients },
+      role: { $in: dto.recipients },
     });
 
     if (users.length > 0) {
@@ -46,7 +46,7 @@ export class NotiManagementService {
           systemNotification: systemNotification._id.toString(),
         });
       });
-      Promise.allSettled(createNotiPromises);
+      await Promise.allSettled(createNotiPromises);
     }
 
     return true;

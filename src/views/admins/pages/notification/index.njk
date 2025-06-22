@@ -1,5 +1,746 @@
 {% extends 'admins/layouts/app.njk' %}
-{% set title = 'Thông báo' %}
+{% set title = 'Quản lý thông báo' %}
 {% set auth = false %}
 {% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="py-3 mb-4">
+    <span class="text-muted fw-light">Quản lý /</span> Thông báo
+  </h4>
+
+  <!-- Nav tabs -->
+  <div class="nav-align-top mb-4">
+    <ul class="nav nav-pills mb-3" role="tablist">
+      <li class="nav-item">
+        <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-top-system" aria-controls="navs-pills-top-system" aria-selected="true">
+          <i class="tf-icons bx bx-cog me-2"></i>Thông báo hệ thống
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-top-personal" aria-controls="navs-pills-top-personal" aria-selected="false">
+          <i class="tf-icons bx bx-bell me-2"></i>Thông báo cá nhân
+        </button>
+      </li>
+    </ul>
+    
+    <div class="tab-content">
+      <!-- System Notifications Tab -->
+      <div class="tab-pane fade show active" id="navs-pills-top-system" role="tabpanel">
+        <div class="card">          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Thông báo hệ thống</h5>
+            <div>
+              <button type="button" class="btn btn-info btn-sm me-2" onclick="testSystemAPI()">
+                <i class="bx bx-test-tube me-1"></i>Test API
+              </button>
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSystemNotificationModal">
+                <i class="bx bx-plus me-1"></i>Tạo thông báo
+              </button>
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <!-- Search and Filter -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bx bx-search"></i></span>
+                  <input type="text" class="form-control" id="systemSearchInput" placeholder="Tìm kiếm thông báo...">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select" id="systemTypeFilter">
+                  <option value="">Tất cả loại</option>
+                  <option value="SYSTEM">Hệ thống</option>
+                  <option value="FOLLOW">Theo dõi</option>
+                  <option value="LIKE">Thích</option>
+                  <option value="COMMENT">Bình luận</option>
+                  <option value="POST">Bài đăng</option>
+                  <option value="REPORT">Báo cáo</option>
+                  <option value="USER">Người dùng</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-outline-secondary" id="systemClearFilter">
+                  <i class="bx bx-refresh me-1"></i>Xóa bộ lọc
+                </button>
+              </div>
+            </div>
+
+            <!-- System Notifications List -->
+            <div id="systemNotificationsList">
+              <!-- Dynamic content will be loaded here -->
+            </div>
+            
+            <!-- Loading indicator -->
+            <div class="text-center mt-3" id="systemLoadingIndicator" style="display: none;">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Notifications Tab -->
+      <div class="tab-pane fade" id="navs-pills-top-personal" role="tabpanel">
+        <div class="card">          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Thông báo cá nhân</h5>
+            <div>
+              <button type="button" class="btn btn-info btn-sm me-2" onclick="testPersonalAPI()">
+                <i class="bx bx-test-tube me-1"></i>Test API
+              </button>
+              <button type="button" class="btn btn-outline-primary me-2" id="markAllReadBtn">
+                <i class="bx bx-check-double me-1"></i>Đánh dấu tất cả đã đọc
+              </button>
+              <span class="badge bg-primary" id="unreadCount">0</span>
+            </div>
+          </div>
+          
+          <div class="card-body">
+            <!-- Filter -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <select class="form-select" id="personalReadFilter">
+                  <option value="">Tất cả</option>
+                  <option value="false">Chưa đọc</option>
+                  <option value="true">Đã đọc</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <button type="button" class="btn btn-outline-secondary" id="personalClearFilter">
+                  <i class="bx bx-refresh me-1"></i>Xóa bộ lọc
+                </button>
+              </div>
+            </div>
+
+            <!-- Personal Notifications List -->
+            <div id="personalNotificationsList">
+              <!-- Dynamic content will be loaded here -->
+            </div>
+            
+            <!-- Loading indicator -->
+            <div class="text-center mt-3" id="personalLoadingIndicator" style="display: none;">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create System Notification Modal -->
+<div class="modal fade" id="createSystemNotificationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tạo thông báo hệ thống</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="createSystemNotificationForm">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col mb-3">
+              <label for="systemNotificationTitle" class="form-label">Tiêu đề</label>
+              <input type="text" id="systemNotificationTitle" class="form-control" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col mb-3">
+              <label for="systemNotificationType" class="form-label">Loại thông báo</label>
+              <select id="systemNotificationType" class="form-select" required>
+                <option value="">Chọn loại</option>
+                <option value="SYSTEM">Hệ thống</option>
+                <option value="FOLLOW">Theo dõi</option>
+                <option value="LIKE">Thích</option>
+                <option value="COMMENT">Bình luận</option>
+                <option value="POST">Bài đăng</option>
+                <option value="REPORT">Báo cáo</option>
+                <option value="USER">Người dùng</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col mb-3">
+              <label for="systemNotificationMessage" class="form-label">Nội dung</label>
+              <textarea id="systemNotificationMessage" class="form-control" rows="4" required></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col mb-3">
+              <label for="systemNotificationRecipients" class="form-label">Người nhận</label>
+              <div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="recipientUser" value="USER">
+                  <label class="form-check-label" for="recipientUser">Người dùng</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="recipientMod" value="MOD">
+                  <label class="form-check-label" for="recipientMod">Moderator</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="recipientAdmin" value="ADMIN">
+                  <label class="form-check-label" for="recipientAdmin">Admin</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col mb-3">
+              <label for="systemNotificationRedirectUrl" class="form-label">URL chuyển hướng (tùy chọn)</label>
+              <input type="text" id="systemNotificationRedirectUrl" class="form-control" placeholder="https://example.com">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Tạo thông báo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Global variables
+  let systemCurrentPage = 1;
+  let personalCurrentPage = 1;
+  let isSystemLoading = false;
+  let isPersonalLoading = false;
+  let hasMoreSystemData = true;
+  let hasMorePersonalData = true;  const pageSize = 10;
+
+  // Initialize
+  console.log('Initializing notification management...');
+  loadSystemNotifications(true);
+  loadUnreadCount();
+
+  // Tab switching
+  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(tab) {
+    tab.addEventListener('shown.bs.tab', function(event) {
+      const target = event.target.getAttribute('data-bs-target');
+      if (target === '#navs-pills-top-personal') {
+        loadPersonalNotifications(true);
+        loadUnreadCount();
+      } else if (target === '#navs-pills-top-system') {
+        loadSystemNotifications(true);
+      }
+    });
+  });
+  // System notifications functions
+  function loadSystemNotifications(reset = false) {
+    console.log('loadSystemNotifications called with reset:', reset);
+    if (isSystemLoading || (!hasMoreSystemData && !reset)) {
+      console.log('loadSystemNotifications early return:', { isSystemLoading, hasMoreSystemData });
+      return;
+    }
+    
+    isSystemLoading = true;
+    document.getElementById('systemLoadingIndicator').style.display = 'block';
+    
+    if (reset) {
+      systemCurrentPage = 1;
+      hasMoreSystemData = true;
+      document.getElementById('systemNotificationsList').innerHTML = '';
+      console.log('Reset system notifications list');
+    }
+
+    const search = document.getElementById('systemSearchInput').value;
+    const type = document.getElementById('systemTypeFilter').value;
+    
+    const params = new URLSearchParams({
+      page: systemCurrentPage,
+      limit: pageSize
+    });
+    
+    if (search) params.append('search', search);
+    if (type) params.append('type', type);
+
+    console.log('Fetching system notifications with params:', params.toString());fetch(`/noti-management/system-notifications?${params.toString()}`)
+      .then(response => {
+        console.log('System notifications response status:', response.status);
+        return response.json();
+      })      .then(response => {
+        console.log('System notifications response:', response);
+        const data = response.data; // Extract data from response
+        console.log('Extracted data:', data);
+        if (data && data.docs && data.docs.length > 0) {
+          console.log('Found', data.docs.length, 'system notifications');
+          const container = document.getElementById('systemNotificationsList');
+          
+          data.docs.forEach((notification, index) => {
+            console.log('Processing notification', index, ':', notification);
+            const item = createSystemNotificationItem(notification);
+            container.appendChild(item);
+          });
+
+          systemCurrentPage++;
+          hasMoreSystemData = data.hasNextPage;
+          console.log('Updated pagination:', { systemCurrentPage, hasMoreSystemData });
+        } else {
+          console.log('No system notifications found or invalid data structure');
+          hasMoreSystemData = false;
+          if (reset) {
+            document.getElementById('systemNotificationsList').innerHTML = 
+              '<div class="text-center text-muted py-4"><i class="bx bx-bell-off fs-1 d-block mb-2"></i>Không có thông báo nào</div>';
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error loading system notifications:', error);
+        showToast('Lỗi khi tải thông báo hệ thống', 'error');
+      })
+      .finally(() => {
+        isSystemLoading = false;
+        document.getElementById('systemLoadingIndicator').style.display = 'none';
+      });
+  }
+  function createSystemNotificationItem(notification) {
+    console.log('Creating system notification item:', notification);
+    const div = document.createElement('div');
+    div.className = 'border rounded p-3 mb-2';
+    div.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <h6 class="mb-1">${notification.title || 'No title'}</h6>
+          <p class="mb-2 text-muted">${notification.message || 'No message'}</p>
+          <div class="d-flex gap-2 mb-2">
+            <span class="badge bg-info">${getTypeLabel(notification.type)}</span>
+            ${notification.recipients ? notification.recipients.map(r => `<span class="badge bg-secondary">${getRecipientLabel(r)}</span>`).join('') : ''}
+          </div>
+          ${notification.redirectUrl ? `<small class="text-muted"><i class="bx bx-link me-1"></i>${notification.redirectUrl}</small>` : ''}
+          <div class="mt-2">
+            <small class="text-muted">${formatDate(notification.createdAt)}</small>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSystemNotification('${notification._id}')">
+          <i class="bx bx-trash"></i>
+        </button>
+      </div>
+    `;
+    console.log('Created div:', div);
+    return div;
+  }
+
+  // Personal notifications functions
+  function loadPersonalNotifications(reset = false) {
+    if (isPersonalLoading || (!hasMorePersonalData && !reset)) return;
+    
+    isPersonalLoading = true;
+    document.getElementById('personalLoadingIndicator').style.display = 'block';
+    
+    if (reset) {
+      personalCurrentPage = 1;
+      hasMorePersonalData = true;
+      document.getElementById('personalNotificationsList').innerHTML = '';
+    }
+
+    const isRead = document.getElementById('personalReadFilter').value;
+    
+    const params = new URLSearchParams({
+      page: personalCurrentPage,
+      limit: pageSize
+    });
+    
+    if (isRead !== '') params.append('isRead', isRead);    fetch(`/notification?${params.toString()}`)
+      .then(response => {
+        console.log('Personal notifications response status:', response.status);
+        return response.json();
+      })
+      .then(response => {
+        console.log('Personal notifications response:', response);
+        // Handle both direct data and wrapped response
+        const data = response.data || response;
+        if (data && data.docs && data.docs.length > 0) {
+          const container = document.getElementById('personalNotificationsList');
+          
+          data.docs.forEach(notification => {
+            const item = createPersonalNotificationItem(notification);
+            container.appendChild(item);
+          });
+
+          personalCurrentPage++;
+          hasMorePersonalData = data.hasNextPage;
+        } else {
+          hasMorePersonalData = false;
+          if (reset) {
+            document.getElementById('personalNotificationsList').innerHTML = 
+              '<div class="text-center text-muted py-4"><i class="bx bx-bell-off fs-1 d-block mb-2"></i>Không có thông báo nào</div>';
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error loading personal notifications:', error);
+        showToast('Lỗi khi tải thông báo cá nhân', 'error');
+      })
+      .finally(() => {
+        isPersonalLoading = false;
+        document.getElementById('personalLoadingIndicator').style.display = 'none';
+      });
+  }
+
+  function createPersonalNotificationItem(notification) {
+    const div = document.createElement('div');
+    div.className = `border rounded p-3 mb-2 ${!notification.isRead ? 'bg-light' : ''}`;
+    div.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <h6 class="mb-0">${notification.title}</h6>
+            ${!notification.isRead ? '<span class="badge bg-primary">Mới</span>' : ''}
+          </div>
+          <p class="mb-2 text-muted">${notification.message}</p>
+          <div class="d-flex gap-2 mb-2">
+            <span class="badge bg-info">${getTypeLabel(notification.type)}</span>
+          </div>
+          ${notification.redirectUrl ? `<small class="text-muted"><i class="bx bx-link me-1"></i>${notification.redirectUrl}</small>` : ''}
+          <div class="mt-2">
+            <small class="text-muted">${formatDate(notification.createdAt)}</small>
+          </div>
+        </div>
+        <div class="d-flex gap-1">
+          ${!notification.isRead ? 
+            `<button type="button" class="btn btn-outline-primary btn-sm" onclick="markAsRead('${notification._id}')">
+              <i class="bx bx-check"></i>
+            </button>` : ''}
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="deletePersonalNotification('${notification._id}')">
+            <i class="bx bx-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+    return div;
+  }
+
+  // Infinite scroll
+  function setupInfiniteScroll() {
+    window.addEventListener('scroll', function() {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+        const activeTab = document.querySelector('.tab-pane.active');
+        if (activeTab.id === 'navs-pills-top-system') {
+          loadSystemNotifications();
+        } else if (activeTab.id === 'navs-pills-top-personal') {
+          loadPersonalNotifications();
+        }
+      }
+    });
+  }
+  setupInfiniteScroll();
+
+  // Event listeners
+  document.getElementById('systemSearchInput').addEventListener('input', debounce(() => {
+    loadSystemNotifications(true);
+  }, 300));
+
+  document.getElementById('systemTypeFilter').addEventListener('change', () => {
+    loadSystemNotifications(true);
+  });
+
+  document.getElementById('systemClearFilter').addEventListener('click', () => {
+    document.getElementById('systemSearchInput').value = '';
+    document.getElementById('systemTypeFilter').value = '';
+    loadSystemNotifications(true);
+  });
+
+  document.getElementById('personalReadFilter').addEventListener('change', () => {
+    loadPersonalNotifications(true);
+  });
+
+  document.getElementById('personalClearFilter').addEventListener('click', () => {
+    document.getElementById('personalReadFilter').value = '';
+    loadPersonalNotifications(true);
+  });
+
+  // Create system notification form
+  document.getElementById('createSystemNotificationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const title = document.getElementById('systemNotificationTitle').value;
+    const type = document.getElementById('systemNotificationType').value;
+    const message = document.getElementById('systemNotificationMessage').value;
+    const redirectUrl = document.getElementById('systemNotificationRedirectUrl').value;
+    
+    const recipients = [];
+    if (document.getElementById('recipientUser').checked) recipients.push('USER');
+    if (document.getElementById('recipientMod').checked) recipients.push('MOD');
+    if (document.getElementById('recipientAdmin').checked) recipients.push('ADMIN');
+    
+    if (recipients.length === 0) {
+      showToast('Vui lòng chọn ít nhất một người nhận', 'error');
+      return;
+    }
+
+    const data = {
+      title,
+      type,
+      message,
+      recipients
+    };
+    
+    if (redirectUrl) data.redirectUrl = redirectUrl;
+
+    fetch('/noti-management/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        showToast('Tạo thông báo thành công', 'success');
+        document.getElementById('createSystemNotificationForm').reset();
+        bootstrap.Modal.getInstance(document.getElementById('createSystemNotificationModal')).hide();
+        loadSystemNotifications(true);
+      } else {
+        showToast(result.message || 'Lỗi khi tạo thông báo', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error creating system notification:', error);
+      showToast('Lỗi khi tạo thông báo', 'error');    });
+  });
+
+  // Mark all as read
+  document.getElementById('markAllReadBtn').addEventListener('click', function() {
+    fetch('/notification/mark-all-read', {
+      method: 'PATCH'
+    })
+    .then(response => response.json())
+    .then(result => {
+      const success = result.success !== undefined ? result.success : !!result;
+      if (success) {
+        showToast('Đã đánh dấu tất cả thông báo là đã đọc', 'success');
+        loadPersonalNotifications(true);
+        loadUnreadCount();
+      } else {
+        showToast(result.message || 'Lỗi khi đánh dấu đã đọc', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error marking all as read:', error);
+      showToast('Lỗi khi đánh dấu đã đọc', 'error');
+    });  });
+
+  // Utility functions
+  function loadUnreadCount() {
+    fetch('/notification/unread')
+      .then(response => response.json())
+      .then(response => {
+        const data = response.data || response;
+        document.getElementById('unreadCount').textContent = data.count || 0;
+      })
+      .catch(error => console.error('Error loading unread count:', error));
+  }
+
+  function getTypeLabel(type) {
+    const labels = {
+      'SYSTEM': 'Hệ thống',
+      'FOLLOW': 'Theo dõi',
+      'LIKE': 'Thích',
+      'COMMENT': 'Bình luận',
+      'POST': 'Bài đăng',
+      'REPORT': 'Báo cáo',
+      'USER': 'Người dùng'
+    };
+    return labels[type] || type;
+  }
+
+  function getRecipientLabel(recipient) {
+    const labels = {
+      'USER': 'Người dùng',
+      'MOD': 'Moderator',
+      'ADMIN': 'Admin'
+    };
+    return labels[recipient] || recipient;
+  }
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('vi-VN');
+  }
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  function showToast(message, type = 'info') {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+    toast.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.remove();
+      }
+    }, 5000);
+  }
+  // Global functions for onclick handlers
+  window.testSystemAPI = function() {
+    console.log('Testing system notifications API...');
+    fetch('/noti-management/system-notifications?page=1&limit=10')
+      .then(response => {
+        console.log('Test System API - Response status:', response.status);
+        console.log('Test System API - Response headers:', response.headers);
+        return response.text();
+      })
+      .then(text => {
+        console.log('Test System API - Raw response:', text);
+        try {
+          const json = JSON.parse(text);
+          console.log('Test System API - Parsed JSON:', json);
+          showToast('Check console for API response', 'info');
+        } catch (e) {
+          console.error('Test System API - Parse error:', e);
+          showToast('API returned invalid JSON. Check console.', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Test System API - Error:', error);
+        showToast('API call failed. Check console.', 'error');
+      });
+  };
+
+  window.testPersonalAPI = function() {
+    console.log('Testing personal notifications API...');
+    fetch('/notification?page=1&limit=10')
+      .then(response => {
+        console.log('Test Personal API - Response status:', response.status);
+        console.log('Test Personal API - Response headers:', response.headers);
+        return response.text();
+      })
+      .then(text => {
+        console.log('Test Personal API - Raw response:', text);
+        try {
+          const json = JSON.parse(text);
+          console.log('Test Personal API - Parsed JSON:', json);
+          showToast('Check console for API response', 'info');
+        } catch (e) {
+          console.error('Test Personal API - Parse error:', e);
+          showToast('API returned invalid JSON. Check console.', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Test Personal API - Error:', error);
+        showToast('API call failed. Check console.', 'error');
+      });
+  };
+
+  window.deleteSystemNotification = function(id) {
+    if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {      fetch(`/noti-management/system-notifications/${id}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          showToast('Xóa thông báo thành công', 'success');
+          loadSystemNotifications(true);
+        } else {
+          showToast(result.message || 'Lỗi khi xóa thông báo', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting system notification:', error);
+        showToast('Lỗi khi xóa thông báo', 'error');
+      });
+    }
+  };
+  window.markAsRead = function(id) {
+    fetch(`/notification/${id}/read`, {
+      method: 'PATCH'
+    })
+    .then(response => response.json())
+    .then(result => {
+      const success = result.success !== undefined ? result.success : !!result;
+      if (success) {
+        showToast('Đã đánh dấu thông báo là đã đọc', 'success');
+        loadPersonalNotifications(true);
+        loadUnreadCount();
+      } else {
+        showToast(result.message || 'Lỗi khi đánh dấu đã đọc', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error marking as read:', error);
+      showToast('Lỗi khi đánh dấu đã đọc', 'error');
+    });
+  };  window.deletePersonalNotification = function(id) {
+    if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
+      fetch(`/notification/${id}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(result => {
+        const success = result.success !== undefined ? result.success : !!result;
+        if (success) {
+          showToast('Xóa thông báo thành công', 'success');
+          loadPersonalNotifications(true);
+          loadUnreadCount();
+        } else {
+          showToast(result.message || 'Lỗi khi xóa thông báo', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting personal notification:', error);
+        showToast('Lỗi khi xóa thông báo', 'error');
+      });
+    }
+  };
+});
+</script>
+
+<style>
+.nav-pills .nav-link.active {
+  background-color: #696cff;
+}
+
+.bg-light {
+  background-color: rgba(105, 108, 255, 0.1) !important;
+}
+
+.border {
+  transition: all 0.2s ease;
+}
+
+.border:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.spinner-border {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.alert {
+  border: none;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+#unreadCount {
+  min-width: 1.5rem;
+  padding: 0.25rem 0.5rem;
+}
+</style>
 {% endblock%}
