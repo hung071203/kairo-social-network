@@ -16,8 +16,7 @@
                 Tìm kiếm
             </button>
         </div>
-        
-        <!-- Filter by role -->
+          <!-- Filter by role -->
         <div class="input-group" style="max-width: 200px;">
             <select class="form-select" id="roleFilter" onchange="submitRoleFilter()">
                 <option value="">Tất cả vai trò</option>
@@ -27,8 +26,18 @@
             </select>
         </div>
         
+        <!-- Filter by status -->
+        <div class="input-group" style="max-width: 200px;">
+            <select class="form-select" id="statusFilter" onchange="submitStatusFilter()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="BANNED">Bị cấm</option>
+                <option value="WARNING">Cảnh báo</option>
+            </select>
+        </div>
+        
         <!-- Clear filters -->
-        {% if query.search or query.role %}
+        {% if query.search or query.role or query.status %}
             <button class="btn btn-outline-secondary" onclick="clearFilters()">
                 <i class="bx bx-x"></i>
                 Xóa bộ lọc
@@ -50,11 +59,11 @@
                 const params = new URLSearchParams(window.location.search);
                 return params.get(param) || "";
             }
-            
-            // Set values from URL when page loads
+              // Set values from URL when page loads
             function initializeFilters() {
                 document.getElementById("searchUser").value = getQueryParam("search");
                 document.getElementById("roleFilter").value = getQueryParam("role");
+                document.getElementById("statusFilter").value = getQueryParam("status");
             }
             
             // Initialize when DOM is loaded
@@ -75,8 +84,7 @@
                 }
                 window.location.href = url.toString();
             }
-            
-            function submitRoleFilter() {
+              function submitRoleFilter() {
                 let roleSelect = document.getElementById("roleFilter").value;
                 let url = new URL(window.location.href);
                 
@@ -88,10 +96,23 @@
                 window.location.href = url.toString();
             }
             
+            function submitStatusFilter() {
+                let statusSelect = document.getElementById("statusFilter").value;
+                let url = new URL(window.location.href);
+                
+                if (statusSelect) {
+                    url.searchParams.set("status", statusSelect);
+                } else {
+                    url.searchParams.delete("status");
+                }
+                window.location.href = url.toString();
+            }
+            
             function clearFilters() {
                 let url = new URL(window.location.href);
                 url.searchParams.delete("search");
                 url.searchParams.delete("role");
+                url.searchParams.delete("status");
                 window.location.href = url.toString();
             }
             
