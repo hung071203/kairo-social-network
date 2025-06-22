@@ -27,14 +27,9 @@
       <div class="tab-pane fade show active" id="navs-pills-top-system" role="tabpanel">
         <div class="card">          <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Thông báo hệ thống</h5>
-            <div>
-              <button type="button" class="btn btn-info btn-sm me-2" onclick="testSystemAPI()">
-                <i class="bx bx-test-tube me-1"></i>Test API
-              </button>
-              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSystemNotificationModal">
-                <i class="bx bx-plus me-1"></i>Tạo thông báo
-              </button>
-            </div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSystemNotificationModal">
+              <i class="bx bx-plus me-1"></i>Tạo thông báo
+            </button>
           </div>
           
           <div class="card-body">
@@ -85,9 +80,6 @@
         <div class="card">          <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Thông báo cá nhân</h5>
             <div>
-              <button type="button" class="btn btn-info btn-sm me-2" onclick="testPersonalAPI()">
-                <i class="bx bx-test-tube me-1"></i>Test API
-              </button>
               <button type="button" class="btn btn-outline-primary me-2" id="markAllReadBtn">
                 <i class="bx bx-check-double me-1"></i>Đánh dấu tất cả đã đọc
               </button>
@@ -296,28 +288,35 @@ document.addEventListener('DOMContentLoaded', function() {
         isSystemLoading = false;
         document.getElementById('systemLoadingIndicator').style.display = 'none';
       });
-  }
-  function createSystemNotificationItem(notification) {
+  }  function createSystemNotificationItem(notification) {
     console.log('Creating system notification item:', notification);
     const div = document.createElement('div');
-    div.className = 'border rounded p-3 mb-2';
+    div.className = 'notification-item border rounded p-3 mb-2';
+    div.style.cursor = 'pointer';
     div.innerHTML = `
       <div class="d-flex justify-content-between align-items-start">
-        <div class="flex-grow-1">
-          <h6 class="mb-1">${notification.title || 'No title'}</h6>
-          <p class="mb-2 text-muted">${notification.message || 'No message'}</p>
-          <div class="d-flex gap-2 mb-2">
-            <span class="badge bg-info">${getTypeLabel(notification.type)}</span>
-            ${notification.recipients ? notification.recipients.map(r => `<span class="badge bg-secondary">${getRecipientLabel(r)}</span>`).join('') : ''}
+        <div class="d-flex align-items-start gap-3 flex-grow-1" onclick="handleNotificationClick('${notification._id}', '${notification.redirectUrl || ''}', 'system')">
+          <div class="notification-icon mt-1">
+            <i class="${getNotificationIcon(notification.type)} ${getNotificationColor(notification.type)} fs-4"></i>
           </div>
-          ${notification.redirectUrl ? `<small class="text-muted"><i class="bx bx-link me-1"></i>${notification.redirectUrl}</small>` : ''}
-          <div class="mt-2">
-            <small class="text-muted">${formatDate(notification.createdAt)}</small>
+          <div class="flex-grow-1">
+            <h6 class="mb-1">${notification.title || 'No title'}</h6>
+            <p class="mb-2 text-muted">${notification.message || 'No message'}</p>
+            <div class="d-flex gap-2 mb-2">
+              <span class="badge bg-info">${getTypeLabel(notification.type)}</span>
+              ${notification.recipients ? notification.recipients.map(r => `<span class="badge bg-secondary">${getRecipientLabel(r)}</span>`).join('') : ''}
+            </div>
+            ${notification.redirectUrl ? `<small class="text-muted"><i class="bx bx-link me-1"></i>${notification.redirectUrl}</small>` : ''}
+            <div class="mt-2">
+              <small class="text-muted">${formatDate(notification.createdAt)}</small>
+            </div>
           </div>
         </div>
-        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSystemNotification('${notification._id}')">
-          <i class="bx bx-trash"></i>
-        </button>
+        <div class="notification-actions" style="opacity: 0; transition: opacity 0.2s ease;">
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation(); deleteSystemNotification('${notification._id}')">
+            <i class="bx bx-trash"></i>
+          </button>
+        </div>
       </div>
     `;
     console.log('Created div:', div);
@@ -379,35 +378,41 @@ document.addEventListener('DOMContentLoaded', function() {
         isPersonalLoading = false;
         document.getElementById('personalLoadingIndicator').style.display = 'none';
       });
-  }
-
-  function createPersonalNotificationItem(notification) {
+  }  function createPersonalNotificationItem(notification) {
     const div = document.createElement('div');
-    div.className = `border rounded p-3 mb-2 ${!notification.isRead ? 'bg-light' : ''}`;
+    div.className = `notification-item border rounded p-3 mb-2 ${!notification.isRead ? 'bg-light' : ''}`;
+    div.style.cursor = 'pointer';
     div.innerHTML = `
       <div class="d-flex justify-content-between align-items-start">
-        <div class="flex-grow-1">
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <h6 class="mb-0">${notification.title}</h6>
-            ${!notification.isRead ? '<span class="badge bg-primary">Mới</span>' : ''}
+        <div class="d-flex align-items-start gap-3 flex-grow-1" onclick="handleNotificationClick('${notification._id}', '${notification.redirectUrl || ''}', 'personal', ${!notification.isRead})">
+          <div class="notification-icon mt-1">
+            <i class="${getNotificationIcon(notification.type)} ${getNotificationColor(notification.type)} fs-4"></i>
           </div>
-          <p class="mb-2 text-muted">${notification.message}</p>
-          <div class="d-flex gap-2 mb-2">
-            <span class="badge bg-info">${getTypeLabel(notification.type)}</span>
-          </div>
-          ${notification.redirectUrl ? `<small class="text-muted"><i class="bx bx-link me-1"></i>${notification.redirectUrl}</small>` : ''}
-          <div class="mt-2">
-            <small class="text-muted">${formatDate(notification.createdAt)}</small>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <h6 class="mb-0">${notification.title}</h6>
+              ${!notification.isRead ? '<span class="badge bg-primary">Mới</span>' : ''}
+            </div>
+            <p class="mb-2 text-muted">${notification.message}</p>
+            <div class="d-flex gap-2 mb-2">
+              <span class="badge bg-info">${getTypeLabel(notification.type)}</span>
+            </div>
+            ${notification.redirectUrl ? `<small class="text-muted"><i class="bx bx-link me-1"></i>${notification.redirectUrl}</small>` : ''}
+            <div class="mt-2">
+              <small class="text-muted">${formatDate(notification.createdAt)}</small>
+            </div>
           </div>
         </div>
-        <div class="d-flex gap-1">
-          ${!notification.isRead ? 
-            `<button type="button" class="btn btn-outline-primary btn-sm" onclick="markAsRead('${notification._id}')">
-              <i class="bx bx-check"></i>
-            </button>` : ''}
-          <button type="button" class="btn btn-outline-danger btn-sm" onclick="deletePersonalNotification('${notification._id}')">
-            <i class="bx bx-trash"></i>
-          </button>
+        <div class="notification-actions" style="opacity: 0; transition: opacity 0.2s ease;">
+          <div class="d-flex gap-1">
+            ${!notification.isRead ? 
+              `<button type="button" class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); markAsRead('${notification._id}')">
+                <i class="bx bx-check"></i>
+              </button>` : ''}
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation(); deletePersonalNotification('${notification._id}')">
+              <i class="bx bx-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -535,7 +540,6 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .catch(error => console.error('Error loading unread count:', error));
   }
-
   function getTypeLabel(type) {
     const labels = {
       'SYSTEM': 'Hệ thống',
@@ -547,6 +551,34 @@ document.addEventListener('DOMContentLoaded', function() {
       'USER': 'Người dùng'
     };
     return labels[type] || type;
+  }
+
+  function getNotificationIcon(type) {
+    const icons = {
+      SYSTEM: 'bx bx-cog',
+      FOLLOW: 'bx bx-user-plus',
+      LIKE: 'bx bx-heart',
+      COMMENT: 'bx bx-comment',
+      POST: 'bx bx-file',
+      REPORT: 'bx bx-flag',
+      USER: 'bx bx-user',
+    };
+
+    return icons[type] || 'bx bx-bell';
+  }
+
+  function getNotificationColor(type) {
+    const colors = {
+      SYSTEM: 'text-primary',
+      FOLLOW: 'text-success',
+      LIKE: 'text-danger',
+      COMMENT: 'text-warning',
+      POST: 'text-dark',
+      REPORT: 'text-warning',
+      USER: 'text-info',
+    };
+
+    return colors[type] || 'text-secondary';
   }
 
   function getRecipientLabel(recipient) {
@@ -591,56 +623,35 @@ document.addEventListener('DOMContentLoaded', function() {
         toast.remove();
       }
     }, 5000);
-  }
-  // Global functions for onclick handlers
-  window.testSystemAPI = function() {
-    console.log('Testing system notifications API...');
-    fetch('/noti-management/system-notifications?page=1&limit=10')
-      .then(response => {
-        console.log('Test System API - Response status:', response.status);
-        console.log('Test System API - Response headers:', response.headers);
-        return response.text();
+  }  // Global functions for onclick handlers
+  window.handleNotificationClick = function(id, redirectUrl, type, isUnread = false) {
+    // Mark as read if it's a personal notification and unread
+    if (type === 'personal' && isUnread) {
+      fetch(`/notification/${id}/read`, {
+        method: 'PATCH'
       })
-      .then(text => {
-        console.log('Test System API - Raw response:', text);
-        try {
-          const json = JSON.parse(text);
-          console.log('Test System API - Parsed JSON:', json);
-          showToast('Check console for API response', 'info');
-        } catch (e) {
-          console.error('Test System API - Parse error:', e);
-          showToast('API returned invalid JSON. Check console.', 'error');
+      .then(response => response.json())
+      .then(result => {
+        const success = result.success !== undefined ? result.success : !!result;
+        if (success) {
+          loadPersonalNotifications(true);
+          loadUnreadCount();
         }
       })
       .catch(error => {
-        console.error('Test System API - Error:', error);
-        showToast('API call failed. Check console.', 'error');
+        console.error('Error marking as read:', error);
       });
-  };
-
-  window.testPersonalAPI = function() {
-    console.log('Testing personal notifications API...');
-    fetch('/notification?page=1&limit=10')
-      .then(response => {
-        console.log('Test Personal API - Response status:', response.status);
-        console.log('Test Personal API - Response headers:', response.headers);
-        return response.text();
-      })
-      .then(text => {
-        console.log('Test Personal API - Raw response:', text);
-        try {
-          const json = JSON.parse(text);
-          console.log('Test Personal API - Parsed JSON:', json);
-          showToast('Check console for API response', 'info');
-        } catch (e) {
-          console.error('Test Personal API - Parse error:', e);
-          showToast('API returned invalid JSON. Check console.', 'error');
-        }
-      })
-      .catch(error => {
-        console.error('Test Personal API - Error:', error);
-        showToast('API call failed. Check console.', 'error');
-      });
+    }
+    
+    // Redirect if URL exists
+    if (redirectUrl && redirectUrl !== 'undefined' && redirectUrl.trim() !== '') {
+      // Check if it's a relative URL or absolute URL
+      if (redirectUrl.startsWith('http://') || redirectUrl.startsWith('https://')) {
+        window.open(redirectUrl, '_blank');
+      } else {
+        window.location.href = redirectUrl;
+      }
+    }
   };
 
   window.deleteSystemNotification = function(id) {
@@ -741,6 +752,50 @@ document.addEventListener('DOMContentLoaded', function() {
 #unreadCount {
   min-width: 1.5rem;
   padding: 0.25rem 0.5rem;
+}
+
+/* Notification hover effects */
+.notification-item:hover .notification-actions {
+  opacity: 1 !important;
+}
+
+.notification-item {
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: rgba(105, 108, 255, 0.05) !important;
+  transform: translateY(-1px);
+}
+
+.notification-actions {
+  transition: opacity 0.2s ease;
+}
+
+/* Notification icon styling */
+.notification-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(105, 108, 255, 0.1);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover .notification-icon {
+  background-color: rgba(105, 108, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.notification-icon i {
+  transition: transform 0.2s ease;
+}
+
+.notification-item:hover .notification-icon i {
+  transform: scale(1.1);
 }
 </style>
 {% endblock%}
