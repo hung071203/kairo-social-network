@@ -79,7 +79,7 @@ export class NotiManagementService {
         ];
       }
     }
-    return this.systemNotificationRepository.findAll({}, pagination);
+    return this.systemNotificationRepository.findAll(filter, pagination);
   }
 
   async deleteSystemNotification(id: string) {
