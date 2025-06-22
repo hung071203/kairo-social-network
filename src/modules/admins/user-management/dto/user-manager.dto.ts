@@ -1,12 +1,7 @@
 import { IsOptional, IsString, IsEmail, IsEnum, IsDateString } from 'class-validator';
 import { PaginationDto } from 'src/common/decorators';
-import { UserRole, UserGenderEnum } from 'src/common/enums';
+import { UserRole, UserGenderEnum, UserStatusEnum } from 'src/common/enums';
 
-export enum UserStatusEnum {
-  ACTIVE = 'active',
-  BANNED = 'banned',
-  ALERT = 'alert',
-}
 
 export class FilterUserDto extends PaginationDto {
   @IsOptional()

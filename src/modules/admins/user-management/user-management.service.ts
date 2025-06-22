@@ -15,7 +15,7 @@ import { PaginationDto } from 'src/common/decorators';
 import { isValidObjectId } from 'mongoose';
 import { hashPassword } from 'src/utils';
 import { NotificationService } from 'src/modules/users/notification/notification.service';
-import { NotificationType } from 'src/common/enums';
+import { NotificationType, UserStatusEnum } from 'src/common/enums';
 import { FollowService } from 'src/modules/users/follow/follow.service';
 import { PostsService } from 'src/modules/users/posts/posts.service';
 
@@ -63,6 +63,27 @@ export class UserManagementService {
       form.role = dto.role;
     }
 
+    if (dto.status) {
+      const now = new Date();
+      switch (dto.status) {
+        case UserStatusEnum.BANNED:
+          form.bannedUntil = { $gt: now };
+          break;
+
+        case UserStatusEnum.ACTIVE:
+          form.$or = [
+            { bannedUntil: { $exists: false } },
+            { bannedUntil: { $lte: now } },
+          ];
+          break;
+
+        case UserStatusEnum.WARNING:
+          form.bannedUntil = { $gt: now };
+          form.bannedReason = { $ne: null };
+          break;
+      }
+    }
+
     const result = await this.userRepository.findAll(form, pagination);
 
     return result;
@@ -98,14 +119,20 @@ export class UserManagementService {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
 
-    const followersCount =( await this.followService.getAllFollowers(id)).length;
-    const followingCount = (await this.followService.getAllFollowing(id)).length;
+    const followersCount = (await this.followService.getAllFollowers(id))
+      .length;
+    const followingCount = (await this.followService.getAllFollowing(id))
+      .length;
     const postsCount = await this.postsService.getPostCount(id);
-
 
     // Don't return password
     const { password, ...userWithoutPassword } = user.toObject();
-    return {...userWithoutPassword, followersCount, followingCount, postsCount};
+    return {
+      ...userWithoutPassword,
+      followersCount,
+      followingCount,
+      postsCount,
+    };
   }
 
   async updateUser(id: string, dto: UpdateUserDto) {
