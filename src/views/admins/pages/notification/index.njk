@@ -282,7 +282,13 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .catch(error => {
         console.error('Error loading system notifications:', error);
-        showToast('Lỗi khi tải thông báo hệ thống', 'error');
+        showToast({
+          message: 'Lỗi khi tải thông báo hệ thống', 
+          header: 'Lỗi!', 
+          type: 'error',
+          iconClass: 'bx bx-error',
+          delay: 5000
+        });
       })
       .finally(() => {
         isSystemLoading = false;
@@ -372,7 +378,13 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .catch(error => {
         console.error('Error loading personal notifications:', error);
-        showToast('Lỗi khi tải thông báo cá nhân', 'error');
+        showToast({
+          message: 'Lỗi khi tải thông báo cá nhân', 
+          header: 'Lỗi!', 
+          type: 'error',
+          iconClass: 'bx bx-error',
+          delay: 5000
+        });
       })
       .finally(() => {
         isPersonalLoading = false;
@@ -473,7 +485,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('recipientAdmin').checked) recipients.push('ADMIN');
     
     if (recipients.length === 0) {
-      showToast('Vui lòng chọn ít nhất một người nhận', 'error');
+      showToast({
+        message: 'Vui lòng chọn ít nhất một người nhận', 
+        header: 'Thông báo', 
+        type: 'warning',
+        iconClass: 'bx bx-error-circle',
+        delay: 3000
+      });
       return;
     }
 
@@ -496,17 +514,35 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => response.json())
     .then(result => {
       if (result.success) {
-        showToast('Tạo thông báo thành công', 'success');
+        showToast({
+          message: 'Tạo thông báo thành công', 
+          header: 'Thành công!', 
+          type: 'success',
+          iconClass: 'bx bx-check-circle',
+          delay: 3000
+        });
         document.getElementById('createSystemNotificationForm').reset();
         bootstrap.Modal.getInstance(document.getElementById('createSystemNotificationModal')).hide();
         loadSystemNotifications(true);
       } else {
-        showToast(result.message || 'Lỗi khi tạo thông báo', 'error');
+        showToast({
+          message: result.message || 'Lỗi khi tạo thông báo', 
+          header: 'Lỗi!', 
+          type: 'error',
+          iconClass: 'bx bx-error',
+          delay: 5000
+        });
       }
     })
     .catch(error => {
       console.error('Error creating system notification:', error);
-      showToast('Lỗi khi tạo thông báo', 'error');    });
+      showToast({
+        message: 'Lỗi khi tạo thông báo', 
+        header: 'Lỗi!', 
+        type: 'error',
+        iconClass: 'bx bx-error',
+        delay: 5000
+      });    });
   });
 
   // Mark all as read
@@ -514,21 +550,37 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/notification/mark-all-read', {
       method: 'PATCH'
     })
-    .then(response => response.json())
-    .then(result => {
+    .then(response => response.json())    .then(result => {
       const success = result.success !== undefined ? result.success : !!result;
       if (success) {
-        showToast('Đã đánh dấu tất cả thông báo là đã đọc', 'success');
+        showToast({
+          message: 'Đã đánh dấu tất cả thông báo là đã đọc', 
+          header: 'Thành công!', 
+          type: 'success',
+          iconClass: 'bx bx-check-circle',
+          delay: 3000
+        });
         loadPersonalNotifications(true);
         loadUnreadCount();
       } else {
-        showToast(result.message || 'Lỗi khi đánh dấu đã đọc', 'error');
+        showToast({
+          message: result.message || 'Lỗi khi đánh dấu đã đọc', 
+          header: 'Lỗi!', 
+          type: 'error',
+          iconClass: 'bx bx-error',
+          delay: 5000
+        });
       }
-    })
-    .catch(error => {
+    })    .catch(error => {
       console.error('Error marking all as read:', error);
-      showToast('Lỗi khi đánh dấu đã đọc', 'error');
-    });  });
+      showToast({
+        message: 'Lỗi khi đánh dấu đã đọc', 
+        header: 'Lỗi!', 
+        type: 'error',
+        iconClass: 'bx bx-error',
+        delay: 5000
+      });
+    });});
 
   // Utility functions
   function loadUnreadCount() {
@@ -640,18 +692,34 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {      fetch(`/noti-management/system-notifications/${id}`, {
         method: 'DELETE'
       })
-      .then(response => response.json())
-      .then(result => {
+      .then(response => response.json())      .then(result => {
         if (result.success) {
-          showToast('Xóa thông báo thành công', 'success');
+          showToast({
+            message: 'Xóa thông báo thành công', 
+            header: 'Thành công!', 
+            type: 'success',
+            iconClass: 'bx bx-check-circle',
+            delay: 3000
+          });
           loadSystemNotifications(true);
         } else {
-          showToast(result.message || 'Lỗi khi xóa thông báo', 'error');
+          showToast({
+            message: result.message || 'Lỗi khi xóa thông báo', 
+            header: 'Lỗi!', 
+            type: 'error',
+            iconClass: 'bx bx-error',
+            delay: 5000
+          });
         }
-      })
-      .catch(error => {
+      })      .catch(error => {
         console.error('Error deleting system notification:', error);
-        showToast('Lỗi khi xóa thông báo', 'error');
+        showToast({
+          message: 'Lỗi khi xóa thông báo', 
+          header: 'Lỗi!', 
+          type: 'error',
+          iconClass: 'bx bx-error',
+          delay: 5000
+        });
       });
     }
   };
@@ -659,40 +727,72 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch(`/notification/${id}/read`, {
       method: 'PATCH'
     })
-    .then(response => response.json())
-    .then(result => {
+    .then(response => response.json())    .then(result => {
       const success = result.success !== undefined ? result.success : !!result;
       if (success) {
-        showToast('Đã đánh dấu thông báo là đã đọc', 'success');
+        showToast({
+          message: 'Đã đánh dấu thông báo là đã đọc', 
+          header: 'Thành công!', 
+          type: 'success',
+          iconClass: 'bx bx-check-circle',
+          delay: 3000
+        });
         loadPersonalNotifications(true);
         loadUnreadCount();
       } else {
-        showToast(result.message || 'Lỗi khi đánh dấu đã đọc', 'error');
+        showToast({
+          message: result.message || 'Lỗi khi đánh dấu đã đọc', 
+          header: 'Lỗi!', 
+          type: 'error',
+          iconClass: 'bx bx-error',
+          delay: 5000
+        });
       }
-    })
-    .catch(error => {
+    })    .catch(error => {
       console.error('Error marking as read:', error);
-      showToast('Lỗi khi đánh dấu đã đọc', 'error');
+      showToast({
+        message: 'Lỗi khi đánh dấu đã đọc', 
+        header: 'Lỗi!', 
+        type: 'error',
+        iconClass: 'bx bx-error',
+        delay: 5000
+      });
     });
   };  window.deletePersonalNotification = function(id) {
     if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
       fetch(`/notification/${id}`, {
         method: 'DELETE'
       })
-      .then(response => response.json())
-      .then(result => {
+      .then(response => response.json())      .then(result => {
         const success = result.success !== undefined ? result.success : !!result;
         if (success) {
-          showToast('Xóa thông báo thành công', 'success');
+          showToast({
+            message: 'Xóa thông báo thành công', 
+            header: 'Thành công!', 
+            type: 'success',
+            iconClass: 'bx bx-check-circle',
+            delay: 3000
+          });
           loadPersonalNotifications(true);
           loadUnreadCount();
         } else {
-          showToast(result.message || 'Lỗi khi xóa thông báo', 'error');
+          showToast({
+            message: result.message || 'Lỗi khi xóa thông báo', 
+            header: 'Lỗi!', 
+            type: 'error',
+            iconClass: 'bx bx-error',
+            delay: 5000
+          });
         }
-      })
-      .catch(error => {
+      })      .catch(error => {
         console.error('Error deleting personal notification:', error);
-        showToast('Lỗi khi xóa thông báo', 'error');
+        showToast({
+          message: 'Lỗi khi xóa thông báo', 
+          header: 'Lỗi!', 
+          type: 'error',
+          iconClass: 'bx bx-error',
+          delay: 5000
+        });
       });
     }
   };
