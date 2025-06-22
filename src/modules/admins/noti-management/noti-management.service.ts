@@ -60,9 +60,6 @@ export class NotiManagementService {
     if (dto.type) {
       filter.type = dto.type;
     }
-    if (dto.recipients) {
-      filter.recipients = { $in: dto.recipients };
-    }
     if (dto.search) {
       const searchTerm = dto.search.trim();
 
