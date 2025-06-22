@@ -71,15 +71,23 @@ export class UserManagementService {
           break;
 
         case UserStatusEnum.ACTIVE:
-          form.$or = [
-            { bannedUntil: { $exists: false } },
-            { bannedUntil: { $lte: now } },
+          form.$and = [
+            {
+              $or: [
+                { bannedUntil: null },
+                { bannedUntil: { $lte: now } },
+              ],
+            },
+            { bannedReason: null },
           ];
           break;
 
         case UserStatusEnum.WARNING:
-          form.bannedUntil = { $gt: now };
           form.bannedReason = { $ne: null };
+          form.$or = [
+            { bannedUntil: null },
+            { bannedUntil: { $lte: now } },
+          ];
           break;
       }
     }
