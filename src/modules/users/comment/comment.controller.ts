@@ -27,7 +27,7 @@ export class CommentController {
   ) {
     try {
       return await this.commentService.createComment(
-        user._id as string,
+        user._id.toString(),
         id,
         dto,
       );

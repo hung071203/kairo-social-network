@@ -25,7 +25,7 @@ export class ReportController {
   async createReport(@GetUser() user: User, @Body() dto: CreateReportDto) {
     // Implementation for creating a report
     try {
-      return await this.reportService.createReport(user._id as string, dto);
+      return await this.reportService.createReport(user._id.toString(), dto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

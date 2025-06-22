@@ -44,7 +44,7 @@ export class ChatController {
     @Body() dto: CreateConversationDto,
   ) {
     try {
-      return await this.chatService.createConversation(user._id as string, dto);
+      return await this.chatService.createConversation(user._id.toString(), dto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -58,7 +58,7 @@ export class ChatController {
   ) {
     try {
       return await this.chatService.getConversations(
-        user._id as string,
+        user._id.toString(),
         dto,
         pagi,
       );

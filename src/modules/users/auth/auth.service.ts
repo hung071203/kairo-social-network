@@ -161,7 +161,7 @@ export class AuthService {
     const isValidPass = await comparePassword(password, user.password);
     if (!isValidPass) throw new Error('Email hoặc mật khẩu không đúng!');
     const payload = {
-      sub: user._id as string,
+      sub: user._id.toString(),
       role: user.role,
     };
     const accessToken = await this.jwtService.signAsync(payload);
@@ -174,7 +174,7 @@ export class AuthService {
 
     if (user) {
       const payload = {
-        sub: user._id as string,
+        sub: user._id.toString(),
         role: user.role,
       };
       const accessToken = await this.jwtService.signAsync(payload);

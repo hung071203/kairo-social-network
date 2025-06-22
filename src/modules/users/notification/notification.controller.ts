@@ -26,7 +26,7 @@ export class NotificationController {
     @Pagination() pagination: PaginationDto,
   ) {
     return this.notificationService.getNotifications(
-      user._id as string,
+      user._id.toString(),
       dto,
       pagination,
     );
@@ -36,7 +36,7 @@ export class NotificationController {
   async getUnreadNotifications(@GetUser() user: User) {
     try {
       return await this.notificationService.getUnreadNotificationCount(
-        user._id as string,
+        user._id.toString(),
       );
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -46,7 +46,7 @@ export class NotificationController {
   @Patch(':id/read')
   async markAsRead(@GetUser() user: User, @Param('id') id: string) {
     try {
-      return await this.notificationService.markAsRead(user._id as string, id);
+      return await this.notificationService.markAsRead(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -55,7 +55,7 @@ export class NotificationController {
   @Patch('mark-all-read')
   async markAllAsRead(@GetUser() user: User) {
     try {
-      return await this.notificationService.markAllAsRead(user._id as string);
+      return await this.notificationService.markAllAsRead(user._id.toString());
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -65,7 +65,7 @@ export class NotificationController {
   async deleteNotification(@GetUser() user: User, @Param('id') id: string) {
     try {
       return await this.notificationService.deleteNotification(
-        user._id as string,
+        user._id.toString(),
         id,
       );
     } catch (error) {

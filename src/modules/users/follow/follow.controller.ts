@@ -42,7 +42,7 @@ export class FollowController {
     @Pagination() Pagination: PaginationDto,
   ) {
     try {
-      return await this.followService.getFollowing(user._id as string, dto, Pagination);
+      return await this.followService.getFollowing(user._id.toString(), dto, Pagination);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -55,7 +55,7 @@ export class FollowController {
     @Param('id') id: string,
   ) {
     try {
-      return await this.followService.followUser(user._id as string, id);
+      return await this.followService.followUser(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -68,7 +68,7 @@ export class FollowController {
     @Param('id') id: string,
   ) {
     try {
-      return await this.followService.acceptFollowRequest(user._id as string, id);
+      return await this.followService.acceptFollowRequest(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -81,7 +81,7 @@ export class FollowController {
     @Param('id') id: string,
   ) {
     try {
-      return await this.followService.cancelFollowRequest(user._id as string, id);
+      return await this.followService.cancelFollowRequest(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -108,7 +108,7 @@ export class FollowController {
     @Param('id') id: string,
   ) {
     try {
-      return await this.followService.blockUser(user._id as string, id);
+      return await this.followService.blockUser(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -121,7 +121,7 @@ export class FollowController {
     @Param('id') id: string,
   ) {
     try {
-      return await this.followService.unblockUser(user._id as string, id);
+      return await this.followService.unblockUser(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

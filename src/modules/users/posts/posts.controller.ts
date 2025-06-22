@@ -52,7 +52,7 @@ export class PostsController {
   ) {
     try {
       return await this.postsService.createPost(
-        user._id as string,
+        user._id.toString(),
         body,
         files,
       );
@@ -70,7 +70,7 @@ export class PostsController {
   ) {
     try {
       return await this.postsService.getPosts(
-        user._id as string,
+        user._id.toString(),
         dto,
         pagination,
       );
@@ -83,7 +83,7 @@ export class PostsController {
   @UseFilters(AllExceptionsFilter)
   async likePost(@GetUser() user: User, @Param('id') id: string) {
     try {
-      return await this.postsService.likePost(user._id as string, id);
+      return await this.postsService.likePost(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -93,7 +93,7 @@ export class PostsController {
   @UseFilters(AllExceptionsFilter)
   async sharePost(@GetUser() user: User, @Param('id') id: string) {
     try {
-      return await this.postsService.sharePost(user._id as string, id);
+      return await this.postsService.sharePost(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -123,7 +123,7 @@ export class PostsController {
   ) {
     try {
       return await this.postsService.updateTypePost(
-        user._id as string,
+        user._id.toString(),
         id,
         type,
       );
@@ -136,7 +136,7 @@ export class PostsController {
   @UseFilters(AllExceptionsFilter)
   async deletePost(@GetUser() user: User, @Param('id') id: string) {
     try {
-      return await this.postsService.deletePost(user._id as string, id);
+      return await this.postsService.deletePost(user._id.toString(), id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -151,7 +151,7 @@ export class PostsController {
   ) {
     try {
       return await this.postsService.searchPost(
-        user._id as string,
+        user._id.toString(),
         dto.search,
         pagination,
       );

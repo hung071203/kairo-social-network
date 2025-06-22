@@ -36,7 +36,7 @@ export class ProfileController {
   ) {
     try {
       return await this.profileService.searchUser(
-        user._id as string,
+        user._id.toString(),
         dto.search,
         pagination,
       );
@@ -60,7 +60,7 @@ export class ProfileController {
         user: target,
         follows,
         isThisAccount,
-      } = await this.profileService.getProfile(user._id as string, username);
+      } = await this.profileService.getProfile(user._id.toString(), username);
 
       return {
         title: 'Trang cá nhân' + target.name,
@@ -97,7 +97,7 @@ export class ProfileController {
     @Body() dto: UpdateUserDto, // Replace with actual DTO
   ) {
     try {
-      return await this.profileService.updateProfile(user._id as string, dto);
+      return await this.profileService.updateProfile(user._id.toString(), dto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -110,7 +110,7 @@ export class ProfileController {
     @Body() dto: UpdatePassDto, // Replace with actual DTO
   ) {
     try {
-      return await this.profileService.updatePassword(user._id as string, dto);
+      return await this.profileService.updatePassword(user._id.toString(), dto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -120,12 +120,12 @@ export class ProfileController {
   @UseGuards(UsersAuthGuard)
   async unlinkGoogle(@GetUser() user: User) {
     try {
-      return await this.profileService.unlinkGoogle(user._id as string);
+      return await this.profileService.unlinkGoogle(user._id.toString());
     } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
-  
+
   @Post('check-username')
   async checkUsername(@Body('username') username: string) {
     try {
@@ -143,7 +143,7 @@ export class ProfileController {
   ) {
     try {
       return await this.profileService.updateUsername(
-        user._id as string,
+        user._id.toString(),
         username,
       );
     } catch (error) {
@@ -155,7 +155,7 @@ export class ProfileController {
   @UseGuards(AllGuard)
   async changeMail(@GetUser() user: User, @Body() dto: ChangeMailDto) {
     try {
-      return await this.profileService.changeMail(user._id as string, dto);
+      return await this.profileService.changeMail(user._id.toString(), dto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
