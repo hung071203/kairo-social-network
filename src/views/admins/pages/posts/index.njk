@@ -15,8 +15,7 @@
                 Tìm kiếm
             </button>
         </div>
-        
-        <!-- Ô tìm kiếm theo tag -->
+          <!-- Ô tìm kiếm theo tag -->
         <div class="input-group" style="max-width: 300px;">
             <span class="input-group-text">#</span>
             <input type="text" class="form-control" id="searchTag" placeholder="Tìm theo thẻ...">
@@ -26,8 +25,19 @@
             </button>
         </div>
         
-        <!-- Nút xóa filter -->
-        {% if query.search or query.tagName %}
+        <!-- Bộ lọc hiển thị -->
+        <div class="input-group" style="max-width: 200px;">
+            <span class="input-group-text">
+                <i class="bx bx-filter"></i>
+            </span>
+            <select class="form-select" id="visibilityFilter" onchange="submitVisibilityFilter()">
+                <option value="">Tất cả bài viết</option>
+                <option value="true">Đang hiển thị</option>
+                <option value="false">Đã ẩn</option>
+            </select>
+        </div>
+          <!-- Nút xóa filter -->
+        {% if query.search or query.tagName or query.isVisible %}
             <button class="btn btn-outline-secondary" onclick="clearFilters()">
                 <i class="bx bx-x"></i>
                 Xóa bộ lọc
@@ -40,15 +50,20 @@
             const params = new URLSearchParams(window.location.search);
             return params.get("search") || "";
         }
-        
-        function getTagQuery() {
+          function getTagQuery() {
             const params = new URLSearchParams(window.location.search);
             return params.get("tagName") || "";
+        }
+        
+        function getVisibilityQuery() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("isVisible") || "";
         }
         
         // Set values from URL
         document.getElementById("searchPost").value = getSearchQuery();
         document.getElementById("searchTag").value = getTagQuery();
+        document.getElementById("visibilityFilter").value = getVisibilityQuery();
         
         function submitSearch() {
             let input = document
@@ -56,9 +71,9 @@
                 .value
                 .trim();
             let url = new URL(window.location.href);
-            
-            // Clear tag filter when searching by content
+              // Clear tag filter when searching by content
             url.searchParams.delete("tagName");
+            url.searchParams.delete("isVisible");
             
             if (input) {
                 url.searchParams.set("search", input);
@@ -77,6 +92,7 @@
             
             // Clear content search when filtering by tag
             url.searchParams.delete("search");
+            url.searchParams.delete("isVisible");
             
             // Remove # if user added it
             const cleanTag = tagInput.replace(/^#/, '');
@@ -89,10 +105,22 @@
             window.location.href = url.toString();
         }
         
-        function clearFilters() {
+        function submitVisibilityFilter() {
+            let visibilityValue = document.getElementById("visibilityFilter").value;
+            let url = new URL(window.location.href);
+            
+            if (visibilityValue) {
+                url.searchParams.set("isVisible", visibilityValue);
+            } else {
+                url.searchParams.delete("isVisible");
+            }
+            window.location.href = url.toString();
+        }
+          function clearFilters() {
             let url = new URL(window.location.href);
             url.searchParams.delete("search");
             url.searchParams.delete("tagName");
+            url.searchParams.delete("isVisible");
             window.location.href = url.toString();
         }
         
@@ -108,9 +136,8 @@
                 submitTagSearch();
             }        });
     </script>
-    
-    <!-- Filter notification banner -->
-    {% if query.search or query.tagName %}
+      <!-- Filter notification banner -->
+    {% if query.search or query.tagName or query.isVisible %}
         <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
             <div>
                 <i class="bx bx-info-circle me-2"></i>
@@ -120,6 +147,11 @@
                 {% endif %}
                 {% if query.tagName %}
                     Thẻ: "<em>#{{ query.tagName }}</em>"
+                {% endif %}
+                {% if query.isVisible == 'true' %}
+                    Trạng thái: "<em>Đang hiển thị</em>"
+                {% elif query.isVisible == 'false' %}
+                    Trạng thái: "<em>Đã ẩn</em>"
                 {% endif %}
             </div>
             <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">
@@ -178,6 +210,12 @@
                                 </div>
                             </td>                            <td>
                                 <div class="post-content" style="max-width: 250px;">
+                                    {% if not item.isVisible %}
+                                        <span class="badge bg-label-danger mb-1">
+                                            <i class="bx bx-hide me-1"></i>Đã ẩn
+                                        </span>
+                                        <br>
+                                    {% endif %}
                                     {% if item.content.length > 20 %}
                                         <span title="{{ item.content }}" data-bs-toggle="tooltip">
                                             {{ item.content | truncate(20) }}
@@ -260,8 +298,18 @@
                                                     <i class="bx bx-flag me-1"></i>
                                                     Báo Cáo Vi Phạm
                                                 </a>
-                                            {% endif %}
-                                            {% if user.role == 'ADMIN' or user.role == 'MOD' %}
+                                            {% endif %}                                            {% if user.role == 'ADMIN' or user.role == 'MOD' %}
+                                                {% if item.isVisible %}
+                                                    <a class="dropdown-item text-warning" href="javascript:void(0);" onclick="hidePost('{{ item._id }}', '{{ item.author.name }}');">
+                                                        <i class="bx bx-hide me-1"></i>
+                                                        Ẩn Bài Viết
+                                                    </a>
+                                                {% else %}
+                                                    <a class="dropdown-item text-success" href="javascript:void(0);" onclick="unhidePost('{{ item._id }}', '{{ item.author.name }}');">
+                                                        <i class="bx bx-show me-1"></i>
+                                                        Hiện Bài Viết
+                                                    </a>
+                                                {% endif %}
                                                 <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deletePost('{{ item._id }}', '{{ item.author.name }}');">
                                                     <i class="bx bx-trash me-1"></i>
                                                     Xóa Bài Viết
@@ -353,6 +401,45 @@
     </div>
                         <!-- Post comments content will be loaded here -->
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+    <!-- Unhide Post Confirmation Modal -->
+    <div class="modal fade" id="unhidePostModal" tabindex="-1" aria-labelledby="unhidePostModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unhidePostModalLabel">Xác Nhận Hiện Bài Viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn hiện lại bài viết này không?</p>
+                    <p class="text-success"><strong>Bài viết sẽ hiển thị trở lại với người dùng và tác giả sẽ nhận được thông báo.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-success" onclick="confirmUnhidePost()">Hiện Bài Viết</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hide Post Confirmation Modal -->
+    <div class="modal fade" id="hidePostModal" tabindex="-1" aria-labelledby="hidePostModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hidePostModalLabel">Xác Nhận Ẩn Bài Viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn ẩn bài viết này không?</p>
+                    <p class="text-warning"><strong>Bài viết sẽ không hiển thị với người dùng và tác giả sẽ nhận được thông báo.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-warning" onclick="confirmHidePost()">Ẩn Bài Viết</button>
                 </div>
             </div>
         </div>
@@ -578,14 +665,88 @@
             const commentsContainer = document.getElementById('postCommentsContent');
             const newCommentsHtml = comments.map(comment => formatSingleComment(comment)).join('');
             commentsContainer.insertAdjacentHTML('beforeend', newCommentsHtml);
-        }
-        
+        }        
         // Delete post
         function deletePost(postId, authorName) {
             currentPostId = postId;
             currentPostAuthor = authorName;
             document.getElementById('deletePostModalLabel').textContent = `Xóa bài viết của ${authorName}`;
             new bootstrap.Modal(document.getElementById('deletePostModal')).show();
+        }
+          // Hide post
+        function hidePost(postId, authorName) {
+            currentPostId = postId;
+            currentPostAuthor = authorName;
+            document.getElementById('hidePostModalLabel').textContent = `Ẩn bài viết của ${authorName}`;
+            new bootstrap.Modal(document.getElementById('hidePostModal')).show();
+        }
+        
+        // Unhide post
+        function unhidePost(postId, authorName) {
+            currentPostId = postId;
+            currentPostAuthor = authorName;
+            document.getElementById('unhidePostModalLabel').textContent = `Hiện bài viết của ${authorName}`;
+            new bootstrap.Modal(document.getElementById('unhidePostModal')).show();
+        }
+        
+        function confirmHidePost() {
+            if (!currentPostId) return;
+            
+            fetch(`{{ baseUrl }}/post-management/hide/${currentPostId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                bootstrap.Modal.getInstance(document.getElementById('hidePostModal')).hide();
+                
+                if (data.success) {
+                    showNotification('success', data.message || 'Ẩn bài viết thành công');
+                    // Reload page to reflect changes
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('error', data.message || 'Có lỗi xảy ra khi ẩn bài viết');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                bootstrap.Modal.getInstance(document.getElementById('hidePostModal')).hide();
+                showNotification('error', 'Có lỗi xảy ra khi ẩn bài viết');
+            });
+        }
+        
+        function confirmUnhidePost() {
+            if (!currentPostId) return;
+            
+            fetch(`{{ baseUrl }}/post-management/unhide/${currentPostId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                bootstrap.Modal.getInstance(document.getElementById('unhidePostModal')).hide();
+                
+                if (data.success) {
+                    showNotification('success', data.message || 'Hiện bài viết thành công');
+                    // Reload page to reflect changes
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification('error', data.message || 'Có lỗi xảy ra khi hiện bài viết');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                bootstrap.Modal.getInstance(document.getElementById('unhidePostModal')).hide();
+                showNotification('error', 'Có lỗi xảy ra khi hiện bài viết');
+            });
         }
           function confirmDeletePost() {
             if (!currentPostId) return;

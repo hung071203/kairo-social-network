@@ -4,7 +4,7 @@ import { PostRepositoryInterface } from 'src/database/interface/post.interface';
 import { CommentRepositoryInterface } from 'src/database/interface/comment.interface';
 import { ReportRepositoryInterface } from 'src/database/interface/report.interface';
 import { FilterPostManagementDto } from './dto/post.dto';
-import { ReportType } from 'src/common/enums';
+import { ReportType, NotificationType } from 'src/common/enums';
 import { isValidObjectId, Types } from 'mongoose';
 import { TagsService } from 'src/modules/users/tags/tags.service';
 import { NotificationService } from 'src/modules/users/notification/notification.service';
@@ -53,10 +53,14 @@ export class PostManagementService {
           form._id = new Types.ObjectId(); // Non-existent ID to return empty
         }
       } catch (error) {
-        console.error('Error finding tag:', error);
-        // If error finding tag, return empty result
+        console.error('Error finding tag:', error);        // If error finding tag, return empty result
         form._id = new Types.ObjectId(); // Non-existent ID to return empty
       }
+    }
+
+    // Filter by visibility if provided
+    if (dto.isVisible !== undefined) {
+      form.isVisible = dto.isVisible;
     }
 
     // Add population for author information
@@ -161,5 +165,71 @@ export class PostManagementService {
     // Note: Comments should be deleted via cascade or separate cleanup job
 
     return { message: 'Xóa bài viết thành công' };
+  }
+
+  async hidePost(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new Error('ID bài viết không hợp lệ');
+    }
+
+    const post = await this.postRepository.findOne({ _id: id });
+    if (!post) {
+      throw new Error('Không tìm thấy bài viết');
+    }
+
+    if (!post.isVisible) {
+      throw new Error('Bài viết đã được ẩn trước đó');
+    }
+
+    // Update post to hide it
+    await this.postRepository.update(id, { isVisible: false });
+
+    // Send notification to the post author
+    try {
+      await this.notificationService.create(post.author.toString(), {
+        title: 'Bài viết bị ẩn',
+        message: 'Bài viết của bạn đã bị ẩn bởi quản trị viên do vi phạm quy định cộng đồng.',
+        type: NotificationType.SYSTEM,
+        redirectUrl: `/posts/${id}`,
+      });
+    } catch (notificationError) {
+      console.error('Error sending notification:', notificationError);
+      // Don't throw here - post hiding should succeed even if notification fails
+    }
+
+    return { message: 'Ẩn bài viết thành công' };
+  }
+
+  async unhidePost(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new Error('ID bài viết không hợp lệ');
+    }
+
+    const post = await this.postRepository.findOne({ _id: id });
+    if (!post) {
+      throw new Error('Không tìm thấy bài viết');
+    }
+
+    if (post.isVisible) {
+      throw new Error('Bài viết đang hiển thị');
+    }
+
+    // Update post to show it
+    await this.postRepository.update(id, { isVisible: true });
+
+    // Send notification to the post author
+    try {
+      await this.notificationService.create(post.author.toString(), {
+        title: 'Bài viết được khôi phục',
+        message: 'Bài viết của bạn đã được khôi phục hiển thị bởi quản trị viên.',
+        type: NotificationType.SYSTEM,
+        redirectUrl: `/posts/${id}`,
+      });
+    } catch (notificationError) {
+      console.error('Error sending notification:', notificationError);
+      // Don't throw here - post unhiding should succeed even if notification fails
+    }
+
+    return { message: 'Hiện bài viết thành công' };
   }
 }

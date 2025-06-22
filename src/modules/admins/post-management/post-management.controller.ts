@@ -82,4 +82,30 @@ export class PostManagementController {
     }
   }
 
+  @Post('hide/:id')
+  async hidePost(@Param('id') id: string) {
+    try {
+      await this.postManagementService.hidePost(id);
+      return {
+        success: true,
+        message: 'Ẩn bài viết thành công',
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('unhide/:id')
+  async unhidePost(@Param('id') id: string) {
+    try {
+      await this.postManagementService.unhidePost(id);
+      return {
+        success: true,
+        message: 'Hiện bài viết thành công',
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
 }
