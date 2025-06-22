@@ -7,9 +7,10 @@ import { extractTags } from 'src/common/helpers';
 import { PaginationDto } from 'src/common/decorators';
 import { ProfileService } from '../profile/profile.service';
 import { FollowService } from '../follow/follow.service';
-import { PostTypeEnum } from 'src/common/enums';
+import { PostTypeEnum, NotificationType } from 'src/common/enums';
 import { CreatePostDto, FilterPostDto } from './dto/post.dto';
 import { create } from 'domain';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class PostsService {
@@ -20,6 +21,7 @@ export class PostsService {
     private readonly tagsService: TagsService,
     private readonly profileService: ProfileService,
     private readonly followService: FollowService,
+    private readonly notificationService: NotificationService, // Thêm NotificationService vào đây
   ) {}
 
   getRepository() {
@@ -174,28 +176,58 @@ export class PostsService {
 
     const likedIndex = post.likes.findIndex(
       (like) => like.toString() === userIdStr,
-    );
-
-    if (likedIndex !== -1) {
+    );    if (likedIndex !== -1) {
       // Nếu đã like, thì bỏ like
       post.likes.splice(likedIndex, 1);
     } else {
       // Nếu chưa like, thì thêm like
       post.likes.push(new Types.ObjectId(userIdStr));
-    }
-
-    await post.save();
+      
+      // Gửi thông báo cho chủ bài viết (không gửi cho chính mình)
+      const authorId = post.author.toString();
+      if (authorId !== userId || post.likes.length <=10) {
+        try {
+          await this.notificationService.create(authorId, {
+            title: 'Lượt thích mới',
+            type: NotificationType.LIKE,
+            message: `Có người đã thích bài viết của bạn`,
+            redirectUrl: `/posts/detail/${postId}`,
+          });
+        } catch (error) {
+          // Log lỗi nhưng không throw để không ảnh hưởng việc like
+          console.error('Lỗi khi gửi thông báo like:', error);
+        }
+      }
+    }    await post.save();
     return post;
   }
-
   async sharePost(userId: string, postId: string) {
     const post = await this.postRepository.findOneById(postId);
     if (!post) {
       throw new Error('Không tìm thấy bài viết');
     }
-    return await this.postRepository.update(postId, {
+    
+    const updatedPost = await this.postRepository.update(postId, {
       sharesCount: post.sharesCount + 1,
     });
+
+    // Gửi thông báo cho chủ bài viết (không gửi cho chính mình)
+    const authorId = post.author.toString();
+    if (authorId !== userId || updatedPost.sharesCount <= 10) {
+      try {
+        await this.notificationService.create(authorId, {
+          title: 'Bài viết được chia sẻ',
+          type: NotificationType.POST,
+          message: `Có người đã chia sẻ bài viết của bạn`,
+          redirectUrl: `/posts/detail/${postId}`,
+        });
+      } catch (error) {
+        // Log lỗi nhưng không throw để không ảnh hưởng việc share
+        console.error('Lỗi khi gửi thông báo share:', error);
+      }
+    }
+
+    return updatedPost;
   }
 
   async getPostDetail(userId: string, postId: string) {

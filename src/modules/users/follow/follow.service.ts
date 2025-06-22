@@ -218,7 +218,6 @@ export class FollowService {
       followId: newFollow._id,
     };
   }
-
   async acceptFollowRequest(userId: string, requesterId: string) {
     const followRequest = await this.followInteractionRepository
       .getModel()
@@ -234,6 +233,19 @@ export class FollowService {
 
     followRequest.status = FollowInteractionStatusEnum.ACCEPTED;
     await followRequest.save();
+
+    // Gửi thông báo cho người gửi yêu cầu rằng yêu cầu đã được chấp nhận
+    try {
+      await this.notificationService.create(requesterId, {
+        title: 'Yêu cầu theo dõi được chấp nhận',
+        type: NotificationType.FOLLOW,
+        message: `Yêu cầu theo dõi của bạn đã được chấp nhận`,
+        redirectUrl: `/profile/user/${userId}`,
+      });
+    } catch (error) {
+      // Log lỗi nhưng không throw để không ảnh hưởng việc accept
+      console.error('Lỗi khi gửi thông báo accept follow:', error);
+    }
 
     return { message: 'Yêu cầu theo dõi đã được chấp nhận' };
   }

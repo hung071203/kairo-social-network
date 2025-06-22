@@ -5,6 +5,8 @@ import { Types } from 'mongoose';
 import { PostsService } from '../posts/posts.service';
 import { PaginationDto } from 'src/common/decorators';
 import { Comment } from 'src/schemas/comments.schema';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from 'src/common/enums';
 
 @Injectable()
 export class CommentService {
@@ -12,10 +14,17 @@ export class CommentService {
     @Inject('CommentRepositoryInterface')
     private readonly commentRepository: CommentRepositoryInterface,
     private readonly postsService: PostsService, // Assuming you have a PostService to validate post existence
+    private readonly notificationService: NotificationService, // Inject NotificationService
   ) {}
-
   async createComment(userId: string, postId: string, dto: CreateCommentDto) {
     const { content, parentComment } = dto;
+    
+    // Lấy thông tin bài viết để biết chủ bài viết
+    const post = await this.postsService.getRepository().findOneById(postId);
+    if (!post) {
+      throw new Error('Bài viết không tồn tại');
+    }
+    
     const comment = await this.commentRepository.create({
       post: new Types.ObjectId(postId),
       author: new Types.ObjectId(userId),
@@ -24,6 +33,7 @@ export class CommentService {
         ? { parentComment: new Types.ObjectId(parentComment) }
         : {}),
     });
+    
     await this.postsService
       .getRepository()
       .getModel()
@@ -34,7 +44,21 @@ export class CommentService {
         {
           $inc: { commentsCount: 1 },
         },
-      );
+      );    // Gửi thông báo cho chủ bài viết (không gửi cho chính mình)
+    if (post.author.toString() !== userId || post.commentsCount < 10) {
+      try {
+        await this.notificationService.create(post.author.toString(), {
+          title: 'Bình luận mới',
+          type: NotificationType.COMMENT,
+          message: `Có người đã bình luận về bài viết của bạn`,
+          redirectUrl: `/posts/detail/${postId}`,
+        });
+      } catch (error) {
+        // Log lỗi nhưng không throw để không ảnh hưởng việc tạo comment
+        console.error('Lỗi khi gửi thông báo comment:', error);
+      }
+    }
+
     return comment;
   }
 
