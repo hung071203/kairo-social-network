@@ -52,9 +52,8 @@
                   <option value="REPORT">Báo cáo</option>
                   <option value="USER">Người dùng</option>
                 </select>
-              </div>
-              <div class="col-md-3">
-                <button type="button" class="btn btn-outline-secondary" id="systemClearFilter">
+              </div>              <div class="col-md-3">
+                <button type="button" class="btn btn-outline-secondary" id="systemClearFilter" style="display: none;">
                   <i class="bx bx-refresh me-1"></i>Xóa bộ lọc
                 </button>
               </div>
@@ -96,9 +95,8 @@
                   <option value="false">Chưa đọc</option>
                   <option value="true">Đã đọc</option>
                 </select>
-              </div>
-              <div class="col-md-4">
-                <button type="button" class="btn btn-outline-secondary" id="personalClearFilter">
+              </div>              <div class="col-md-4">
+                <button type="button" class="btn btn-outline-secondary" id="personalClearFilter" style="display: none;">
                   <i class="bx bx-refresh me-1"></i>Xóa bộ lọc
                 </button>
               </div>
@@ -240,9 +238,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Variables for delete confirmation
   let pendingDeleteId = null;
-  let pendingDeleteType = null;
-  // Initialize
+  let pendingDeleteType = null;  // Initialize
   console.log('Initializing notification management...');
+  
+  // Initialize clear filter buttons visibility
+  toggleSystemClearFilterButton();
+  togglePersonalClearFilterButton();
   
   // Restore last active tab from localStorage
   const lastActiveTab = localStorage.getItem('notificationActiveTab') || 'system';
@@ -511,28 +512,32 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   setupInfiniteScroll();
-
   // Event listeners
   document.getElementById('systemSearchInput').addEventListener('input', debounce(() => {
+    toggleSystemClearFilterButton();
     loadSystemNotifications(true);
   }, 300));
 
   document.getElementById('systemTypeFilter').addEventListener('change', () => {
+    toggleSystemClearFilterButton();
     loadSystemNotifications(true);
   });
 
   document.getElementById('systemClearFilter').addEventListener('click', () => {
     document.getElementById('systemSearchInput').value = '';
     document.getElementById('systemTypeFilter').value = '';
+    toggleSystemClearFilterButton();
     loadSystemNotifications(true);
   });
 
   document.getElementById('personalReadFilter').addEventListener('change', () => {
+    togglePersonalClearFilterButton();
     loadPersonalNotifications(true);
   });
 
   document.getElementById('personalClearFilter').addEventListener('click', () => {
     document.getElementById('personalReadFilter').value = '';
+    togglePersonalClearFilterButton();
     loadPersonalNotifications(true);
   });
 
@@ -680,6 +685,30 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .catch(error => console.error('Error loading unread count:', error));
   }
+  // Function to check and toggle clear filter button visibility
+  function toggleSystemClearFilterButton() {
+    const searchValue = document.getElementById('systemSearchInput').value.trim();
+    const typeValue = document.getElementById('systemTypeFilter').value;
+    const clearButton = document.getElementById('systemClearFilter');
+    
+    if (searchValue || typeValue) {
+      clearButton.style.display = 'block';
+    } else {
+      clearButton.style.display = 'none';
+    }
+  }
+
+  function togglePersonalClearFilterButton() {
+    const readValue = document.getElementById('personalReadFilter').value;
+    const clearButton = document.getElementById('personalClearFilter');
+    
+    if (readValue) {
+      clearButton.style.display = 'block';
+    } else {
+      clearButton.style.display = 'none';
+    }
+  }
+
   function getTypeLabel(type) {
     const labels = {
       'SYSTEM': 'Hệ thống',
