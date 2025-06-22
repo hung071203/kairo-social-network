@@ -97,6 +97,7 @@ export class PostsService {
           { type: PostTypeEnum.PUBLIC, author: { $nin: blockedIds } },
           { author: { $in: followingIds } },
         ],
+        isVisible: true,
       };
 
       pinnedPost = await postModel
@@ -133,6 +134,8 @@ export class PostsService {
         filter.$or.push({ type: PostTypeEnum.PRIVATE });
       }
     }
+
+    filter.isVisible = true;
 
     const posts = await postModel
       .find(filter)
@@ -214,8 +217,15 @@ export class PostsService {
       throw new Error('Bạn không có quyền xem bài viết này');
     }
 
-    if (post.type === PostTypeEnum.PRIVATE && post.author._id.toString() !== userId) {
+    if (
+      post.type === PostTypeEnum.PRIVATE &&
+      post.author._id.toString() !== userId
+    ) {
       throw new Error('Bài viết này là riêng tư');
+    }
+
+    if (post.isVisible === false && post.author._id.toString() !== userId) {
+      throw new Error('Bài viết không tồn tại hoặc đã bị xóa');
     }
 
     if (post.type === PostTypeEnum.FOLLOWERS) {
@@ -312,7 +322,7 @@ export class PostsService {
 
     // Giảm postCount của các tags liên quan
     if (post.tags && post.tags.length > 0) {
-      const tagIds = post.tags.map(tag => tag.toString());
+      const tagIds = post.tags.map((tag) => tag.toString());
       await this.tagsService.decrementTagsPostCount(tagIds);
     }
 
