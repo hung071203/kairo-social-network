@@ -14,7 +14,7 @@ import {
 import { NotiManagementService } from './noti-management.service';
 import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
-import { CreateSystemNotificationDto } from './dto/system-notification.dto';
+import { CreateSystemNotificationDto, FilterSystemNotificationDto } from './dto/system-notification.dto';
 import { Pagination, PaginationDto } from 'src/common/decorators';
 
 @Controller('noti-management')
@@ -47,11 +47,11 @@ export class NotiManagementController {
 
   @Get('system-notifications')
   async getSystemNotifications(
-    @Query() dto: PaginationDto,
+    @Query() dto: FilterSystemNotificationDto,
     @Pagination() pagination: PaginationDto,
   ) {
     try {
-      return await this.notiManagementService.getSystemNotifications(pagination);
+      return await this.notiManagementService.getSystemNotifications(dto, pagination);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

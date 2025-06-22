@@ -1,10 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CreateSystemNotificationDto } from './dto/system-notification.dto';
+import {
+  CreateSystemNotificationDto,
+  FilterSystemNotificationDto,
+} from './dto/system-notification.dto';
 import { SystemNotificationRepositoryInterface } from 'src/database/interface/systemNotification.interface';
 import { NotificationRepositoryInterface } from 'src/database/interface/notification.interface';
 import { UserManagementService } from '../user-management/user-management.service';
 import { NotificationService } from 'src/modules/users/notification/notification.service';
 import { PaginationDto } from 'src/common/decorators';
+import { isValidObjectId } from 'mongoose';
 
 @Injectable()
 export class NotiManagementService {
@@ -48,12 +52,42 @@ export class NotiManagementService {
     return true;
   }
 
-  async getSystemNotifications(pagination: PaginationDto) {
+  async getSystemNotifications(
+    dto: FilterSystemNotificationDto,
+    pagination: PaginationDto,
+  ) {
+    const filter: any = {};
+    if (dto.type) {
+      filter.type = dto.type;
+    }
+    if (dto.recipients) {
+      filter.recipients = { $in: dto.recipients };
+    }
+    if (dto.search) {
+      const searchTerm = dto.search.trim();
+
+      // Nếu là ObjectId hợp lệ → tìm chính xác theo _id
+      if (isValidObjectId(searchTerm)) {
+        filter._id = searchTerm;
+        console.log('Searching by ObjectId');
+      } else {
+        // Escape special regex characters
+        const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        filter.$or = [
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          {
+            message: { $regex: escapedSearch, $options: 'i' },
+          },
+        ];
+      }
+    }
     return this.systemNotificationRepository.findAll({}, pagination);
   }
 
   async deleteSystemNotification(id: string) {
-    const systemNotification = await this.systemNotificationRepository.findOneById(id);
+    const systemNotification =
+      await this.systemNotificationRepository.findOneById(id);
     if (!systemNotification) {
       throw new Error('Thông báo không tồn tại');
     }
