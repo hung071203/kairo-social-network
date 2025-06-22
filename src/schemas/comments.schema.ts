@@ -1,8 +1,8 @@
-import { Post } from '@nestjs/common';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 import { User } from './users.schema';
+import { Post } from './posts.schema';
 
 @Schema({ timestamps: true })
 export class Comment extends Document {

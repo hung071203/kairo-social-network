@@ -9,8 +9,7 @@
             class="col-lg-9 col-md-12 order-1">
             <!-- User and API Cards -->
             <div
-                class="row">
-                <!-- Total Users -->
+                class="row">                <!-- Total Users -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
                         <div class="card-body">
@@ -18,55 +17,184 @@
                                 <div class="avatar flex-shrink-0">
                                     <i class="bx bx-user text-success bx-lg"></i>
                                 </div>
+                                <div class="dropdown">
+                                    <small class="text-success fw-medium">
+                                        <i class="bx bx-up-arrow-alt"></i> +{{ newUsersToday }}
+                                    </small>
+                                </div>
                             </div>
                             <p class="mb-1">Tổng số người dùng</p>
                             <h4 class="card-title mb-3">{{ totalUsers }}</h4>
+                            <small class="text-muted">{{ newUsersToday }} người mới hôm nay</small>
                         </div>
                     </div>
                 </div>
-                <!-- Total APIs -->
+                <!-- Active Users Today -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="card-title d-flex align-items-start justify-content-between mb-4">
                                 <div class="avatar flex-shrink-0">
-                                    <i class="bx bx-signal-5 text-info bx-lg"></i>
+                                    <i class="bx bx-user-check text-success bx-lg"></i>
                                 </div>
                             </div>
-                            <p class="mb-1">Tổng số API</p>
-                            <h4 class="card-title mb-3">{{ totalEndpoints }}</h4>
+                            <p class="mb-1">Người dùng hoạt động hôm nay</p>
+                            <h4 class="card-title mb-3">{{ activeUsersToday }}</h4>
+                            <small class="text-muted">Đã hoạt động trong 24h</small>
+                        </div>
+                    </div>
+                </div>
+            </div>            <!-- Banned IPs and Monthly Requests -->
+            <div
+                class="row">
+                <!-- Banned Users -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-user-x text-warning bx-lg"></i>
+                                </div>
+                                {% if bannedUsers > 0 %}
+                                <div class="dropdown">
+                                    <small class="text-warning fw-medium">
+                                        <i class="bx bx-error-circle"></i> {{ bannedUsers }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1">Người dùng bị cấm</p>
+                            <h4 class="card-title mb-3">{{ bannedUsers }}</h4>
+                            <small class="text-muted">Đang bị cấm hiện tại</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- New Users This Month -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-user-plus text-info bx-lg"></i>
+                                </div>
+                                <div class="dropdown">
+                                    <small class="text-success fw-medium">
+                                        <i class="bx bx-up-arrow-alt"></i> +{{ newUsersThisWeek }}
+                                    </small>
+                                </div>
+                            </div>
+                            <p class="mb-1">Người dùng mới tháng này</p>
+                            <h4 class="card-title mb-3">{{ newUsersThisMonth }}</h4>
+                            <small class="text-muted">{{ newUsersThisWeek }} người tuần này</small>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Banned IPs and Monthly Requests -->
-            <div
-                class="row">
-                <!-- Banned IPs -->
+            <!-- Posts and Interactions Statistics -->
+            <div class="row">
+                <!-- Total Posts -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="card-title d-flex align-items-start justify-content-between mb-4">
                                 <div class="avatar flex-shrink-0">
-                                    <i class="bx bx-no-signal text-warning bx-lg"></i>
+                                    <i class="bx bx-file text-primary bx-lg"></i>
+                                </div>
+                                <div class="dropdown">
+                                    <small class="text-success fw-medium">
+                                        <i class="bx bx-up-arrow-alt"></i> +{{ newPostsToday }}
+                                    </small>
                                 </div>
                             </div>
-                            <p class="mb-1">Tổng số IP bị cấm</p>
-                            <h4 class="card-title mb-3">{{ bannedIps }}</h4>
+                            <p class="mb-1">Tổng số bài viết</p>
+                            <h4 class="card-title mb-3">{{ totalPosts }}</h4>
+                            <small class="text-muted">{{ newPostsToday }} bài viết mới hôm nay</small>
                         </div>
                     </div>
                 </div>
-                <!-- Monthly Requests -->
+                <!-- Total Interactions -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="card-title d-flex align-items-start justify-content-between mb-4">
                                 <div class="avatar flex-shrink-0">
-                                    <i class="bx bx-calendar text-danger bx-lg"></i>
+                                    <i class="bx bx-heart text-danger bx-lg"></i>
                                 </div>
                             </div>
-                            <p class="mb-1">Số yêu cầu trong tháng này/Tổng</p>
-                            <h4 class="card-title mb-3">{{ monthlyRequests }}/{{ totalRequests }}</h4>
+                            <p class="mb-1">Tổng tương tác</p>
+                            <h4 class="card-title mb-3">{{ totalLikes + totalComments + totalShares }}</h4>
+                            <small class="text-muted">
+                                {{ totalLikes }} likes, {{ totalComments }} comments, {{ totalShares }} shares
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>            <!-- Reports and Users Advanced Statistics -->
+            <div class="row">
+                <!-- Reports Status -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-bar-chart-alt text-warning bx-lg"></i>
+                                </div>
+                                {% if pendingReports > 0 %}
+                                <div class="dropdown">
+                                    <small class="text-warning fw-medium">
+                                        <i class="bx bx-error-circle"></i> {{ pendingReports }} chờ xử lý
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1">Báo cáo hệ thống</p>
+                            <h4 class="card-title mb-3">{{ totalReports }}</h4>
+                            <small class="text-muted">{{ resolvedReports }} đã xử lý, {{ pendingReports }} chờ xử lý</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Posts This Week -->
+                <div class="col-lg-6 col-md-12 col-6 mb-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0">
+                                    <i class="bx bx-edit text-primary bx-lg"></i>
+                                </div>
+                                <div class="dropdown">
+                                    <small class="text-success fw-medium">
+                                        <i class="bx bx-up-arrow-alt"></i> +{{ newPostsThisWeek }}
+                                    </small>
+                                </div>
+                            </div>
+                            <p class="mb-1">Bài viết tuần này</p>
+                            <h4 class="card-title mb-3">{{ newPostsThisWeek }}</h4>
+                            <small class="text-muted">{{ newPostsToday }} bài viết hôm nay</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Section -->
+            <div class="row">
+                <!-- User Growth Chart -->
+                <div class="col-lg-6 col-md-12 mb-6">
+                    <div class="card h-100">
+                        <div class="card-header pb-0">
+                            <h5 class="card-title mb-0">Tăng trưởng người dùng (30 ngày)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="userGrowthChart"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Post Growth Chart -->
+                <div class="col-lg-6 col-md-12 mb-6">
+                    <div class="card h-100">
+                        <div class="card-header pb-0">
+                            <h5 class="card-title mb-0">Bài viết mới (30 ngày)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="postGrowthChart"></div>
                         </div>
                     </div>
                 </div>
@@ -74,14 +202,180 @@
         </div>
         <!-- Right Column: Top 10 Active Users -->
         <div class="col-lg-3 col-md-12 order-2">
-            <div class="card h-100 shadow-lg">
-                <div class="card-body">
-                    <h5 class="card-title mb-4 text-center">Top 10 Người Dùng Hoạt Động Nhiều Nhất</h5>
-                    <div
-                        id="user-list" class="list-group" style="max-height: 600px; overflow-y: auto;"><!-- Danh sách người dùng sẽ được tạo động bằng JavaScript -->
+            <div class="card h-100 shadow-lg">                <div class="card-body">
+                    <h5 class="card-title mb-4 text-center">Top 10 Người Dùng Hoạt Động</h5>                    <div
+                        id="user-list" class="list-group" style="max-height: 600px; overflow-y: auto; overflow-x: hidden;">
+                        {% if topActiveUsers and topActiveUsers.length > 0 %}                            {% for user in topActiveUsers %}
+                                <div class="list-group-item d-flex align-items-center py-3 border-0" style="padding-left: 8px; padding-right: 8px;">
+                                    <div class="avatar me-2 flex-shrink-0">
+                                        <img src="{{ user.avatar }}" alt="Avatar" class="w-px-35 h-px-35 rounded-circle">
+                                    </div>
+                                    <div class="flex-grow-1" style="min-width: 0; overflow: hidden;">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="me-2" style="min-width: 0; flex: 1;">
+                                                <h6 class="mb-1 text-truncate" style="font-size: 0.875rem; line-height: 1.2;">{{ user.name }}</h6>
+                                                <small class="text-muted text-truncate d-block" style="font-size: 0.75rem;">@{{ user.username }}</small>
+                                                {% if user.lastPostDate %}
+                                                    <small class="text-muted d-block" style="font-size: 0.7rem;">
+                                                        {{ user.lastPostDate | date('DD/MM') }}
+                                                    </small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-end flex-shrink-0" style="min-width: fit-content;">
+                                                <div class="mb-1">
+                                                    <span class="badge bg-label-primary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;">{{ user.postsCount }}</span>
+                                                </div>
+                                                {% if user.role == 'ADMIN' %}
+                                                    <span class="badge bg-label-danger" style="font-size: 0.6rem; padding: 0.15rem 0.3rem;">Admin</span>
+                                                {% elif user.role == 'MODERATOR' %}
+                                                    <span class="badge bg-label-warning" style="font-size: 0.6rem; padding: 0.15rem 0.3rem;">Mod</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bx bx-info-circle bx-lg text-muted mb-2"></i>
+                                <p class="text-muted">Chưa có dữ liệu người dùng hoạt động</p>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
-        </div>
+            </div>        </div>
     </div>
+
+    <!-- Dashboard Charts Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize User Growth Chart
+            initUserGrowthChart();
+            
+            // Initialize Post Growth Chart
+            initPostGrowthChart();
+        });
+
+        function initUserGrowthChart() {
+            fetch('{{ baseUrl }}/dashboard/api/user-growth')
+                .then(response => response.json())
+                .then(data => {
+                    const chartData = data.map(item => ({
+                        x: new Date(item._id.year, item._id.month - 1, item._id.day),
+                        y: item.count
+                    }));
+
+                    const options = {
+                        series: [{
+                            name: 'Người dùng mới',
+                            data: chartData
+                        }],
+                        chart: {
+                            type: 'line',
+                            height: 250,
+                            toolbar: {
+                                show: false
+                            }
+                        },
+                        stroke: {
+                            curve: 'smooth',
+                            width: 3
+                        },
+                        colors: ['#28a745'],
+                        xaxis: {
+                            type: 'datetime',
+                            labels: {
+                                format: 'dd/MM'
+                            }
+                        },
+                        yaxis: {
+                            title: {
+                                text: 'Số người dùng'
+                            }
+                        },
+                        tooltip: {
+                            x: {
+                                format: 'dd/MM/yyyy'
+                            }
+                        },
+                        grid: {
+                            borderColor: '#e7e7e7'
+                        }
+                    };
+
+                    const chart = new ApexCharts(document.querySelector("#userGrowthChart"), options);
+                    chart.render();
+                })
+                .catch(error => {
+                    console.error('Error loading user growth chart:', error);
+                    document.getElementById('userGrowthChart').innerHTML = 
+                        '<div class="text-center py-4"><p class="text-muted">Không thể tải biểu đồ</p></div>';
+                });
+        }
+
+        function initPostGrowthChart() {
+            fetch('{{ baseUrl }}/dashboard/api/post-growth')
+                .then(response => response.json())
+                .then(data => {
+                    const chartData = data.map(item => ({
+                        x: new Date(item._id.year, item._id.month - 1, item._id.day),
+                        y: item.count
+                    }));
+
+                    const options = {
+                        series: [{
+                            name: 'Bài viết mới',
+                            data: chartData
+                        }],
+                        chart: {
+                            type: 'area',
+                            height: 250,
+                            toolbar: {
+                                show: false
+                            }
+                        },
+                        stroke: {
+                            curve: 'smooth',
+                            width: 2
+                        },
+                        fill: {
+                            type: 'gradient',
+                            gradient: {
+                                shadeIntensity: 1,
+                                opacityFrom: 0.7,
+                                opacityTo: 0.1,
+                            }
+                        },
+                        colors: ['#007bff'],
+                        xaxis: {
+                            type: 'datetime',
+                            labels: {
+                                format: 'dd/MM'
+                            }
+                        },
+                        yaxis: {
+                            title: {
+                                text: 'Số bài viết'
+                            }
+                        },
+                        tooltip: {
+                            x: {
+                                format: 'dd/MM/yyyy'
+                            }
+                        },
+                        grid: {
+                            borderColor: '#e7e7e7'
+                        }
+                    };
+
+                    const chart = new ApexCharts(document.querySelector("#postGrowthChart"), options);
+                    chart.render();
+                })
+                .catch(error => {
+                    console.error('Error loading post growth chart:', error);
+                    document.getElementById('postGrowthChart').innerHTML = 
+                        '<div class="text-center py-4"><p class="text-muted">Không thể tải biểu đồ</p></div>';
+                });
+        }
+    </script>
 {% endblock %}
