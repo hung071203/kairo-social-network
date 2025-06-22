@@ -8,6 +8,7 @@ import {
 } from 'src/schemas/notifications.schema';
 import { SystemNotification, SystemNotificationSchema } from 'src/schemas/systemNotifications.schema';
 import { NotificationRepository } from 'src/database/repository/notification.repository';
+import { SystemNotificationRepository } from 'src/database/repository/systemNotification.repository';
 
 @Module({
   imports: [
