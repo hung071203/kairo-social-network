@@ -2,6 +2,12 @@ import { IsOptional, IsString, IsEmail, IsEnum, IsDateString } from 'class-valid
 import { PaginationDto } from 'src/common/decorators';
 import { UserRole, UserGenderEnum } from 'src/common/enums';
 
+export enum UserStatusEnum {
+  ACTIVE = 'active',
+  BANNED = 'banned',
+  ALERT = 'alert',
+}
+
 export class FilterUserDto extends PaginationDto {
   @IsOptional()
   @IsString()
@@ -10,6 +16,10 @@ export class FilterUserDto extends PaginationDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+
+  @IsOptional()
+  @IsEnum(UserStatusEnum)
+  status?: UserStatusEnum;
 }
 
 export class CreateUserDto {
