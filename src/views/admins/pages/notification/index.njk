@@ -194,6 +194,39 @@
   </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bx bx-trash me-2"></i>Xác nhận xóa thông báo
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bx bx-error-circle text-warning" style="font-size: 4rem;"></i>
+        </div>
+        <p class="text-center mb-0">
+          Bạn có chắc chắn muốn xóa thông báo này không?
+        </p>
+        <p class="text-center text-muted small mb-0">
+          Hành động này không thể hoàn tác.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bx bx-x me-1"></i>Hủy
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="bx bx-trash me-1"></i>Xóa thông báo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Global variables
@@ -202,7 +235,12 @@ document.addEventListener('DOMContentLoaded', function() {
   let isSystemLoading = false;
   let isPersonalLoading = false;
   let hasMoreSystemData = true;
-  let hasMorePersonalData = true;  const pageSize = 10;
+  let hasMorePersonalData = true;
+  const pageSize = 10;
+  
+  // Variables for delete confirmation
+  let pendingDeleteId = null;
+  let pendingDeleteType = null;
 
   // Initialize
   console.log('Initializing notification management...');
@@ -582,6 +620,28 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });});
 
+  // Delete confirmation modal event listener
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (pendingDeleteId && pendingDeleteType) {
+      if (pendingDeleteType === 'system') {
+        executeDeleteSystemNotification(pendingDeleteId);
+      } else if (pendingDeleteType === 'personal') {
+        executeDeletePersonalNotification(pendingDeleteId);
+      }
+      
+      // Hide modal and reset variables
+      bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+      pendingDeleteId = null;
+      pendingDeleteType = null;
+    }
+  });
+
+  // Reset pending delete when modal is hidden
+  document.getElementById('deleteConfirmModal').addEventListener('hidden.bs.modal', function() {
+    pendingDeleteId = null;
+    pendingDeleteType = null;
+  });
+
   // Utility functions
   function loadUnreadCount() {
     fetch('/notification/unread')
@@ -687,41 +747,48 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   };
-
   window.deleteSystemNotification = function(id) {
-    if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {      fetch(`/noti-management/system-notifications/${id}`, {
-        method: 'DELETE'
-      })
-      .then(response => response.json())      .then(result => {
-        if (result.success) {
-          showToast({
-            message: 'Xóa thông báo thành công', 
-            header: 'Thành công!', 
-            type: 'success',
-            iconClass: 'bx bx-check-circle',
-            delay: 3000
-          });
-          loadSystemNotifications(true);
-        } else {
-          showToast({
-            message: result.message || 'Lỗi khi xóa thông báo', 
-            header: 'Lỗi!', 
-            type: 'error',
-            iconClass: 'bx bx-error',
-            delay: 5000
-          });
-        }
-      })      .catch(error => {
-        console.error('Error deleting system notification:', error);
+    pendingDeleteId = id;
+    pendingDeleteType = 'system';
+    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    modal.show();
+  };
+
+  function executeDeleteSystemNotification(id) {
+    fetch(`/noti-management/system-notifications/${id}`, {
+      method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
         showToast({
-          message: 'Lỗi khi xóa thông báo', 
+          message: 'Xóa thông báo thành công', 
+          header: 'Thành công!', 
+          type: 'success',
+          iconClass: 'bx bx-check-circle',
+          delay: 3000
+        });
+        loadSystemNotifications(true);
+      } else {
+        showToast({
+          message: result.message || 'Lỗi khi xóa thông báo', 
           header: 'Lỗi!', 
           type: 'error',
           iconClass: 'bx bx-error',
           delay: 5000
         });
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting system notification:', error);
+      showToast({
+        message: 'Lỗi khi xóa thông báo', 
+        header: 'Lỗi!', 
+        type: 'error',
+        iconClass: 'bx bx-error',
+        delay: 5000
       });
-    }
+    });
   };
   window.markAsRead = function(id) {
     fetch(`/notification/${id}/read`, {
@@ -759,42 +826,49 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   };  window.deletePersonalNotification = function(id) {
-    if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
-      fetch(`/notification/${id}`, {
-        method: 'DELETE'
-      })
-      .then(response => response.json())      .then(result => {
-        const success = result.success !== undefined ? result.success : !!result;
-        if (success) {
-          showToast({
-            message: 'Xóa thông báo thành công', 
-            header: 'Thành công!', 
-            type: 'success',
-            iconClass: 'bx bx-check-circle',
-            delay: 3000
-          });
-          loadPersonalNotifications(true);
-          loadUnreadCount();
-        } else {
-          showToast({
-            message: result.message || 'Lỗi khi xóa thông báo', 
-            header: 'Lỗi!', 
-            type: 'error',
-            iconClass: 'bx bx-error',
-            delay: 5000
-          });
-        }
-      })      .catch(error => {
-        console.error('Error deleting personal notification:', error);
+    pendingDeleteId = id;
+    pendingDeleteType = 'personal';
+    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    modal.show();
+  };
+
+  function executeDeletePersonalNotification(id) {
+    fetch(`/notification/${id}`, {
+      method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(result => {
+      const success = result.success !== undefined ? result.success : !!result;
+      if (success) {
         showToast({
-          message: 'Lỗi khi xóa thông báo', 
+          message: 'Xóa thông báo thành công', 
+          header: 'Thành công!', 
+          type: 'success',
+          iconClass: 'bx bx-check-circle',
+          delay: 3000
+        });
+        loadPersonalNotifications(true);
+        loadUnreadCount();
+      } else {
+        showToast({
+          message: result.message || 'Lỗi khi xóa thông báo', 
           header: 'Lỗi!', 
           type: 'error',
           iconClass: 'bx bx-error',
           delay: 5000
         });
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting personal notification:', error);
+      showToast({
+        message: 'Lỗi khi xóa thông báo', 
+        header: 'Lỗi!', 
+        type: 'error',
+        iconClass: 'bx bx-error',
+        delay: 5000
       });
-    }
+    });
   };
 });
 </script>
