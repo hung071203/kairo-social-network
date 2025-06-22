@@ -12,9 +12,8 @@
                 class="row">                <!-- Total Users -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToUserManagement()" data-bs-toggle="tooltip" title="Click để quản lý người dùng">
                                     <i class="bx bx-user text-success bx-lg"></i>
                                 </div>
                                 <div class="dropdown">
@@ -32,9 +31,8 @@
                 <!-- Active Users Today -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToUserManagement()" data-bs-toggle="tooltip" title="Click để quản lý người dùng hoạt động">
                                     <i class="bx bx-user-check text-success bx-lg"></i>
                                 </div>
                             </div>
@@ -50,9 +48,8 @@
                 <!-- Banned Users -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToBannedUsers()" data-bs-toggle="tooltip" title="Click để quản lý người dùng bị cấm">
                                     <i class="bx bx-user-x text-warning bx-lg"></i>
                                 </div>
                                 {% if bannedUsers > 0 %}
@@ -72,9 +69,8 @@
                 <!-- New Users This Month -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToUserManagement()" data-bs-toggle="tooltip" title="Click để quản lý người dùng mới">
                                     <i class="bx bx-user-plus text-info bx-lg"></i>
                                 </div>
                                 <div class="dropdown">
@@ -95,9 +91,8 @@
                 <!-- Total Posts -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToPostManagement()" data-bs-toggle="tooltip" title="Click để quản lý bài viết">
                                     <i class="bx bx-file text-primary bx-lg"></i>
                                 </div>
                                 <div class="dropdown">
@@ -115,9 +110,8 @@
                 <!-- Total Interactions -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToPostManagement()" data-bs-toggle="tooltip" title="Click để xem tương tác bài viết">
                                     <i class="bx bx-heart text-danger bx-lg"></i>
                                 </div>
                             </div>
@@ -134,9 +128,8 @@
                 <!-- Reports Status -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToReportManagement()" data-bs-toggle="tooltip" title="Click để quản lý báo cáo">
                                     <i class="bx bx-bar-chart-alt text-warning bx-lg"></i>
                                 </div>
                                 {% if pendingReports > 0 %}
@@ -156,9 +149,8 @@
                 <!-- Posts This Week -->
                 <div class="col-lg-6 col-md-12 col-6 mb-6">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-                                <div class="avatar flex-shrink-0">
+                        <div class="card-body">                            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                                <div class="avatar flex-shrink-0" style="cursor: pointer;" onclick="navigateToPostManagement()" data-bs-toggle="tooltip" title="Click để quản lý bài viết tuần này">
                                     <i class="bx bx-edit text-primary bx-lg"></i>
                                 </div>
                                 <div class="dropdown">
@@ -339,14 +331,30 @@
                     document.getElementById('userGrowthChart').innerHTML = 
                         '<div class="text-center py-4"><p class="text-muted">Không thể tải biểu đồ</p></div>';
                 });
-        }
-
-        // Function to navigate to user management page
+        }        // Function to navigate to user management page
         function navigateToUserManagement(userId) {
             if (userId) {
                 // Redirect to user management page with the specific user ID
                 window.location.href = '{{ baseUrl }}/user-management?search=' + userId;
+            } else {
+                // Redirect to general user management page
+                window.location.href = '{{ baseUrl }}/user-management';
             }
+        }
+
+        // Function to navigate to banned users management
+        function navigateToBannedUsers() {
+            window.location.href = '{{ baseUrl }}/user-management';
+        }
+
+        // Function to navigate to post management
+        function navigateToPostManagement() {
+            window.location.href = '{{ baseUrl }}/post-management';
+        }
+
+        // Function to navigate to report management
+        function navigateToReportManagement() {
+            window.location.href = '{{ baseUrl }}/report-management';
         }function initPostGrowthChart() {
             fetch('{{ baseUrl }}/dashboard/api/post-growth')
                 .then(response => response.json())
