@@ -39,6 +39,9 @@ export class Post extends Document {
 
   @Prop({ type: [Types.ObjectId], ref: Tag.name, default: [] })
   tags: Types.ObjectId[];
+
+  @Prop({ type: Boolean, default: true })
+  isVisible: boolean;
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);
