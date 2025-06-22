@@ -202,14 +202,13 @@ function appendNotifications(newNotifications) {
 
   container.classList.remove('hidden');
   emptyState.classList.add('hidden');
-
   filteredNotifications.forEach((notification, index) => {
     if (renderedIds.has(notification._id)) return; // Skip if already rendered
 
     const item = document.createElement('div');
     item.className = `notification-item flex gap-3 items-start p-3 rounded-lg cursor-pointer transition-all ${
       !notification.isRead ? 'unread' : ''
-    } ${index < filteredNotifications.length - 1 ? 'mb-2' : ''}`;
+    } mb-2`;
     item.dataset.id = notification._id;
 
     item.innerHTML = `
