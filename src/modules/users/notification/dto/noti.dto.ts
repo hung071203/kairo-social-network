@@ -27,4 +27,8 @@ export class CreateNotiDto {
   @IsOptional()
   @IsString()
   redirectUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  systemNotification?: string; // ID của thông báo hệ thống nếu có
 }

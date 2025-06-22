@@ -4,6 +4,7 @@ import { PaginationDto } from 'src/common/decorators';
 import { NotificationRepositoryInterface } from 'src/database/interface/notification.interface';
 import { CreateNotiDto, FilterNotiDto } from './dto/noti.dto';
 import { NotificationGateway } from 'src/gateways/notification/notification.gateway';
+import { Notification } from 'src/schemas/notifications.schema';
 
 @Injectable()
 export class NotificationService {
@@ -45,10 +46,19 @@ export class NotificationService {
   }
 
   async create(userId: string, dto: CreateNotiDto) {
-    const noti = await this.notificationRepository.create({
-      user: new Types.ObjectId(userId),
-      ...dto,
-    });
+    const form = new Notification();
+
+    form.type = dto.type;
+    form.user = new Types.ObjectId(userId);
+    form.title = dto.title;
+    form.message = dto.message;
+    form.isRead = false;
+    form.redirectUrl = dto.redirectUrl;
+    form.systemNotification = dto.systemNotification
+      ? new Types.ObjectId(dto.systemNotification)
+      : null;
+
+    const noti = await this.notificationRepository.create(form);
     this.notiGateway.sendNotification(noti)
     return noti;
   }

@@ -4,6 +4,7 @@ import { SystemNotificationRepositoryInterface } from 'src/database/interface/sy
 import { NotificationRepositoryInterface } from 'src/database/interface/notification.interface';
 import { UserManagementService } from '../user-management/user-management.service';
 import { NotificationService } from 'src/modules/users/notification/notification.service';
+import { PaginationDto } from 'src/common/decorators';
 
 @Injectable()
 export class NotiManagementService {
@@ -38,11 +39,31 @@ export class NotiManagementService {
           message: systemNotification.message,
           type: systemNotification.type,
           redirectUrl: systemNotification.redirectUrl,
+          systemNotification: systemNotification._id.toString(),
         });
       });
       Promise.allSettled(createNotiPromises);
     }
 
     return true;
+  }
+
+  async getSystemNotifications(pagination: PaginationDto) {
+    return this.systemNotificationRepository.findAll({}, pagination);
+  }
+
+  async deleteSystemNotification(id: string) {
+    const systemNotification = await this.systemNotificationRepository.findOneById(id);
+    if (!systemNotification) {
+      throw new Error('Thông báo không tồn tại');
+    }
+
+    // Xoá tất cả thông báo liên quan đến thông báo hệ thống này
+    await this.notificationRepository.getModel().deleteMany({
+      systemNotification: systemNotification._id,
+    });
+
+    // Xoá thông báo hệ thống
+    return this.systemNotificationRepository.delete(id);
   }
 }
