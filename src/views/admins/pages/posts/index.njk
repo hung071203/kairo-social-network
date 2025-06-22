@@ -424,8 +424,7 @@
             </div>
         </div>
     </div>
-    
-    <!-- Hide Post Confirmation Modal -->
+      <!-- Hide Post Confirmation Modal -->
     <div class="modal fade" id="hidePostModal" tabindex="-1" aria-labelledby="hidePostModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -435,7 +434,27 @@
                 </div>
                 <div class="modal-body">
                     <p>Bạn có chắc chắn muốn ẩn bài viết này không?</p>
-                    <p class="text-warning"><strong>Bài viết sẽ không hiển thị với người dùng và tác giả sẽ nhận được thông báo.</strong></p>
+                    <p class="text-warning"><strong>Bài viết sẽ không hiển thị với người dùng và tác giả sẽ nhận được thông báo kèm lý do.</strong></p>
+                    
+                    <form id="hidePostForm">
+                        <div class="mb-3">
+                            <label for="hideReason" class="form-label">Lý do ẩn bài viết <span class="text-danger">*</span></label>
+                            <select class="form-select" id="hideReason" required onchange="toggleCustomReason()">
+                                <option value="">Chọn lý do...</option>
+                                <option value="Nội dung không phù hợp">Nội dung không phù hợp</option>
+                                <option value="Spam hoặc quảng cáo">Spam hoặc quảng cáo</option>
+                                <option value="Bạo lực hoặc ngôn từ thù địch">Bạo lực hoặc ngôn từ thù địch</option>
+                                <option value="Thông tin sai lệch">Thông tin sai lệch</option>
+                                <option value="Vi phạm bản quyền">Vi phạm bản quyền</option>
+                                <option value="Nội dung người lớn">Nội dung người lớn</option>
+                                <option value="custom">Lý do khác...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="customReasonDiv" style="display: none;">
+                            <label for="customHideReason" class="form-label">Nhập lý do cụ thể</label>
+                            <textarea class="form-control" id="customHideReason" rows="3" placeholder="Nhập lý do chi tiết..."></textarea>
+                        </div>
+                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -672,13 +691,29 @@
             currentPostAuthor = authorName;
             document.getElementById('deletePostModalLabel').textContent = `Xóa bài viết của ${authorName}`;
             new bootstrap.Modal(document.getElementById('deletePostModal')).show();
-        }
-          // Hide post
+        }        // Hide post
         function hidePost(postId, authorName) {
             currentPostId = postId;
             currentPostAuthor = authorName;
             document.getElementById('hidePostModalLabel').textContent = `Ẩn bài viết của ${authorName}`;
+            // Reset form
+            document.getElementById('hidePostForm').reset();
+            document.getElementById('customReasonDiv').style.display = 'none';
             new bootstrap.Modal(document.getElementById('hidePostModal')).show();
+        }
+        
+        function toggleCustomReason() {
+            const reasonSelect = document.getElementById('hideReason');
+            const customDiv = document.getElementById('customReasonDiv');
+            
+            if (reasonSelect.value === 'custom') {
+                customDiv.style.display = 'block';
+                document.getElementById('customHideReason').required = true;
+            } else {
+                customDiv.style.display = 'none';
+                document.getElementById('customHideReason').required = false;
+                document.getElementById('customHideReason').value = '';
+            }
         }
         
         // Unhide post
@@ -688,15 +723,34 @@
             document.getElementById('unhidePostModalLabel').textContent = `Hiện bài viết của ${authorName}`;
             new bootstrap.Modal(document.getElementById('unhidePostModal')).show();
         }
-        
-        function confirmHidePost() {
+          function confirmHidePost() {
             if (!currentPostId) return;
+            
+            const reasonSelect = document.getElementById('hideReason');
+            const customReason = document.getElementById('customHideReason');
+            
+            if (!reasonSelect.value) {
+                showNotification('error', 'Vui lòng chọn lý do ẩn bài viết');
+                return;
+            }
+            
+            let finalReason = reasonSelect.value;
+            if (reasonSelect.value === 'custom') {
+                if (!customReason.value.trim()) {
+                    showNotification('error', 'Vui lòng nhập lý do cụ thể');
+                    return;
+                }
+                finalReason = customReason.value.trim();
+            }
             
             fetch(`{{ baseUrl }}/post-management/hide/${currentPostId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    reason: finalReason
+                })
             })
             .then(response => response.json())
             .then(data => {

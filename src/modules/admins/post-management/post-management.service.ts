@@ -166,10 +166,13 @@ export class PostManagementService {
 
     return { message: 'Xóa bài viết thành công' };
   }
-
-  async hidePost(id: string) {
+  async hidePost(id: string, reason: string) {
     if (!isValidObjectId(id)) {
       throw new Error('ID bài viết không hợp lệ');
+    }
+
+    if (!reason || !reason.trim()) {
+      throw new Error('Vui lòng nhập lý do ẩn bài viết');
     }
 
     const post = await this.postRepository.findOne({ _id: id });
@@ -184,13 +187,13 @@ export class PostManagementService {
     // Update post to hide it
     await this.postRepository.update(id, { isVisible: false });
 
-    // Send notification to the post author
+    // Send notification to the post author with reason
     try {
       await this.notificationService.create(post.author.toString(), {
         title: 'Bài viết bị ẩn',
-        message: 'Bài viết của bạn đã bị ẩn bởi quản trị viên do vi phạm quy định cộng đồng.',
+        message: `Bài viết của bạn đã bị ẩn bởi quản trị viên. Lý do: ${reason.trim()}`,
         type: NotificationType.SYSTEM,
-        redirectUrl: `/posts/${id}`,
+        redirectUrl: `/posts/detail/${id}`,
       });
     } catch (notificationError) {
       console.error('Error sending notification:', notificationError);
@@ -223,7 +226,7 @@ export class PostManagementService {
         title: 'Bài viết được khôi phục',
         message: 'Bài viết của bạn đã được khôi phục hiển thị bởi quản trị viên.',
         type: NotificationType.SYSTEM,
-        redirectUrl: `/posts/${id}`,
+        redirectUrl: `/posts/detail/${id}`,
       });
     } catch (notificationError) {
       console.error('Error sending notification:', notificationError);

@@ -1,4 +1,4 @@
-import { IsOptional, IsBoolean } from 'class-validator';
+import { IsOptional, IsBoolean, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { PaginationDto } from 'src/common/decorators';
 
@@ -17,4 +17,9 @@ export class FilterPostManagementDto extends PaginationDto {
   })
   @IsBoolean()
   isVisible?: boolean;
+}
+
+export class HidePostDto {
+  @IsString()
+  reason: string;
 }

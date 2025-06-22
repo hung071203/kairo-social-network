@@ -3,7 +3,7 @@ import { PostManagementService } from './post-management.service';
 import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
 import { Pagination, PaginationDto } from 'src/common/decorators';
-import { FilterPostManagementDto } from './dto/post.dto';
+import { FilterPostManagementDto, HidePostDto } from './dto/post.dto';
 
 @Controller('post-management')
 @UseGuards(ModeratorsAuthGuard)
@@ -81,11 +81,10 @@ export class PostManagementController {
       throw new BadRequestException(error.message);
     }
   }
-
   @Post('hide/:id')
-  async hidePost(@Param('id') id: string) {
+  async hidePost(@Param('id') id: string, @Body() hidePostDto: HidePostDto) {
     try {
-      await this.postManagementService.hidePost(id);
+      await this.postManagementService.hidePost(id, hidePostDto.reason);
       return {
         success: true,
         message: 'Ẩn bài viết thành công',
