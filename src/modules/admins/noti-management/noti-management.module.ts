@@ -9,6 +9,7 @@ import {
 import { SystemNotification, SystemNotificationSchema } from 'src/schemas/systemNotifications.schema';
 import { NotificationRepository } from 'src/database/repository/notification.repository';
 import { SystemNotificationRepository } from 'src/database/repository/systemNotification.repository';
+import { UserManagementModule } from '../user-management/user-management.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SystemNotificationRepository } from 'src/database/repository/systemNoti
         schema: SystemNotificationSchema,
       }
     ]),
+    UserManagementModule
   ], // Add your schemas here if needed
   controllers: [NotiManagementController],
   providers: [NotiManagementService,

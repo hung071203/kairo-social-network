@@ -15,9 +15,13 @@ import { UserRepository } from 'src/database/repository/user.repository';
     ]),
   ], // Add your Mongoose models here if needed
   controllers: [UserManagementController],
-  providers: [UserManagementService, {
-    provide: 'UserRepositoryInterface',
-    useClass: UserRepository, // Assuming you have a service class for UserManagementq
-  }],
+  providers: [
+    UserManagementService,
+    {
+      provide: 'UserRepositoryInterface',
+      useClass: UserRepository, // Assuming you have a service class for UserManagementq
+    },
+  ],
+  exports: [UserManagementService],
 })
 export class UserManagementModule {}

@@ -11,6 +11,7 @@ import {
 import { NotiManagementService } from './noti-management.service';
 import { ModeratorsAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { WebExceptionFilter } from 'src/common/filters';
+import { CreateSystemNotificationDto } from './dto/system-notification.dto';
 
 @Controller('noti-management')
 @UseGuards(ModeratorsAuthGuard)
