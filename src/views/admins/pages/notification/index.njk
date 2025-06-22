@@ -241,20 +241,48 @@ document.addEventListener('DOMContentLoaded', function() {
   // Variables for delete confirmation
   let pendingDeleteId = null;
   let pendingDeleteType = null;
-
   // Initialize
   console.log('Initializing notification management...');
-  loadSystemNotifications(true);
-  loadUnreadCount();
-
+  
+  // Restore last active tab from localStorage
+  const lastActiveTab = localStorage.getItem('notificationActiveTab') || 'system';
+  if (lastActiveTab === 'personal') {
+    // Switch to personal tab
+    const personalTabButton = document.querySelector('[data-bs-target="#navs-pills-top-personal"]');
+    const systemTabButton = document.querySelector('[data-bs-target="#navs-pills-top-system"]');
+    const personalTabPane = document.getElementById('navs-pills-top-personal');
+    const systemTabPane = document.getElementById('navs-pills-top-system');
+    
+    // Update tab buttons
+    systemTabButton.classList.remove('active');
+    systemTabButton.setAttribute('aria-selected', 'false');
+    personalTabButton.classList.add('active');
+    personalTabButton.setAttribute('aria-selected', 'true');
+    
+    // Update tab panes
+    systemTabPane.classList.remove('show', 'active');
+    personalTabPane.classList.add('show', 'active');
+    
+    // Load personal notifications
+    loadPersonalNotifications(true);
+    loadUnreadCount();
+  } else {
+    // Default to system tab
+    loadSystemNotifications(true);
+    loadUnreadCount();
+  }
   // Tab switching
   document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(tab) {
     tab.addEventListener('shown.bs.tab', function(event) {
       const target = event.target.getAttribute('data-bs-target');
       if (target === '#navs-pills-top-personal') {
+        // Save personal tab as active
+        localStorage.setItem('notificationActiveTab', 'personal');
         loadPersonalNotifications(true);
         loadUnreadCount();
       } else if (target === '#navs-pills-top-system') {
+        // Save system tab as active
+        localStorage.setItem('notificationActiveTab', 'system');
         loadSystemNotifications(true);
       }
     });
