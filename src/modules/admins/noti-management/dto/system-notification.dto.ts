@@ -29,9 +29,4 @@ export class FilterSystemNotificationDto extends PaginationDto {
   @IsOptional()
   @IsEnum(NotificationType)
   type?: NotificationType;
-
-  @IsOptional()
-  @IsArray()
-  @IsEnum(SystemNotificationRecipientEnum, { each: true })
-  recipients?: SystemNotificationRecipientEnum[];
 }
