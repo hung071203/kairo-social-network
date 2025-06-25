@@ -11,11 +11,28 @@ export class WebExceptionFilter implements ExceptionFilter {
     // Truyền lỗi vào
     request.session.errorMessage = exception.message || 'An error occurred';
 
+    request.session.errorRedirectCount =
+      (request.session.errorRedirectCount || 0) + 1;
+
+    // Nếu redirect quá 3 lần → về trang mặc định
+    if (request.session.errorRedirectCount > 3) {
+      // Reset đếm lỗi để không lặp mãi
+      request.session.errorRedirectCount = 0;
+
+      const user = request.user;
+
+      if (user?.role === UserRole.USER) {
+        return response.redirect('/home');
+      } else {
+        return response.redirect('/dashboard');
+      }
+    }
+
     // Kiểm tra loại lỗi và quyết định chuyển hướng
     if (exception instanceof Error) {
       let previousUrl = '';
       const user = request.user; // Lấy thông tin người dùng từ response locals
-      
+
       if (user) {
         // Nếu có người dùng, chuyển hướng về trang trước đó
         if (user?.role === UserRole.USER) {
