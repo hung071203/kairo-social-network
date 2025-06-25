@@ -275,7 +275,7 @@
                                                             {% endif %}
                                                         {% endif %}
                                                         
-                                                        {% if (user.role == 'ADMIN') or (user.role == 'MOD' and item.role == 'USER') %}
+                                                        {% if (user.role == 'ADMIN') %}
                                                             <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="delUser('{{ item.name }}', '{{ item._id }}');">
                                                                 <i class="bx bx-trash me-1"></i>
                                                                 Xóa tài khoản

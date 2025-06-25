@@ -14,6 +14,11 @@ export class WebExceptionFilter implements ExceptionFilter {
     request.session.errorRedirectCount =
       (request.session.errorRedirectCount || 0) + 1;
 
+    if (exception?.status === 403) {
+      request.session.errorRedirectCount = 0; // reset nếu cần
+      return response.redirect('/auth/login');
+    }
+
     // Nếu redirect quá 3 lần → về trang mặc định
     if (request.session.errorRedirectCount > 3) {
       // Reset đếm lỗi để không lặp mãi

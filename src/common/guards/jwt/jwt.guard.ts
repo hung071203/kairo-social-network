@@ -28,10 +28,18 @@ export class UsersAuthGuard extends AuthGuard('users-jwt') {
       );
     }
     response.locals.user = user; // ✅ Gán vào locals
+    if (user.bannedUntil && user.bannedUntil > new Date()) {
+      const bannedTimeVN = user.bannedUntil.toLocaleString('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour12: false,
+      });
 
+      throw new ForbiddenException(
+        `Tài khoản của bạn đã bị khóa đến ${bannedTimeVN}. Lý do: ${user.bannedReason || 'Không rõ'}.`,
+      );
+    }
     return can;
   }
-  
 }
 
 @Injectable()
@@ -55,6 +63,16 @@ export class ModeratorsAuthGuard extends AuthGuard('users-jwt') {
       );
     }
     response.locals.user = user;
+    if (user.bannedUntil && user.bannedUntil > new Date()) {
+      const bannedTimeVN = user.bannedUntil.toLocaleString('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour12: false,
+      });
+
+      throw new ForbiddenException(
+        `Tài khoản của bạn đã bị khóa đến ${bannedTimeVN}. Lý do: ${user.bannedReason || 'Không rõ'}.`,
+      );
+    }
     return can;
   }
 }
@@ -80,6 +98,16 @@ export class AdminAuthGuard extends AuthGuard('users-jwt') {
     }
 
     response.locals.user = user; // ✅ Gán vào locals
+    if (user.bannedUntil && user.bannedUntil > new Date()) {
+      const bannedTimeVN = user.bannedUntil.toLocaleString('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour12: false,
+      });
+
+      throw new ForbiddenException(
+        `Tài khoản của bạn đã bị khóa đến ${bannedTimeVN}. Lý do: ${user.bannedReason || 'Không rõ'}.`,
+      );
+    }
     return can;
   }
 }
@@ -99,6 +127,16 @@ export class AllGuard extends AuthGuard('users-jwt') {
     }
 
     response.locals.user = user; // ✅ Gán vào locals
+    if (user.bannedUntil && user.bannedUntil > new Date()) {
+      const bannedTimeVN = user.bannedUntil.toLocaleString('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour12: false,
+      });
+
+      throw new ForbiddenException(
+        `Tài khoản của bạn đã bị khóa đến ${bannedTimeVN}. Lý do: ${user.bannedReason || 'Không rõ'}.`,
+      );
+    }
     return can;
   }
 }

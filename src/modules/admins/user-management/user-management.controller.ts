@@ -139,6 +139,7 @@ export class UserManagementController {
   }
 
   @Delete('delete/:id')
+  @UseGuards(AdminAuthGuard)
   async deleteUser(@Param('id') id: string) {
     try {
       await this.userManagementService.deleteUser(id);
