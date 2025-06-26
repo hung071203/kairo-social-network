@@ -310,10 +310,12 @@
                                                         Hiện Bài Viết
                                                     </a>
                                                 {% endif %}
-                                                <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deletePost('{{ item._id }}', '{{ item.author.name }}');">
-                                                    <i class="bx bx-trash me-1"></i>
-                                                    Xóa Bài Viết
-                                                </a>
+                                                {% if user.role == 'ADMIN' %}
+                                                    <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deletePost('{{ item._id }}', '{{ item.author.name }}');">
+                                                        <i class="bx bx-trash me-1"></i>
+                                                        Xóa Bài Viết
+                                                    </a>
+                                                {% endif %}
                                             {% endif %}
                                         </div>
                                     </div>
