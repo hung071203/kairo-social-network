@@ -46,6 +46,7 @@ export class ProfileController {
   }
 
   @Get('me')
+  @UseGuards(AllGuard)
   async getMyProfile(@GetUser() user: User) {
     return user;
   }
